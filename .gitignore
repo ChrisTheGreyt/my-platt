@@ -1,0 +1,7 @@
+ttc-app/node_modules
+server/node_modules
+ttc-app/dist/
+server/dist/
+ttc-app/.env
+server/.env
+ttc-app/.next/
