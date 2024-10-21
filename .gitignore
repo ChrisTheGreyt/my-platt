@@ -4,4 +4,4 @@ ttc-app/dist/
 server/dist/
 ttc-app/.env
 server/.env
-ttc-app/.next/
+ttc-app/.next/ 
