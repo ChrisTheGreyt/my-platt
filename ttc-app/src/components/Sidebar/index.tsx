@@ -8,7 +8,6 @@ import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, Chevr
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { userAgent } from 'next/server';
 import { useState } from 'react';
 
 const Sidebar = () => {
@@ -55,7 +54,7 @@ const Sidebar = () => {
           <Image src="https://mp-s3-images.s3.us-east-1.amazonaws.com/logo.png" alt="Logo" width={40} height={50} />
           <div>
             <h3 className='text-md font-bold tracking-wide dark:text-gray-200'>
-              {`${userAgent.name}`}
+            {currentUserDetails?.username}
             </h3>
             <div className='mt-1 flex items-start gap-2'>
               <LockIcon className='mt-[0.1rem] h-3 w-3 text-gray-500 dark:text-gray-400' />
