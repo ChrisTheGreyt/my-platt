@@ -1,5 +1,6 @@
 import React from 'react'
-import { Authenticator, Placeholder } from "@aws-amplify/ui-react";
+import { Authenticator } from "@aws-amplify/ui-react";
+// import { Authenticator, Placeholder } from "@aws-amplify/ui-react";
 import { Amplify } from 'aws-amplify';
 import "@aws-amplify/ui-react/styles.css";
 Amplify.configure({
