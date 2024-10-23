@@ -19,7 +19,7 @@ const Navbar = () => {
         try{
             await signOut();
         } catch (error){
-            console.error("Error signging out: ", error)
+            console.error("Errorsignging out: ", error)
         }
     }
     if(!currentUser) return null; 

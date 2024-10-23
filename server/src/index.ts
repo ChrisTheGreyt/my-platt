@@ -10,7 +10,6 @@ import taskRoutes from './routes/taskRoutes';
 import searchRoutes from "./routes/searchRoutes";
 import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
-import { PrismaClient } from "@prisma/client";
 
 /* CONFIGURATIONS */
 dotenv.config();

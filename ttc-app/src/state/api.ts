@@ -74,8 +74,7 @@ export interface SearchReults {
 }
 export const api = createApi({
     baseQuery: fetchBaseQuery({ 
-        // baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-        baseUrl: "",
+        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
         prepareHeaders: async ( headers ) =>{
             const session = await fetchAuthSession();
             const { accessToken } = session.tokens ?? {};
@@ -94,7 +93,7 @@ export const api = createApi({
                     // fetch data from congnito db
                     const user = await getCurrentUser();
                     const session = await fetchAuthSession();
-                    if (!session) throw new Error("No session fount");
+                    if (!session) throw new Error("No session found");
                     const { userSub } = session;
                     const { accessToken } = session.tokens ?? {};
                     // fetch data from local database
