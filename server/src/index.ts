@@ -1,4 +1,4 @@
-import express, { Request, Response } from"express";
+import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -42,7 +42,9 @@ app.listen(port, "0.0.0.0", () => {
     console.log(`Server running on port ${port}`);
 });
 // LOCAL SERVER BUILD
-// const port = process.env.PORT || 3000;
-// app.listen(port, () => {
-//     console.log(`Server running on port ${port}`);
-// });
+/*
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+*/
