@@ -15,7 +15,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Topping The Curve",
+  title: "My PLATT",
   description: "Manage Your Law School Applications with Precision",
 };
 

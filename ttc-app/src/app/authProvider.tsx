@@ -58,46 +58,57 @@ const AuthProvider = ({ children }: any) => {
   // Function to handle the Stripe redirection
   const redirectToCheckout = async (email: string) => {
     const stripe = await stripePromise;
-
+  
     if (!stripe) {
       console.error("Stripe has not been initialized properly.");
       return;
     }
-
+  
     // Call your backend to create the Stripe Checkout session
-    const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    const { id: sessionId } = await response.json();
-
-    // Redirect to Stripe Checkout
-    const result = await stripe.redirectToCheckout({
-      sessionId,
-    });
-
-    if (result.error) {
-      console.error("Stripe Checkout error:", result.error.message);
+    try {
+      const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const { id: sessionId } = await response.json();
+      console.log("Stripe Session ID:", sessionId); // Debugging log
+  
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId,
+      });
+  
+      if (result.error) {
+        console.error("Stripe Checkout error:", result.error.message);
+      }
+    } catch (error) {
+      console.error("Error creating Stripe session:", error);
     }
   };
+  
 
   useEffect(() => {
     // Listen for auth state changes with Amplify Hub
     const authListener = (data: any) => {
       const { event, data: eventData } = data.payload;
+  
+      console.log("Auth Event:", event); // Debugging log
+      console.log("User Data:", eventData); // Debugging log
+  
       if (event === 'signIn' && eventData) {
         // Trigger Stripe checkout after successful sign-in
+        console.log("User signed in, redirecting to Stripe..."); // Debugging log
         redirectToCheckout(eventData.attributes.email);
       }
     };
-
+  
     // Amplify Hub listens to auth events
     const listener = Hub.listen('auth', authListener);
-
+  
     return () => {
       listener();  // Use the listener to clean up
     };
