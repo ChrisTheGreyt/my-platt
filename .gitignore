@@ -5,3 +5,4 @@ server/dist/
 ttc-app/.env
 server/.env
 ttc-app/.next/ 
+stripeLambdaFunction/.env

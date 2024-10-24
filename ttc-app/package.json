@@ -9,13 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aws-amplify/ui-react": "^6.5.4",
+    "@aws-amplify/auth": "^6.5.3",
+    "@aws-amplify/ui-react": "^6.5.5",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@mui/material": "^6.1.0",
     "@mui/x-data-grid": "^7.16.0",
     "@reduxjs/toolkit": "^2.2.7",
-    "aws-amplify": "^6.6.5",
+    "@stripe/stripe-js": "^4.9.0",
+    "aws-amplify": "^6.6.6",
     "axios": "^1.7.7",
     "date-fns": "^3.6.0",
     "dot": "^1.1.3",
