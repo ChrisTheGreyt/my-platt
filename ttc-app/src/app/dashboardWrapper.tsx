@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
+import Auth from '@aws-amplify/auth';  // Modular import for Auth
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
@@ -34,28 +35,46 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [hasSubscription, setHasSubscription] = useState(false);
-  const [loading, setLoading] = useState(false);  // Set to false for testing to skip loading
+  const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
 
-  // Temporary toggle to switch between subscribed and unsubscribed
-  const toggleSubscriptionStatus = () => {
-    setHasSubscription((prev) => !prev);
-  };
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const email = user.attributes.email;
+        setUserEmail(email);
+
+        // Call the API route to check subscription status
+        const response = await fetch('/api/users/check-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+        setHasSubscription(data.hasSubscription);
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscriptionStatus();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <StoreProvider>
       <AuthProvider>
-        {/* Temporary toggle button to simulate subscription status */}
-        <div style={{ textAlign: "center", margin: "20px" }}>
-          <button onClick={toggleSubscriptionStatus}>
-            Toggle Subscription Status (Currently {hasSubscription ? "Subscribed" : "Not Subscribed"})
-          </button>
-        </div>
-
-        {/* Conditional rendering based on simulated subscription status */}
         {hasSubscription ? (
-          <DashboardLayout>{children}</DashboardLayout>  // Show main app if "subscribed"
+          <DashboardLayout>{children}</DashboardLayout>
         ) : (
-          <SubscriptionPage userEmail="test@example.com" />  // Show subscription page if "not subscribed"
+          <SubscriptionPage userEmail={userEmail} />
         )}
       </AuthProvider>
     </StoreProvider>

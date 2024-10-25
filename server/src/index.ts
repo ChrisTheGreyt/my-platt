@@ -34,6 +34,10 @@ app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 
 
+app.use("/api/users", userRoutes);
+
+
+
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;
