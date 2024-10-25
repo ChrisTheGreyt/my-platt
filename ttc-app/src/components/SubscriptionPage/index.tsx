@@ -12,8 +12,8 @@ if (!stripePublicKey) {
 const stripePromise = loadStripe(stripePublicKey);
 
 const SubscriptionPage = ({ userEmail }: any) => {
-  const handleSubscription = async (priceId: string) => {
-    console.log('Redirecting to checkout for:', userEmail, priceId);
+  const handleSubscription = async (priceId: string, planType: string) => {
+    console.log('Redirecting to checkout for:', userEmail);
     const stripe = await stripePromise;
 
     if (!stripe) {
@@ -28,7 +28,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ priceId, email: userEmail }), // Pass the selected plan and user email
+        body: JSON.stringify({ priceId, email: userEmail, planType }), // Pass the selected plan and user email
       });
 
       const data = await response.json();
@@ -61,7 +61,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* Monthly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO')}
+            onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'monthly')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div> {/* Silver Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
@@ -72,7 +72,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* 6-Month Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u')}
+            onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u', 'oneTime')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div> {/* Blue Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
@@ -83,7 +83,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2')}
+            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'oneTime')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div> {/* Gold Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
