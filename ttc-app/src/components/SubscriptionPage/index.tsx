@@ -83,7 +83,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2')}
+            onClick={() => handleSubscription('prod_R3RX6ssvPn83tB')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div> {/* Gold Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
