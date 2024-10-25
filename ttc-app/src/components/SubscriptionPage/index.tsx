@@ -58,26 +58,37 @@ const SubscriptionPage = ({ userEmail }: any) => {
       <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
         <h1 className="text-3xl font-bold mb-6 text-center">Select a Subscription Plan</h1>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {/* Monthly Plan */}
           <div
-            className="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg shadow cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
             onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO')}
           >
-            <h2 className="text-2xl font-semibold mb-4">MyPLATT Monthly</h2>
-            <p className="text-xl">$75 / Monthly</p>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div> {/* Silver Bar */}
+            <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
+            <p className="mt-2 text-gray-600">$75 / Monthly</p>
+            <p className="mt-2 text-sm text-gray-500">Access to all features for 30 days.</p>
           </div>
+
+          {/* 6-Month Plan */}
           <div
-            className="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg shadow cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
             onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u')}
           >
-            <h2 className="text-2xl font-semibold mb-4">MyPLATT 6 Months</h2>
-            <p className="text-xl">$400 / 6 Months</p>
+            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div> {/* Blue Bar */}
+            <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
+            <p className="mt-2 text-gray-600">$400 / 6 Months</p>
+            <p className="mt-2 text-sm text-gray-500">Save with a 6-month subscription.</p>
           </div>
+
+          {/* Yearly Plan */}
           <div
-            className="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg shadow cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
             onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2')}
           >
-            <h2 className="text-2xl font-semibold mb-4">MyPLATT Yearly</h2>
-            <p className="text-xl">$800 / Yearly</p>
+            <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div> {/* Gold Bar */}
+            <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
+            <p className="mt-2 text-gray-600">$800 / Yearly</p>
+            <p className="mt-2 text-sm text-gray-500">Best value with a yearly subscription.</p>
           </div>
         </div>
       </div>
