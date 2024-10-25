@@ -104,20 +104,26 @@ const AuthProvider = ({ children }: any) => {
     };
   }, []);
   
-
   return (
-    <Authenticator formFields={formFields}>
-      {({ user }: any) =>
-        user ? (
-          <div>{children}</div>
-        ) : (
-          <div>
-            <h1>Please sign in below:</h1>
-          </div>
-        )
-      }
-    </Authenticator>
+    <div>
+      <h1>Sign in to Test Stripe Checkout</h1>
+      <button onClick={() => redirectToCheckout('test@example.com')}>Test Checkout</button>
+      {children}
+    </div>
   );
+  // return (
+  //   <Authenticator formFields={formFields}>
+  //     {({ user }: any) =>
+  //       user ? (
+  //         <div>{children}</div>
+  //       ) : (
+  //         <div>
+  //           <h1>Please sign in below:</h1>
+  //         </div>
+  //       )
+  //     }
+  //   </Authenticator>
+  // );
 };
 
 export default AuthProvider;

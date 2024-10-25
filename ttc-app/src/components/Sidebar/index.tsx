@@ -161,6 +161,10 @@ const SidebarLink = ({
 
 
 
+  function redirectToCheckout(arg0: string): void {
+    throw new Error('Function not implemented.');
+  }
+
     return ( 
       <Link href={href} className='w-full'>
         <div className={`relative flex cursor-pointer items-center gap-3 transistion-color hover:bg-gray-100 dark:bg-black dark:hover:bg-gray-700 ${
@@ -176,7 +180,9 @@ const SidebarLink = ({
             {label}
           </span>
         </div>
+
       </Link>
+      
     )
 }
 
