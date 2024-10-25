@@ -68,3 +68,30 @@ body,
   width: 0px;
   height: 0px;
 }
+.subscription-container {
+  text-align: center;
+}
+
+.plans {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.plan-box {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.plan-box:hover {
+  transform: scale(1.05);
+}
+
+.plan-box h2 {
+  margin-bottom: 10px;
+}
