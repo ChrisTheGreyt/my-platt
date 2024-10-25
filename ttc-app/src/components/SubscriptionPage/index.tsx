@@ -51,16 +51,16 @@ const SubscriptionPage = ({ userEmail }:any) => {
       <h1>Select a Subscription Plan</h1>
       <div className="plans">
         <div className="plan-box" onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO')}>
-          <h2>Monthly</h2>
-          <p>$10/month</p>
+          <h2>MyPLATT Monthly</h2>
+          <p>$75 / Monthly</p>
         </div>
         <div className="plan-box" onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u')}>
-          <h2>6 Months</h2>
-          <p>$50/6 months</p>
+          <h2>MyPLATT 6 months</h2>
+          <p>$400 months</p>
         </div>
         <div className="plan-box" onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2')}>
-          <h2>1 Year</h2>
-          <p>$90/year</p>
+          <h2>MyPLATT Yearly</h2>
+          <p>$800/year</p>
         </div>
       </div>
     </div>
