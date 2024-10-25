@@ -21,24 +21,35 @@ const SubscriptionPage = ({ userEmail }: any) => {
       return;
     }
 
-    // Call your backend to create the Stripe Checkout session
-    const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ priceId, email: userEmail }), // Pass the selected plan and user email
-    });
+    try {
+      // Call your backend to create the Stripe Checkout session
+      const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ priceId, email: userEmail }), // Pass the selected plan and user email
+      });
 
-    const { id: sessionId } = await response.json();
+      const data = await response.json();
+      console.log('Response from server:', data); // Check for sessionId and errors
+      const { id: sessionId } = data;
 
-    // Redirect to Stripe Checkout
-    const result = await stripe.redirectToCheckout({
-      sessionId,
-    });
+      if (!sessionId) {
+        console.error('No sessionId returned from the server.');
+        return;
+      }
 
-    if (result.error) {
-      console.error("Stripe Checkout error:", result.error.message);
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId,
+      });
+
+      if (result.error) {
+        console.error("Stripe Checkout error:", result.error.message);
+      }
+    } catch (error) {
+      console.error('Error during the checkout process:', error);
     }
   };
 
