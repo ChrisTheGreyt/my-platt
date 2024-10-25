@@ -6,7 +6,6 @@ import Sidebar from '@/components/Sidebar';
 import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
-import { Auth } from 'aws-amplify';
 
 const DashboardLayout = ( {children}: {children: React.ReactNode}) => {
     const isSidebarCollapsed = useAppSelector(
