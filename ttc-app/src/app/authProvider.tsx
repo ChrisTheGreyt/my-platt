@@ -56,6 +56,7 @@ const formFields = {
 
 const AuthProvider = ({ children }: any) => {
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [authenticatedUser, setAuthenticatedUser] = useState<any>(null);  // Store the authenticated user
 
   // Function to handle the Stripe redirection
   const redirectToCheckout = async (email: string) => {
@@ -99,8 +100,7 @@ const AuthProvider = ({ children }: any) => {
       const { event, data: eventData } = data.payload;
       if (event === 'signIn' && eventData) {
         console.log('User signed in:', eventData);
-        // Trigger Stripe checkout after successful sign-in
-        redirectToCheckout(eventData.attributes.email);
+        setAuthenticatedUser(eventData);  // Store the authenticated user data
       }
     };
 
@@ -109,7 +109,15 @@ const AuthProvider = ({ children }: any) => {
     return () => {
       listener();  // Clean up the listener
     };
-  }, [selectedPlan]);
+  }, []);
+
+  const handleProceedToCheckout = () => {
+    if (authenticatedUser && authenticatedUser.attributes.email) {
+      redirectToCheckout(authenticatedUser.attributes.email);
+    } else {
+      console.error("User not authenticated or email not available.");
+    }
+  };
 
   return (
     <div>
@@ -150,6 +158,9 @@ const AuthProvider = ({ children }: any) => {
                   1-Year Plan
                 </label>
               </div>
+
+              {/* Button to Proceed to Checkout */}
+              <button onClick={handleProceedToCheckout}>Proceed to Checkout</button>
               {children}
             </div>
           ) : (
