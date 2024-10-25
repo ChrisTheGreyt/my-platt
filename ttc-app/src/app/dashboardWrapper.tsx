@@ -6,7 +6,8 @@ import Sidebar from '@/components/Sidebar';
 import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
-import Auth from '@aws-amplify/auth';  // Modular import for Auth
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
+
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
@@ -33,6 +34,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+
+const poolData = {
+  UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
+  ClientId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID || '',
+};
+const userPool = new CognitoUserPool(poolData);
+
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -41,21 +49,43 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const user = await Auth.currentAuthenticatedUser();
-        const email = user.attributes.email;
-        setUserEmail(email);
+        const cognitoUser = userPool.getCurrentUser();
 
-        // Call the API route to check subscription status
-        const response = await fetch('/api/users/check-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email }),
-        });
+        if (cognitoUser) {
+          cognitoUser.getSession((err: any, session: { isValid: () => any; }) => {
+            if (err) {
+              console.error('Error fetching session:', err);
+              return;
+            }
 
-        const data = await response.json();
-        setHasSubscription(data.hasSubscription);
+            if (session.isValid()) {
+              cognitoUser.getUserAttributes((err, attributes) => {
+                if (err) {
+                  console.error('Error fetching user attributes:', err);
+                  return;
+                }
+
+                const emailAttribute = attributes?.find(attr => attr.getName() === 'email');
+                const email = emailAttribute ? emailAttribute.getValue() : '';
+                setUserEmail(email);
+
+                // Call the API route to check subscription status
+                fetch('/api/users/check-subscription', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                })
+                  .then(response => response.json())
+                  .then(data => setHasSubscription(data.hasSubscription))
+                  .catch(error => console.error('Error checking subscription status:', error));
+              });
+            }
+          });
+        } else {
+          console.log('No user is currently logged in');
+        }
       } catch (error) {
         console.error('Error fetching subscription status:', error);
       } finally {
