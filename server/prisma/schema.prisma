@@ -16,12 +16,12 @@ datasource db {
 
 model User {
   userId            Int     @id @default(autoincrement())
-  cognitoId         String  @unique
+  cognitoId         String? @unique
   username          String  @unique
   profilePictureUrl String?
   teamId            Int?
   subscriptionStatus String?
-  email             String?
+  email              String  @unique
 
   authoredTasks   Task[]           @relation("TaskAuthor")
   assignedTasks   Task[]           @relation("TaskAssignee")

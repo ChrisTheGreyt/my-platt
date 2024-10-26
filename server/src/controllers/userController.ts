@@ -69,6 +69,7 @@ export const postUser = async (req: Request, res: Response) => {
     const {
       username,
       cognitoId,
+      email,
       profilePictureUrl = "i1.jpg",
       teamId = 1,
     } = req.body;
@@ -76,6 +77,7 @@ export const postUser = async (req: Request, res: Response) => {
       data: {
         username,
         cognitoId,
+        email,
         profilePictureUrl,
         teamId,
       },
@@ -93,20 +95,19 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
   const signature = req.headers['stripe-signature'] as string;
 
   try {
-    // Verify the event with Stripe
     const event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
 
-    // Process the event based on type
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerEmail = session.customer_details?.email;
 
-      // Update subscription status in your database here
       if (customerEmail) {
+        // Update the subscription status of the user
         await prisma.user.update({
           where: { email: customerEmail },
           data: { subscriptionStatus: 'active' },
         });
+        console.log("User subscription status updated to active.");
       }
     }
 
@@ -116,3 +117,5 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
     res.status(400).send(`Webhook Error: ${error.message}`);
   }
 };
+
+
