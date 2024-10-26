@@ -20,6 +20,8 @@ model User {
   username          String  @unique
   profilePictureUrl String?
   teamId            Int?
+  subscriptionStatus String?
+  email             String?
 
   authoredTasks   Task[]           @relation("TaskAuthor")
   assignedTasks   Task[]           @relation("TaskAssignee")

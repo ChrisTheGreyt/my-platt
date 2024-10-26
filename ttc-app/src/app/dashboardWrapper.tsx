@@ -49,52 +49,27 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        const cognitoUser = userPool.getCurrentUser();
-
-        if (cognitoUser) {
-          cognitoUser.getSession((err: any, session: { isValid: () => any; }) => {
-            if (err) {
-              console.error('Error fetching session:', err);
-              return;
-            }
-
-            if (session.isValid()) {
-              cognitoUser.getUserAttributes((err, attributes) => {
-                if (err) {
-                  console.error('Error fetching user attributes:', err);
-                  return;
-                }
-
-                const emailAttribute = attributes?.find(attr => attr.getName() === 'email');
-                const email = emailAttribute ? emailAttribute.getValue() : '';
-                setUserEmail(email);
-
-                // Call the API route to check subscription status
-                fetch('/api/users/check-subscription', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ email }),
-                })
-                  .then(response => response.json())
-                  .then(data => setHasSubscription(data.hasSubscription))
-                  .catch(error => console.error('Error checking subscription status:', error));
-              });
-            }
-          });
-        } else {
-          console.log('No user is currently logged in');
-        }
+        // Replace this with a call to your backend API that checks the user's payment status in the database
+        const response = await fetch('/api/users/check-subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email: userEmail }),
+        });
+  
+        const data = await response.json();
+        setHasSubscription(data.hasSubscription);  // Update state based on subscription status
       } catch (error) {
         console.error('Error fetching subscription status:', error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchSubscriptionStatus();
-  }, []);
+  }, [userEmail]);
+  
 
   if (loading) return <div>Loading...</div>;
 

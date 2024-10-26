@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import Stripe from "stripe";
 
 const prisma = new PrismaClient();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 // Ensure the environment variable is set
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing STRIPE_SECRET_KEY environment variable");
@@ -83,5 +85,34 @@ export const postUser = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: `Error retrieving users: ${error.message}` });
+  }
+};
+
+export const handleStripeWebhook = async (req: Request, res: Response) => {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const signature = req.headers['stripe-signature'] as string;
+
+  try {
+    // Verify the event with Stripe
+    const event = stripe.webhooks.constructEvent(req.body, signature, webhookSecret);
+
+    // Process the event based on type
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerEmail = session.customer_details?.email;
+
+      // Update subscription status in your database here
+      if (customerEmail) {
+        await prisma.user.update({
+          where: { email: customerEmail },
+          data: { subscriptionStatus: 'active' },
+        });
+      }
+    }
+
+    res.status(200).json({ received: true });
+  } catch (error: any) {
+    console.error('Webhook error:', error);
+    res.status(400).send(`Webhook Error: ${error.message}`);
   }
 };
