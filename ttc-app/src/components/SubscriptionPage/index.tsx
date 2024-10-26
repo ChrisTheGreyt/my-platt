@@ -22,11 +22,12 @@ const SubscriptionPage = ({ userEmail }: { userEmail: string }) => {
       if (!userEmail) return;
 
       try {
-        const response = await fetch('/api/users/check-subscription', {
+        const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/api/users/check-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: userEmail }),
         });
+        
         const data = await response.json();
         if (data.hasSubscription) {
           router.push('/app'); // Redirect to main app if user has an active subscription
