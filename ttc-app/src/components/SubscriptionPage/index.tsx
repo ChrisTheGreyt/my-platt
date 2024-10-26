@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { loadStripe } from '@stripe/stripe-js';
 
 // Check if the environment variable is defined, otherwise throw an error
@@ -11,9 +12,35 @@ if (!stripePublicKey) {
 // Initialize Stripe with the public key
 const stripePromise = loadStripe(stripePublicKey);
 
-const SubscriptionPage = ({ userEmail }: any) => {
+// Pass `userEmail` prop into the SubscriptionPage
+const SubscriptionPage = ({ userEmail }: { userEmail: string }) => {
+  const router = useRouter();
+
+  // Check for subscription status on page load
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      if (!userEmail) return;
+
+      try {
+        const response = await fetch('/api/users/check-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail }),
+        });
+        const data = await response.json();
+        if (data.hasSubscription) {
+          router.push('/app'); // Redirect to main app if user has an active subscription
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    };
+
+    checkSubscriptionStatus();
+  }, [userEmail, router]);
+
+  // Handle subscription initiation
   const handleSubscription = async (priceId: string, planType: string) => {
-    console.log('Redirecting to checkout for:', userEmail);
     const stripe = await stripePromise;
 
     if (!stripe) {
@@ -22,17 +49,14 @@ const SubscriptionPage = ({ userEmail }: any) => {
     }
 
     try {
-      // Call your backend to create the Stripe Checkout session
+      // Create Stripe Checkout session
       const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ priceId, email: userEmail, planType }), // Pass the selected plan and user email
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, email: userEmail, planType }),
       });
 
       const data = await response.json();
-      console.log('Response from server:', data); // Check for sessionId and errors
       const { id: sessionId } = data;
 
       if (!sessionId) {
@@ -41,9 +65,7 @@ const SubscriptionPage = ({ userEmail }: any) => {
       }
 
       // Redirect to Stripe Checkout
-      const result = await stripe.redirectToCheckout({
-        sessionId,
-      });
+      const result = await stripe.redirectToCheckout({ sessionId });
 
       if (result.error) {
         console.error("Stripe Checkout error:", result.error.message);
@@ -54,42 +76,41 @@ const SubscriptionPage = ({ userEmail }: any) => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg">
-        <h1 className="text-3xl font-bold mb-6 text-center">Select a Subscription Plan</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {/* Monthly Plan */}
-          <div
-            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
+    <div className="flex flex-col items-center space-y-6 p-8">
+      <h1 className="text-2xl font-semibold mb-4">Select a Subscription Plan</h1>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="p-6 border rounded-lg shadow-lg">
+          <div className="h-2 bg-gray-300 rounded-t-md mb-4"></div>
+          <h2 className="text-lg font-bold">MyPLATT Monthly</h2>
+          <p className="text-gray-600">$75 / Monthly</p>
+          <button
             onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'monthly')}
+            className="mt-4 px-4 py-2 bg-gray-300 text-gray-900 rounded"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div> {/* Silver Bar */}
-            <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
-            <p className="mt-2 text-gray-600">$75 / Monthly</p>
-            <p className="mt-2 text-sm text-gray-500">Access to all features for 30 days.</p>
-          </div>
-
-          {/* 6-Month Plan */}
-          <div
-            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u', 'oneTime')}
+            Choose Monthly
+          </button>
+        </div>
+        <div className="p-6 border rounded-lg shadow-lg">
+          <div className="h-2 bg-blue-500 rounded-t-md mb-4"></div>
+          <h2 className="text-lg font-bold">MyPLATT 6 months</h2>
+          <p className="text-gray-600">$400 / 6 Months</p>
+          <button
+            onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u', 'halfYear')}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div> {/* Blue Bar */}
-            <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
-            <p className="mt-2 text-gray-600">$400 / 6 Months</p>
-            <p className="mt-2 text-sm text-gray-500">Save with a 6-month subscription.</p>
-          </div>
-
-          {/* Yearly Plan */}
-          <div
-            className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'oneTime')}
+            Choose 6 Months
+          </button>
+        </div>
+        <div className="p-6 border rounded-lg shadow-lg">
+          <div className="h-2 bg-yellow-500 rounded-t-md mb-4"></div>
+          <h2 className="text-lg font-bold">MyPLATT Yearly</h2>
+          <p className="text-gray-600">$800 / Year</p>
+          <button
+            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'yearly')}
+            className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded"
           >
-            <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div> {/* Gold Bar */}
-            <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
-            <p className="mt-2 text-gray-600">$800 / Yearly</p>
-            <p className="mt-2 text-sm text-gray-500">Best value with a yearly subscription.</p>
-          </div>
+            Choose Yearly
+          </button>
         </div>
       </div>
     </div>
