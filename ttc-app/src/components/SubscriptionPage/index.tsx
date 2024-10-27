@@ -28,6 +28,7 @@ const SubscriptionPage = ({ userEmail }: { userEmail: string }) => {
           body: JSON.stringify({ email: userEmail }),
         });
         
+        
         const data = await response.json();
         if (data.hasSubscription) {
           router.push('/app'); // Redirect to main app if user has an active subscription
