@@ -69,22 +69,47 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   
     const setUserEmailAndFetch = async () => {
       try {
-        // Get the current user, and fetch their email
-        const user = await userPool.getCurrentUser(); // Example method, adjust as needed
+        const user = userPool.getCurrentUser(); // Get current Cognito user
         if (user) {
-          const email = user.getUsername(); // Adjust based on your logic
-          console.log("Setting userEmail:", email);
-          setUserEmail(email);
-          fetchSubscriptionStatus(); // Call this once userEmail is set
+          user.getSession((err: any, session: any) => {
+            if (err) {
+              console.error("Error getting user session:", err);
+              setLoading(false);
+              return;
+            }
+            
+            // Fetch user attributes
+            user.getUserAttributes((err: any, attributes: any) => {
+              if (err) {
+                console.error("Error fetching user attributes:", err);
+                setLoading(false);
+                return;
+              }
+    
+              // Extract email from user attributes
+              const emailAttr = attributes.find((attr: any) => attr.Name === "email");
+              const email = emailAttr ? emailAttr.Value : null;
+    
+              if (email) {
+                console.log("Setting userEmail:", email);
+                setUserEmail(email);
+                fetchSubscriptionStatus(); // Call subscription check with valid email
+              } else {
+                console.warn("Email attribute not found for user.");
+                setLoading(false);
+              }
+            });
+          });
         } else {
           console.warn("No user found, stopping loading.");
-          setLoading(false); // Stop loading if no user is found
+          setLoading(false);
         }
       } catch (err) {
         console.error("Error in setUserEmailAndFetch:", err);
         setLoading(false);
       }
     };
+    
   
     setUserEmailAndFetch();
   }, [userEmail]);
