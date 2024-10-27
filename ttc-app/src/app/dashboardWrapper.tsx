@@ -44,6 +44,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
 
+  // Get email from Cognito and set userEmail
   useEffect(() => {
     const setUserEmailAndFetch = async () => {
       try {
@@ -55,20 +56,20 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
               setLoading(false);
               return;
             }
-  
+
             user.getUserAttributes((err: any, attributes: any) => {
               if (err) {
                 console.error("Error fetching user attributes:", err);
                 setLoading(false);
                 return;
               }
-  
+
               const emailAttr = attributes.find((attr: any) => attr.Name === "email");
               const email = emailAttr ? emailAttr.Value : null;
-  
+
               if (email) {
                 console.log("Setting userEmail:", email);
-                setUserEmail(email); // This will trigger the next useEffect to check the subscription
+                setUserEmail(email);
               } else {
                 console.warn("Email attribute not found for user.");
                 setLoading(false);
@@ -84,14 +85,14 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     };
-  
+
     setUserEmailAndFetch();
   }, []);
-  
-  // New useEffect to watch for userEmail updates and trigger the subscription check
+
+  // Check subscription status when userEmail is set
   useEffect(() => {
     if (!userEmail) return;
-  
+
     const fetchSubscriptionStatus = async () => {
       try {
         console.log("Checking subscription for userEmail:", userEmail);
@@ -102,7 +103,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
           },
           body: JSON.stringify({ email: userEmail }),
         });
-  
+
         const data = await response.json();
         setHasSubscription(data.hasSubscription);  
       } catch (error) {
@@ -111,7 +112,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     };
-  
+
     fetchSubscriptionStatus();
   }, [userEmail]);
   
