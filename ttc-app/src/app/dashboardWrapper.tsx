@@ -8,7 +8,6 @@ import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 
-
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const isDarkmode = useAppSelector((state) => state.global.isDarkMode);
@@ -34,7 +33,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-
 const poolData = {
   UserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
   ClientId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_CLIENT_ID || '',
@@ -49,8 +47,8 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        // Replace this with a call to your backend API that checks the user's payment status in the database
-        const response = await fetch('/api/users/check-subscription', {
+        // Full API Gateway URL for checking subscription status
+        const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -66,11 +64,23 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     };
+
+    // Set user email before fetching subscription status
+    const setUserEmailAndFetch = async () => {
+      // You may have a method to get the email from Cognito or another source here
+      const user = await userPool.getCurrentUser(); // Example method, adjust as needed
+      if (user) {
+        const email = user.getUsername(); // Adjust based on your logic
+        setUserEmail(email);
+        fetchSubscriptionStatus();
+      } else {
+        setLoading(false); // Stop loading if no user is found
+      }
+    };
   
-    fetchSubscriptionStatus();
+    setUserEmailAndFetch();
   }, [userEmail]);
   
-
   if (loading) return <div>Loading...</div>;
 
   return (
