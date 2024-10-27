@@ -47,7 +47,9 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       try {
-        // Full API Gateway URL for checking subscription status
+        // Log userEmail to ensure it's set correctly before making the API request
+        console.log("Checking subscription for userEmail:", userEmail);
+        
         const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
           method: 'POST',
           headers: {
@@ -55,7 +57,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
           },
           body: JSON.stringify({ email: userEmail }),
         });
-  
+    
         const data = await response.json();
         setHasSubscription(data.hasSubscription);  // Update state based on subscription status
       } catch (error) {
@@ -64,22 +66,29 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     };
-
-    // Set user email before fetching subscription status
+  
     const setUserEmailAndFetch = async () => {
-      // You may have a method to get the email from Cognito or another source here
-      const user = await userPool.getCurrentUser(); // Example method, adjust as needed
-      if (user) {
-        const email = user.getUsername(); // Adjust based on your logic
-        setUserEmail(email);
-        fetchSubscriptionStatus();
-      } else {
-        setLoading(false); // Stop loading if no user is found
+      try {
+        // Get the current user, and fetch their email
+        const user = await userPool.getCurrentUser(); // Example method, adjust as needed
+        if (user) {
+          const email = user.getUsername(); // Adjust based on your logic
+          console.log("Setting userEmail:", email);
+          setUserEmail(email);
+          fetchSubscriptionStatus(); // Call this once userEmail is set
+        } else {
+          console.warn("No user found, stopping loading.");
+          setLoading(false); // Stop loading if no user is found
+        }
+      } catch (err) {
+        console.error("Error in setUserEmailAndFetch:", err);
+        setLoading(false);
       }
     };
   
     setUserEmailAndFetch();
   }, [userEmail]);
+  
   
   if (loading) return <div>Loading...</div>;
 
