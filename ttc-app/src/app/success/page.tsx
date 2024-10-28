@@ -24,8 +24,8 @@ const SuccessPage = () => {
           return response.json();
         })
         .then((data) => {
-          console.log("Success Data:", data);
-          // Update local storage or state if needed
+          console.log("Webhook Success Data:", data);
+          // Redirect to dashboard or show success message if necessary
         })
         .catch((error) => {
           console.error('Error verifying session:', error);
