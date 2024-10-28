@@ -8,7 +8,7 @@ const SuccessPage = () => {
   useEffect(() => {
     const sessionId = new URLSearchParams(window.location.search).get('session_id');
     console.log("Retrieved session ID:", sessionId);
-
+  
     if (sessionId) {
       fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/webhook', {
         method: 'POST',
@@ -25,16 +25,23 @@ const SuccessPage = () => {
         })
         .then((data) => {
           console.log("Webhook Success Data:", data);
-          // Redirect to dashboard or show success message if necessary
+          if (data.success) {
+            // Redirect to dashboard or show success message if necessary
+            console.log("Payment verified successfully.");
+          } else {
+            console.error("Error from Lambda:", data.error);
+          }
         })
         .catch((error) => {
           console.error('Error verifying session:', error);
         })
         .finally(() => setLoading(false));
     } else {
+      console.warn("No session ID found in URL.");
       setLoading(false);
     }
   }, []);
+  
 
   if (loading) return <div>Loading...</div>;
 
