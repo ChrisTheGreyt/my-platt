@@ -1,34 +1,38 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useLogPaymentMutation } from '@/state/api';
 
 const SuccessPage = () => {
-  const [logPayment] = useLogPaymentMutation();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const sessionId = new URLSearchParams(window.location.search).get('session_id');
     console.log("Retrieved session ID:", sessionId);
-    
+
     if (sessionId) {
-      fetch(`https://main.d249lhj5v2utjs.amplifyapp.com/success`, {
+      fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/webhook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ sessionId }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then((data) => {
           console.log("Success Data:", data);
-          // Handle success, perhaps redirect to the dashboard or show a success message
+          // Update local storage or state if needed
         })
         .catch((error) => {
           console.error('Error verifying session:', error);
-          // Handle error, maybe show an error message
         })
         .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, []);
 
