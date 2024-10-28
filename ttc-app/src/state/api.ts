@@ -85,7 +85,7 @@ export const api = createApi({
         } 
     }),
     reducerPath: 'api',
-    tagTypes: [ "Projects", "Tasks", "Users", "Teams"],
+    tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment"],
     endpoints: (build) => ({
         getAuthUser: build.query({
             queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) =>{
@@ -164,8 +164,18 @@ export const api = createApi({
         search: build.query<SearchReults, string>({
             query: (query) => `search?query=${query}`,
         }),
+        logPayment: build.mutation<void, { sessionId: string; email: string }>({
+            query: (data) => ({
+                url: "payment/success",
+                method: "POST",
+                body: data,
+            }),
+            invalidatesTags: ["Payment"]
+        }),
     }),
 });
+
+
 
 export const { 
     useGetProjectsQuery, 
@@ -178,4 +188,5 @@ export const {
     useGetTeamsQuery,
     useGetTasksByUserQuery,
     useGetAuthUserQuery,
+    useLogPaymentMutation,
 } = api;
