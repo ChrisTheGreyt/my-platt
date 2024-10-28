@@ -7,6 +7,7 @@ import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { usePathname } from 'next/navigation';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
@@ -38,11 +39,18 @@ const poolData = {
 const userPool = new CognitoUserPool(poolData);
 
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
+  const pathname = usePathname();
   const [hasSubscription, setHasSubscription] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
 
+  // Bypass authentication check for the success page
   useEffect(() => {
+    if (pathname === '/success') {
+      setLoading(false); // Skip loading on the success page
+      return;
+    }
+
     const fetchUserEmail = async () => {
       try {
         const user = userPool.getCurrentUser();
@@ -81,7 +89,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
     };
 
     fetchUserEmail();
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!userEmail) return;
@@ -113,7 +121,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <StoreProvider>
       <AuthProvider>
-        {hasSubscription ? (
+        {hasSubscription || pathname === '/success' ? (
           <DashboardLayout>{children}</DashboardLayout>
         ) : (
           <SubscriptionPage userEmail={userEmail} />
