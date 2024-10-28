@@ -44,10 +44,10 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
 
-  // Bypass authentication check for the success page
   useEffect(() => {
+    // If on success page, don't require subscription check
     if (pathname === '/success') {
-      setLoading(false); // Skip loading on the success page
+      setLoading(false);
       return;
     }
 
@@ -92,9 +92,17 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   }, [pathname]);
 
   useEffect(() => {
-    if (!userEmail) return;
+    // Check if user has paid by looking for the session ID or a flag in local storage
+    const subscriptionFlag = localStorage.getItem("hasSubscription");
+    if (subscriptionFlag) {
+      setHasSubscription(true);
+      setLoading(false);
+      return;
+    }
 
     const checkSubscriptionStatus = async () => {
+      if (!userEmail) return;
+
       try {
         const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
           method: 'POST',
@@ -106,6 +114,9 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
 
         const data = await response.json();
         setHasSubscription(data.hasSubscription);
+        if (data.hasSubscription) {
+          localStorage.setItem("hasSubscription", "true");
+        }
       } catch (error) {
         console.error('Error checking subscription:', error);
       } finally {
