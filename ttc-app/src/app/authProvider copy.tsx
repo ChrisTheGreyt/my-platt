@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 import { Authenticator } from "@aws-amplify/ui-react";
 import { loadStripe } from '@stripe/stripe-js';
 import { Amplify } from 'aws-amplify';

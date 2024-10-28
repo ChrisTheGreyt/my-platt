@@ -7,15 +7,10 @@ import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
-import router, { useRouter } from 'next/router';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const isDarkmode = useAppSelector((state) => state.global.isDarkMode);
-  const router = useRouter();
-  const [hasSubscription, setHasSubscription] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     if (isDarkmode) {
@@ -27,10 +22,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className='flex min-h-screen w-full bg-gray-50 text-gray-900'>
-      {/* Sidebar */}
       <Sidebar />
       <main className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${isSidebarCollapsed ? "" : "md:pl-64"}`}>
-        {/* Navbar */}
         <Navbar />
         {children}
       </main>
@@ -49,15 +42,14 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
 
-  // Get email from Cognito and set userEmail
   useEffect(() => {
-    const setUserEmailAndFetch = async () => {
+    const fetchUserEmail = async () => {
       try {
-        const user = userPool.getCurrentUser(); 
+        const user = userPool.getCurrentUser();
         if (user) {
-          user.getSession((err: any, session: any) => {
+          user.getSession((err: any) => {
             if (err) {
-              console.error("Error getting user session:", err);
+              console.error("Error getting session:", err);
               setLoading(false);
               return;
             }
@@ -70,13 +62,10 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
               }
 
               const emailAttr = attributes.find((attr: any) => attr.Name === "email");
-              const email = emailAttr ? emailAttr.Value : null;
-
-              if (email) {
-                console.log("Setting userEmail:", email);
-                setUserEmail(email);
+              if (emailAttr) {
+                setUserEmail(emailAttr.Value);
               } else {
-                console.warn("Email attribute not found for user.");
+                console.warn("Email attribute not found.");
                 setLoading(false);
               }
             });
@@ -86,21 +75,19 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
         }
       } catch (err) {
-        console.error("Error in setUserEmailAndFetch:", err);
+        console.error("Error in fetchUserEmail:", err);
         setLoading(false);
       }
     };
 
-    setUserEmailAndFetch();
+    fetchUserEmail();
   }, []);
 
-  // Check subscription status when userEmail is set
   useEffect(() => {
     if (!userEmail) return;
 
-    const fetchSubscriptionStatus = async () => {
+    const checkSubscriptionStatus = async () => {
       try {
-        console.log("Checking subscription for userEmail:", userEmail);
         const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
           method: 'POST',
           headers: {
@@ -110,44 +97,23 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
         });
 
         const data = await response.json();
-        setHasSubscription(data.hasSubscription);  
+        setHasSubscription(data.hasSubscription);
       } catch (error) {
-        console.error('Error fetching subscription status:', error);
+        console.error('Error checking subscription:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubscriptionStatus();
+    checkSubscriptionStatus();
   }, [userEmail]);
-  
-  useEffect(() => {
-    if (router.pathname === '/success') {
-      setLoading(false);
-    } else {
-      // Regular authentication and subscription logic
-      const fetchSubscriptionStatus = async () => {
-        try {
-          // Your existing authentication and subscription logic here
-        } catch (error) {
-          console.error('Error fetching subscription status:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchSubscriptionStatus();
-    }
-  }, [router.pathname]);
 
-  if (loading) return <div>Loading...</div>;
-  
-  
   if (loading) return <div>Loading...</div>;
 
   return (
     <StoreProvider>
       <AuthProvider>
-        {hasSubscription || router.pathname === '/success' ? (
+        {hasSubscription ? (
           <DashboardLayout>{children}</DashboardLayout>
         ) : (
           <SubscriptionPage userEmail={userEmail} />

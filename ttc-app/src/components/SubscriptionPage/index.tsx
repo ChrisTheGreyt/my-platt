@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/router';
 import { loadStripe } from '@stripe/stripe-js';
 
 // Check if the environment variable is defined, otherwise throw an error
