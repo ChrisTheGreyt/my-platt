@@ -119,3 +119,20 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 };
 
 
+export const fetchSessionData = async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.query.session_id as string;
+    if (!sessionId) {
+      return res.status(400).json({ error: "Session ID is required" });
+    }
+
+    // Retrieve the session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    res.json(session);
+  } catch (error) {
+    console.error("Error fetching session data:", error);
+    res.status(500).json({ error: "Failed to fetch session data" });
+  }
+};
+
+

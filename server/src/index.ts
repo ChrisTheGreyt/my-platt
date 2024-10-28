@@ -10,6 +10,7 @@ import taskRoutes from './routes/taskRoutes';
 import searchRoutes from "./routes/searchRoutes";
 import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
+import subscriptionRoutes from "./routes/subscriptionRoutes";
 
 /* CONFIGURATIONS */
 dotenv.config();
@@ -35,7 +36,7 @@ app.use("/teams", teamRoutes);
 
 
 app.use("/api/users", userRoutes);
-
+app.use("/api/subscriptions", subscriptionRoutes);
 
 
 
