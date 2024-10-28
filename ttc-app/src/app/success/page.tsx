@@ -1,17 +1,17 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import { useLogPaymentMutation } from '@/state/api';
 
 const SuccessPage = () => {
-  const [loading, setLoading] = useState(true);
   const [logPayment] = useLogPaymentMutation();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Extract the session_id from the URL's search params directly
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionId = urlParams.get('session_id');
-
+    const sessionId = new URLSearchParams(window.location.search).get('session_id');
+    
     if (sessionId) {
-      fetch(`https://main.d249lhj5v2utjs.amplifyapp.com/api/payment-success`, { // Update to the correct endpoint if needed
+      fetch(`https://main.d249lhj5v2utjs.amplifyapp.com/success`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -21,16 +21,13 @@ const SuccessPage = () => {
         .then((response) => response.json())
         .then((data) => {
           console.log("Success Data:", data);
-          setLoading(false);
-          // Handle success, such as redirecting to the dashboard or displaying a success message
+          // Handle success, perhaps redirect to the dashboard or show a success message
         })
         .catch((error) => {
           console.error('Error verifying session:', error);
-          setLoading(false);
-          // Handle error, perhaps show an error message
-        });
-    } else {
-      setLoading(false);
+          // Handle error, maybe show an error message
+        })
+        .finally(() => setLoading(false));
     }
   }, []);
 
