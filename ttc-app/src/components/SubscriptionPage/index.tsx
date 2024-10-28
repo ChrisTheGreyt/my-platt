@@ -62,7 +62,8 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* Monthly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'monthly')}
+            // onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'monthly')}
+            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'monthly')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div> {/* Silver Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
@@ -73,7 +74,9 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* 6-Month Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u', 'oneTime')}
+            // onClick={() => handleSubscription('price_1QBKcfG8jnQLC5SAUKU11z0u', 'oneTime')}
+            onClick={() => handleSubscription('price_1QECEOG8jnQLC5SAFtP5c1d4', 'monthly')}
+
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div> {/* Blue Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
@@ -84,7 +87,9 @@ const SubscriptionPage = ({ userEmail }: any) => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'oneTime')}
+            // onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'oneTime')}
+            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'monthly')}
+
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div> {/* Gold Bar */}
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
