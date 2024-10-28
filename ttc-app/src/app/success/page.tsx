@@ -9,6 +9,7 @@ const SuccessPage = () => {
 
   useEffect(() => {
     const sessionId = new URLSearchParams(window.location.search).get('session_id');
+    console.log("Retrieved session ID:", sessionId);
     
     if (sessionId) {
       fetch(`https://main.d249lhj5v2utjs.amplifyapp.com/success`, {
