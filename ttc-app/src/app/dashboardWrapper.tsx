@@ -7,10 +7,15 @@ import StoreProvider, { useAppSelector } from './redux';
 import AuthProvider from "./authProvider";
 import SubscriptionPage from '@/components/SubscriptionPage';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import router, { useRouter } from 'next/router';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const isDarkmode = useAppSelector((state) => state.global.isDarkMode);
+  const router = useRouter();
+  const [hasSubscription, setHasSubscription] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     if (isDarkmode) {
@@ -116,6 +121,25 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
     fetchSubscriptionStatus();
   }, [userEmail]);
   
+  useEffect(() => {
+    if (router.pathname === '/success') {
+      setLoading(false);
+    } else {
+      // Regular authentication and subscription logic
+      const fetchSubscriptionStatus = async () => {
+        try {
+          // Your existing authentication and subscription logic here
+        } catch (error) {
+          console.error('Error fetching subscription status:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSubscriptionStatus();
+    }
+  }, [router.pathname]);
+
+  if (loading) return <div>Loading...</div>;
   
   
   if (loading) return <div>Loading...</div>;
@@ -123,7 +147,7 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
     <StoreProvider>
       <AuthProvider>
-        {hasSubscription ? (
+        {hasSubscription || router.pathname === '/success' ? (
           <DashboardLayout>{children}</DashboardLayout>
         ) : (
           <SubscriptionPage userEmail={userEmail} />
