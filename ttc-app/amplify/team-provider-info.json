@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-ttcapp-dev-11be6-authRole",
+      "UnauthRoleArn": "arn:aws:iam::977098983931:role/amplify-ttcapp-dev-11be6-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::977098983931:role/amplify-ttcapp-dev-11be6-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-ttcapp-dev-11be6-deployment",
+      "UnauthRoleName": "amplify-ttcapp-dev-11be6-unauthRole",
+      "StackName": "amplify-ttcapp-dev-11be6",
+      "StackId": "arn:aws:cloudformation:us-east-1:977098983931:stack/amplify-ttcapp-dev-11be6/ba4275b0-9745-11ef-8f4e-0e6f16ab4627",
+      "AmplifyAppId": "d1ub4z12ozz20q"
+    },
+    "categories": {
+      "auth": {
+        "ttcapp5afe0d10": {}
+      }
+    }
+  }
+}

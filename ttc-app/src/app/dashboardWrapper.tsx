@@ -4,8 +4,6 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import StoreProvider, { useAppSelector } from './redux';
-import AuthProvider from "./authProvider";
-import SubscriptionPage from '@/components/SubscriptionPage';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import { usePathname } from 'next/navigation';
 
@@ -39,105 +37,99 @@ const poolData = {
 const userPool = new CognitoUserPool(poolData);
 
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
-  const pathname = usePathname();
-  const [hasSubscription, setHasSubscription] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState('');
+  // const pathname = usePathname();
+  // const [hasSubscription, setHasSubscription] = useState(false);
+  // const [loading, setLoading] = useState(true);
+  // const [userEmail, setUserEmail] = useState('');
 
-  useEffect(() => {
-    // If on success page, don't require subscription check
-    if (pathname === '/success') {
-      setLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   // If on success page, don't require subscription check
+  //   if (pathname === '/success') {
+  //     setLoading(false);
+  //     return;
+  //   }
 
-    const fetchUserEmail = async () => {
-      try {
-        const user = userPool.getCurrentUser();
-        if (user) {
-          user.getSession((err: any) => {
-            if (err) {
-              console.error("Error getting session:", err);
-              setLoading(false);
-              return;
-            }
+  //   const fetchUserEmail = async () => {
+  //     try {
+  //       const user = userPool.getCurrentUser();
+  //       if (user) {
+  //         user.getSession((err: any) => {
+  //           if (err) {
+  //             console.error("Error getting session:", err);
+  //             setLoading(false);
+  //             return;
+  //           }
 
-            user.getUserAttributes((err: any, attributes: any) => {
-              if (err) {
-                console.error("Error fetching user attributes:", err);
-                setLoading(false);
-                return;
-              }
+  //           user.getUserAttributes((err: any, attributes: any) => {
+  //             if (err) {
+  //               console.error("Error fetching user attributes:", err);
+  //               setLoading(false);
+  //               return;
+  //             }
 
-              const emailAttr = attributes.find((attr: any) => attr.Name === "email");
-              if (emailAttr) {
-                setUserEmail(emailAttr.Value);
-              } else {
-                console.warn("Email attribute not found.");
-                setLoading(false);
-              }
-            });
-          });
-        } else {
-          console.warn("No user found, stopping loading.");
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error("Error in fetchUserEmail:", err);
-        setLoading(false);
-      }
-    };
+  //             const emailAttr = attributes.find((attr: any) => attr.Name === "email");
+  //             if (emailAttr) {
+  //               setUserEmail(emailAttr.Value);
+  //             } else {
+  //               console.warn("Email attribute not found.");
+  //               setLoading(false);
+  //             }
+  //           });
+  //         });
+  //       } else {
+  //         console.warn("No user found, stopping loading.");
+  //         setLoading(false);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error in fetchUserEmail:", err);
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchUserEmail();
-  }, [pathname]);
+  //   fetchUserEmail();
+  // }, [pathname]);
 
-  useEffect(() => {
-    // Check if user has paid by looking for the session ID or a flag in local storage
-    const subscriptionFlag = localStorage.getItem("hasSubscription");
-    if (subscriptionFlag) {
-      setHasSubscription(true);
-      setLoading(false);
-      return;
-    }
+  // useEffect(() => {
+  //   // Check if user has paid by looking for the session ID or a flag in local storage
+  //   const subscriptionFlag = localStorage.getItem("hasSubscription");
+  //   if (subscriptionFlag) {
+  //     setHasSubscription(true);
+  //     setLoading(false);
+  //     return;
+  //   }
 
-    const checkSubscriptionStatus = async () => {
-      if (!userEmail) return;
+  //   const checkSubscriptionStatus = async () => {
+  //     if (!userEmail) return;
 
-      try {
-        const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email: userEmail }),
-        });
+  //     try {
+  //       const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/check-subscription', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //         },
+  //         body: JSON.stringify({ email: userEmail }),
+  //       });
 
-        const data = await response.json();
-        setHasSubscription(data.hasSubscription);
-        if (data.hasSubscription) {
-          localStorage.setItem("hasSubscription", "true");
-        }
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       const data = await response.json();
+  //       setHasSubscription(data.hasSubscription);
+  //       if (data.hasSubscription) {
+  //         localStorage.setItem("hasSubscription", "true");
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking subscription:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    checkSubscriptionStatus();
-  }, [userEmail]);
+  //   checkSubscriptionStatus();
+  // }, [userEmail]);
 
-  if (loading) return <div>Loading...</div>;
+  // if (loading) return <div>Loading...</div>;
 
   return (
     <StoreProvider>
-      <AuthProvider>
-        {hasSubscription || pathname === '/success' ? (
-          <DashboardLayout>{children}</DashboardLayout>
-        ) : (
-          <SubscriptionPage userEmail={userEmail} />
-        )}
-      </AuthProvider>
+      <DashboardLayout>{children}</DashboardLayout>
     </StoreProvider>
   );
 };

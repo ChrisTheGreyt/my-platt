@@ -3,7 +3,6 @@
 import { useAppDispatch, useAppSelector } from '@/app/redux';
 import { setIsSidebarCollapsed } from '@/state';
 import { useGetAuthUserQuery, useGetProjectsQuery } from '@/state/api';
-import { signOut } from 'aws-amplify/auth';
 import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, ChevronUp, Home, Layers3, LockIcon, LucideIcon, Search, Settings, ShieldAlert, User, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,7 +22,7 @@ const Sidebar = () => {
   const { data: currentUser } = useGetAuthUserQuery({});
   const handleSignOut = async () =>{
       try{
-          await signOut();
+          await Auth.signOut();
       } catch (error){
           console.error("Error signging out: ", error)
       }

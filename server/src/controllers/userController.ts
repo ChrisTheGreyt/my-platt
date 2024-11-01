@@ -135,4 +135,50 @@ export const fetchSessionData = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUserStatus = async (req: Request, res: Response) => {
+  try {
+    const { cognitoId, status } = req.body;
 
+    if (!cognitoId || !status) {
+      return res.status(400).json({ message: 'Missing cognitoId or status' });
+    }
+
+    // Update the user's status in the database
+    const updatedUser = await prisma.user.update({
+      where: { cognitoId: cognitoId },
+      data: { subscriptionStatus: status },
+    });
+
+    return res.status(200).json({ message: 'User status updated successfully', user: updatedUser });
+  } catch (error: any) {
+    console.error('Error updating user status:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  const { cognitoId, username, email } = req.body;
+
+  try {
+    // Use Prisma to insert the user into the database
+    const newUser = await prisma.user.create({
+      data: {
+        cognitoId,
+        username,
+        email,
+      },
+    });
+
+    // Send back success response
+    res.status(201).json({
+      message: 'User created successfully.',
+      user: newUser,
+    });
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      message: 'An error occurred while creating the user in the database.',
+      error: error.message,
+    });
+  }
+};

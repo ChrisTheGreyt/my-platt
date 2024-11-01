@@ -1,5 +1,9 @@
+// src/state/api.ts
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
+import { CognitoUser } from 'amazon-cognito-identity-js';
+import { Auth } from 'aws-amplify'; // Ensure Amplify is configured
+
 
 export interface Project {
     id: number; 
@@ -72,43 +76,65 @@ export interface SearchReults {
     projects?: Project[];
     users?: User[];
 }
+
+export interface Project {
+    id: number; 
+    name: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    school: string;
+}
 export const api = createApi({
     baseQuery: fetchBaseQuery({ 
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-        prepareHeaders: async ( headers ) =>{
-            const session = await fetchAuthSession();
-            const { accessToken } = session.tokens ?? {};
-            if(accessToken) {
-                headers.set("Authorization", `Bearer ${ accessToken }`);
+        prepareHeaders: async (headers) => {
+            try {
+              const session = await Auth.currentSession();
+              const accessToken = session.getAccessToken().getJwtToken();
+              if (accessToken) {
+                headers.set("Authorization", `Bearer ${accessToken}`);
+              }
+            } catch (error) {
+              console.error("Error fetching session:", error);
+              // Optionally handle the error, e.g., redirect to login
             }
             return headers;
-        } 
+          }
+        
     }),
     reducerPath: 'api',
     tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment"],
     endpoints: (build) => ({
-        getAuthUser: build.query({
-            queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) =>{
-                try{
-                    // fetch data from congnito db
-                    const user = await getCurrentUser();
-                    const session = await fetchAuthSession();
-                    if (!session) throw new Error("No session found");
-                    const { userSub } = session;
-                    const { accessToken } = session.tokens ?? {};
-                    // fetch data from local database
+
+        getAuthUser: build.query<{
+            user: CognitoUser;
+            userSub: string;
+            userDetails: User;
+        }, void>({
+            queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
+                try {
+                    // Fetch current authenticated user
+                    const user = await Auth.currentAuthenticatedUser();
+                    if (!user) throw new Error("No user found");
+        
+                    // Get user attributes
+                    const userSub = user.attributes.sub;
+        
+                    // Fetch user details from backend
                     const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
+                    if (userDetailsResponse.error) {
+                        throw new Error(userDetailsResponse.error.data?.message || "Failed to fetch user details");
+                    }
                     const userDetails = userDetailsResponse.data as User;
-
-                    return{ data: { user, userSub,userDetails}}
-
-
-                    // fetch data from stripe DB
-                }catch (error: any){
-                    return{ error: error.message || "Could not fetch user data" };
+        
+                    return { data: { user, userSub, userDetails } };
+                } catch (error: any) {
+                    return { error: error.message || "Could not fetch user data" };
                 }
-            }
+            },
         }),
+        
         getProjects: build.query<Project[], void>({
             query: () => "projects",
             providesTags: ["Projects"],
@@ -172,6 +198,14 @@ export const api = createApi({
             }),
             invalidatesTags: ["Payment"]
         }),
+        updateUserStatus: build.mutation<{ message: string; user: User }, { cognitoId: string; status: string }>({
+            query: (data) => ({
+            url: "/api/users/update-user-status",
+            method: "POST",
+            body: data,
+            }),
+            invalidatesTags: ["Users"],
+        }),
     }),
 });
 
@@ -189,4 +223,5 @@ export const {
     useGetTasksByUserQuery,
     useGetAuthUserQuery,
     useLogPaymentMutation,
+    useUpdateUserStatusMutation,
 } = api;

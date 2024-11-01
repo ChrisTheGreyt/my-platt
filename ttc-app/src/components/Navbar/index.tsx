@@ -5,7 +5,6 @@ import { setIsDarkMode, setIsSidebarCollapsed } from '@/state';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useGetAuthUserQuery } from '@/state/api';
-import { signOut } from 'aws-amplify/auth';
 
 const Navbar = () => {
     const dispatch = useAppDispatch();
@@ -17,7 +16,7 @@ const Navbar = () => {
     const { data: currentUser } = useGetAuthUserQuery({});
     const handleSignOut = async () =>{
         try{
-            await signOut();
+            await Auth.signOut();
         } catch (error){
             console.error("Errorsignging out: ", error)
         }
