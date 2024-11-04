@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 const ConfirmSignUp: React.FC = () => {
-  // const { user, setIsConfirmed, username } = useAuth();
+  const { user, setIsConfirmed } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [code, setCode] = useState('');

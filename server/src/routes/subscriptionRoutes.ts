@@ -1,8 +1,11 @@
-import { Router } from "express";
-import { logSubscription } from "../controllers/subscriptionController";
+// subscriptionRoutes.ts
 
-const router = Router();
+import express from 'express';
+import { createCheckoutSession } from '../controllers/subscriptionController';
 
-router.post("/log-subscription", logSubscription);
+const router = express.Router();
+
+// Route for creating Stripe checkout session
+router.post('/create-checkout-session', createCheckoutSession);
 
 export default router;

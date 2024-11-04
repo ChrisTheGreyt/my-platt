@@ -22,6 +22,8 @@ model User {
   teamId            Int?
   subscriptionStatus String?
   email              String  @unique
+  firstName          String
+  lastName           String
 
   authoredTasks   Task[]           @relation("TaskAuthor")
   assignedTasks   Task[]           @relation("TaskAssignee")

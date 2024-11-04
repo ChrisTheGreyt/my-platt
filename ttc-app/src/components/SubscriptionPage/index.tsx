@@ -1,6 +1,6 @@
 // src/components/SubscriptionPage/index.tsx
 
-"use client"; // This line ensures this component is treated as a Client Component
+"use client"; // Client Component
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -16,7 +16,9 @@ const SubscriptionPage: React.FC = () => {
   const email = searchParams.get('email');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailState, setEmailState] = useState<string>(email || '');
+  const [emailState, setEmailState] = useState<string>(email ?? '');
+  const [promotionCode, setPromotionCode] = useState<string>('');
+
   // Ensure username is available
   useEffect(() => {
     if (!username) {
@@ -29,19 +31,19 @@ const SubscriptionPage: React.FC = () => {
       setError('Please enter your email address.');
       return;
     }
-
+  
     setLoading(true);
     setError(null);
-
+  
     const stripe = await stripePromise;
-
+  
     if (!stripe) {
       console.error("Stripe has not been initialized properly.");
       setError('Stripe has not been initialized properly.');
       setLoading(false);
       return;
     }
-
+  
     try {
       // Call the backend to create a Stripe Checkout session
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/create-checkout-session`, {
@@ -54,30 +56,30 @@ const SubscriptionPage: React.FC = () => {
           email,
           username,
           planType,
+          promotionCode, // Pass the promotionCode from state
         }),
       });
-
+  
       const data = await response.json();
       const { sessionId } = data;
-
+  
       if (!sessionId) {
         setError('An error occurred while creating the checkout session.');
         setLoading(false);
         return;
       }
-
+  
       // Redirect to Stripe Checkout
       const result = await stripe.redirectToCheckout({ sessionId });
-
-      if (result.error) {
-        setError(result.error.message);
-      }
-    } catch (error: any) {
-      setError(error.message || 'An error occurred during the checkout process.');
+  
+    }catch (error: any) {
+      // Check if error is an instance of Error; if not, use a fallback message
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-  };
+};  
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
@@ -103,7 +105,7 @@ const SubscriptionPage: React.FC = () => {
           {/* Monthly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'monthly')}
+            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'subscription')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
@@ -111,10 +113,11 @@ const SubscriptionPage: React.FC = () => {
             <p className="mt-2 text-sm text-gray-500">Access to all features for 30 days.</p>
           </div>
 
+
           {/* 6-Month Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QECEOG8jnQLC5SAFtP5c1d4', '6-months')}
+            onClick={() => handleSubscription('price_1QECEOG8jnQLC5SAFtP5c1d4', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
@@ -125,13 +128,29 @@ const SubscriptionPage: React.FC = () => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'yearly')}
+            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
             <p className="mt-2 text-gray-600">$800 / Yearly</p>
             <p className="mt-2 text-sm text-gray-500">Best value with a yearly subscription.</p>
           </div>
+
+            {/* Promotion code */}
+            <div className="mb-6">
+              <label htmlFor="promotionCode" className="block text-gray-700 text-sm font-bold mb-2">
+                Promotion Code (optional)
+              </label>
+              <input
+                id="promotionCode"
+                type="text"
+                value={promotionCode}
+                onChange={(e) => setPromotionCode(e.target.value)} // Update promotionCode on change
+                placeholder="Enter your code"
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+
         </div>
 
         {loading && <p className="text-blue-500 text-center mt-4">Processing...</p>}
