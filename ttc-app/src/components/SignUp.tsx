@@ -5,7 +5,6 @@
 import React, { useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { useRouter } from 'next/navigation';
-// Remove unused imports like useAuth if not needed
 
 const SignUp: React.FC = () => {
   const router = useRouter();
@@ -37,7 +36,13 @@ const SignUp: React.FC = () => {
       });
       console.log('Sign-up successful:', user);
 
-      // Store the email in localStorage
+      // Store the cognitoId (sub) in sessionStorage
+      const cognitoId = user?.getUsername();
+      if (cognitoId) {
+        sessionStorage.setItem('cognitoId', cognitoId);
+      }
+
+      // Store the email and username for later use (if needed)
       localStorage.setItem('signUpEmail', formData.email);
       localStorage.setItem('signUpUsername', formData.username);
 

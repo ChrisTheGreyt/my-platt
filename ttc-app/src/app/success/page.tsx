@@ -20,31 +20,20 @@ const SuccessPage = () => {
 
   useEffect(() => {
     const sessionIdFromURL = new URLSearchParams(window.location.search).get('session_id');
+    
+    // Retrieve the cognitoId from sessionStorage
+    const id = sessionStorage.getItem('cognitoId');
+    if (id) {
+      setCognitoId(id);
+    }
+
     if (sessionIdFromURL) {
       setSessionId(sessionIdFromURL);
-      fetchCognitoId(sessionIdFromURL);
     } else {
       setError('Invalid session. Please try registering again.');
       setLoading(false);
     }
   }, []);
-
-  const fetchCognitoId = async (sessionId: string) => {
-    try {
-      const response = await fetch(`/users/fetch-session?session_id=${sessionId}`);
-      const data = await response.json();
-
-      if (response.ok && data.cognitoId) {
-        setCognitoId(data.cognitoId);
-      } else {
-        setError(data.error || 'Failed to retrieve session details.');
-      }
-    } catch (err) {
-      setError('An error occurred while fetching session details.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -27,6 +27,15 @@ const SubscriptionPage: React.FC = () => {
   }, [username]);
 
   const handleSubscription = async (priceId: string, planType: string) => {
+    const cognitoId = sessionStorage.getItem('cognitoId');
+
+    // Ensure cognitoId exists
+    if (!cognitoId) {
+      setError('User ID is missing. Please sign in again.');
+      return;
+    }
+
+    
     if (!email) {
       setError('Please enter your email address.');
       return;
@@ -56,7 +65,8 @@ const SubscriptionPage: React.FC = () => {
           email,
           username,
           planType,
-          promotionCode, // Pass the promotionCode from state
+          promotionCode, 
+          cognitoId,
         }),
       });
   
