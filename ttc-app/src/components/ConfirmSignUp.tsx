@@ -18,6 +18,7 @@ const ConfirmSignUp: React.FC = () => {
   useEffect(() => {
     // Retrieve the username from localStorage when the component mounts
     const storedUsername = localStorage.getItem('signUpUsername');
+    console.log("Retrieved username from localStorage:", storedUsername);
     if (storedUsername) {
       setUsername(storedUsername);
     } else {
@@ -43,6 +44,7 @@ const ConfirmSignUp: React.FC = () => {
 
       // Retrieve the email from localStorage
       const email = localStorage.getItem('signUpEmail');
+      console.log("Retrieved email from localStorage:", email);
 
       // Redirect to the subscription page with email and username
       if (email) {
@@ -52,7 +54,10 @@ const ConfirmSignUp: React.FC = () => {
         setError("Unable to retrieve email. Please try logging in.");
       }
 
-      // Clear the email from localStorage
+      // Log before clearing localStorage
+      console.log("Clearing localStorage - username:", localStorage.getItem("signUpUsername"), "email:", localStorage.getItem("signUpEmail"));
+      
+      // Clear the email and username from localStorage
       localStorage.removeItem('signUpEmail');
       localStorage.removeItem('signUpUsername');
     } catch (error: any) {

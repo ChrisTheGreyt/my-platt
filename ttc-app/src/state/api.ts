@@ -90,7 +90,7 @@ export const api = createApi({
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
         prepareHeaders: async (headers) => {
             try {
-              const session = await Auth.currentSession();
+              const session = await Session();
               const accessToken = session.getAccessToken().getJwtToken();
               if (accessToken) {
                 headers.set("Authorization", `Bearer ${accessToken}`);

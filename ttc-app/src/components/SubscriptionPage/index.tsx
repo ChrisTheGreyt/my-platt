@@ -12,30 +12,36 @@ const stripePromise = loadStripe(stripePublicKey || '');
 
 const SubscriptionPage: React.FC = () => {
   const searchParams = useSearchParams();
-  const username = searchParams.get('username');
-  const email = searchParams.get('email');
+  const [username, setUsername] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [emailState, setEmailState] = useState<string>(email ?? '');
   const [promotionCode, setPromotionCode] = useState<string>('');
 
-  // Ensure username is available
   useEffect(() => {
-    if (!username) {
+    const retrievedUsername = searchParams.get('username');
+    const retrievedEmail = searchParams.get('email');
+    
+    // Set the retrieved values in state
+    setUsername(retrievedUsername);
+    setEmail(retrievedEmail);
+
+    console.log("Retrieved username from URL:", retrievedUsername);
+    console.log("Retrieved email from URL:", retrievedEmail);
+
+    // Set error if username is missing
+    if (!retrievedUsername) {
       setError('Username is missing. Please go back and sign up again.');
     }
-  }, [username]);
+  }, [searchParams]);
 
   const handleSubscription = async (priceId: string, planType: string) => {
-    const cognitoId = sessionStorage.getItem('cognitoId');
-
-    // Ensure cognitoId exists
-    if (!cognitoId) {
-      setError('User ID is missing. Please sign in again.');
-      return;
-    }
-
-    
+    console.log("email:", email);
+    console.log("username:", username);
+    console.log("priceId:", priceId);
+    console.log("planType:", planType);
+    console.log("promotionCode:", promotionCode);
+  
     if (!email) {
       setError('Please enter your email address.');
       return;
@@ -65,8 +71,7 @@ const SubscriptionPage: React.FC = () => {
           email,
           username,
           planType,
-          promotionCode, 
-          cognitoId,
+          promotionCode,
         }),
       });
   
@@ -80,15 +85,15 @@ const SubscriptionPage: React.FC = () => {
       }
   
       // Redirect to Stripe Checkout
-      const result = await stripe.redirectToCheckout({ sessionId });
+      await stripe.redirectToCheckout({ sessionId });
   
-    }catch (error: any) {
-      // Check if error is an instance of Error; if not, use a fallback message
+    } catch (error: any) {
       setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
-};  
+  };
+  
   
 
   return (
@@ -105,7 +110,7 @@ const SubscriptionPage: React.FC = () => {
           <input
             id="email"
             type="email"
-            value={emailState}
+            value={email ?? ""}
             readOnly
             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           />

@@ -8,7 +8,8 @@ import {
   handleStripeWebhook, 
   fetchSessionData, 
   updateUserStatus, 
-  updateAfterPayment 
+  updateAfterPayment,
+  updateUserAfterPayment
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -29,6 +30,7 @@ router.post("/check-subscription", checkSubscriptionStatus);
 router.post("/webhook", handleStripeWebhook);
 router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
+router.post('/update-after-payment', updateUserAfterPayment);
 router.post('/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

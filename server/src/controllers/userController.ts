@@ -267,10 +267,10 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 
 
 export const updateUserAfterPayment = async (req: Request, res: Response) => {
-  const { sessionId, firstName, lastName, profilePictureUrl, cognitoId } = req.body;
+  const { sessionId, firstName, lastName, profilePictureUrl, username } = req.body;
 
-  if (!sessionId || !firstName || !lastName) {
-    return res.status(400).json({ error: 'Session ID, first name, and last name are required.' });
+  if (!sessionId || !firstName || !lastName || !username) {
+    return res.status(400).json({ error: 'Session ID, first name, last name, and username are required.' });
   }
 
   try {
@@ -284,17 +284,14 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
     let user = await prisma.user.findUnique({ where: { email: customerEmail } });
 
     if (!user) {
-      const generatedUsername = customerEmail.split('@')[0];
-
       user = await prisma.user.create({
         data: {
           email: customerEmail,
           firstName,
           lastName,
-          profilePictureUrl: 'i1.jpg',
+          profilePictureUrl,
           subscriptionStatus: 'active',
-          cognitoId,
-          username: generatedUsername,
+          username,
         },
       });
     } else {
@@ -303,7 +300,7 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
         data: {
           firstName,
           lastName,
-          profilePictureUrl: profilePictureUrl,
+          profilePictureUrl,
           subscriptionStatus: 'active',
         },
       });
@@ -315,3 +312,4 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+

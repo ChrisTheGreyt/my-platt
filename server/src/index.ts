@@ -14,6 +14,7 @@ import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import uploadRoutes from "./routes/uploadRoutes"; // Import the upload routes
+import { updateUserAfterPayment } from "./controllers/userController";
 import path from 'path';
 
 
@@ -50,6 +51,7 @@ app.use("/search", searchRoutes);
 app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
+app.post('/users/update-after-payment', updateUserAfterPayment); 
 app.use("/upload", uploadRoutes); // Mount the upload routes
 
 app.use('/public', express.static(path.join(__dirname, '../public')));

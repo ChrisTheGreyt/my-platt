@@ -9,14 +9,13 @@ dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
-  const { priceId, email, username, planType, promotionCode, cognitoId } = req.body;
+  const { priceId, email, username, planType, promotionCode } = req.body;
 
-  if (!priceId || !email || !cognitoId) {
-    return res.status(400).json({ error: 'Price ID, email, and Cognito ID are required.' });
+  if (!priceId || !email) {
+    return res.status(400).json({ error: 'Price ID and email are required.' });
   }
 
   try {
-    // Define line item based on the type of purchase
     const lineItems = [
       {
         price: priceId,
@@ -24,18 +23,16 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       },
     ];
 
-    // Create a new Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: email,
       line_items: lineItems,
-      mode: planType === 'one-time' ? 'payment' : 'subscription', // payment for one-time, subscription for recurring
+      mode: planType === 'one-time' ? 'payment' : 'subscription',
       discounts: promotionCode ? [{ promotion_code: promotionCode }] : undefined,
-      success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&username=${encodeURIComponent(username)}`,
       cancel_url: `${process.env.CLIENT_URL}/subscriptions`,
-      client_reference_id: cognitoId, // Include Cognito ID for tracking
       metadata: {
-        username: username || '', // Include username if available
+        username: username || '',
         planType: planType,
       },
     });
@@ -46,3 +43,4 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'An error occurred while creating the checkout session.' });
   }
 };
+

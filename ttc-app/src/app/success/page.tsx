@@ -1,36 +1,47 @@
-// src/app/success/pages.tsx
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { Auth } from 'aws-amplify';
 
 const SuccessPage = () => {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     profilePictureUrl: '',
   });
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [cognitoId, setCognitoId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   useEffect(() => {
     const sessionIdFromURL = new URLSearchParams(window.location.search).get('session_id');
-    
-    // Retrieve the cognitoId from sessionStorage
-    const id = sessionStorage.getItem('cognitoId');
-    if (id) {
-      setCognitoId(id);
+    const queryParams = new URLSearchParams(window.location.search);
+    const usernameFromURL = queryParams.get('username');
+
+    setFormData((prev) => ({
+      ...prev,
+      username: usernameFromURL || '', // Set username directly from URL
+    }));
+
+    if (!usernameFromURL) {
+      setError('Username is missing. Please try registering again.');
+      setLoading(false);
+      return;
     }
 
     if (sessionIdFromURL) {
       setSessionId(sessionIdFromURL);
     } else {
       setError('Invalid session. Please try registering again.');
+      setLoading(false);
+    }
+
+    if (sessionIdFromURL && usernameFromURL) {
       setLoading(false);
     }
   }, []);
@@ -50,35 +61,38 @@ const SuccessPage = () => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+  
+    console.log("Form Data - First Name:", formData.firstName);
+    console.log("Form Data - Last Name:", formData.lastName);
+    console.log("Form Data - Username:", formData.username);
 
-    if (!formData.firstName || !formData.lastName) {
-      setError('First and last name are required.');
+    if (!formData.firstName || !formData.lastName || !formData.username) {
+      setError('First name, last name, and username are required.');
       return;
     }
-
-    if (!sessionId || !cognitoId) {
-      setError('Session ID or Cognito ID is missing.');
+  
+    if (!sessionId) {
+      setError('Session ID is missing.');
       return;
     }
-
+  
     setIsSubmitting(true);
-
+  
     try {
       let uploadedImageUrl = formData.profilePictureUrl;
 
-      // Upload the selected file if present
       if (selectedFile) {
         const uploadFormData = new FormData();
         uploadFormData.append('file', selectedFile);
 
-        const uploadResponse = await fetch('/upload', { // Adjust the endpoint as per your routing
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload`, {
           method: 'POST',
           body: uploadFormData,
         });
 
         const uploadData = await uploadResponse.json();
         if (uploadData.success) {
-          uploadedImageUrl = uploadData.filePath; // Assuming the server returns the path to the uploaded file
+          uploadedImageUrl = uploadData.filePath;
         } else {
           setError(uploadData.error || 'Failed to upload image.');
           setIsSubmitting(false);
@@ -86,21 +100,26 @@ const SuccessPage = () => {
         }
       }
 
-      // Submit the form data with the uploaded image URL or user-provided URL
-      const updateResponse = await fetch('/users/update-after-payment', { // Adjust the endpoint as per your routing
+      const payload = {
+        sessionId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        username: formData.username,
+        profilePictureUrl: uploadedImageUrl,
+      };
+      console.log("Payload to be sent:", payload);
+
+      const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          sessionId,
-          cognitoId, // Include the cognitoId in the request
-          ...formData,
-          profilePictureUrl: uploadedImageUrl,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await updateResponse.json();
+      console.log("Server Response:", result);
+
       if (result.success) {
         setSuccess(true);
       } else {
@@ -111,6 +130,7 @@ const SuccessPage = () => {
       setError('An error occurred while updating your information.');
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 

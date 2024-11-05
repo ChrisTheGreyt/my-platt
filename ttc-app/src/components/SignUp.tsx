@@ -36,13 +36,7 @@ const SignUp: React.FC = () => {
       });
       console.log('Sign-up successful:', user);
 
-      // Store the cognitoId (sub) in sessionStorage
-      const cognitoId = user?.getUsername();
-      if (cognitoId) {
-        sessionStorage.setItem('cognitoId', cognitoId);
-      }
-
-      // Store the email and username for later use (if needed)
+      // Store the email and username in localStorage for later
       localStorage.setItem('signUpEmail', formData.email);
       localStorage.setItem('signUpUsername', formData.username);
 
