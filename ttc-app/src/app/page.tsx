@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-indigo-800 p-4">
       {user && session ? (
         <div className="text-center text-white">
-          <h2 className="text-3xl font-bold">Welcome, {user.getUsername()}!</h2>
+          <h2 className="text-3xl font-bold">Welcome, {user.username}!</h2> {/* Access `username` as a property */}
           {/* Render authenticated user content here */}
         </div>
       ) : (
