@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Auth } from 'aws-amplify';
+import { useRouter } from 'next/navigation';
+
 
 const SuccessPage = () => {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -44,7 +46,14 @@ const SuccessPage = () => {
     if (sessionIdFromURL && usernameFromURL) {
       setLoading(false);
     }
-  }, []);
+
+    if (success) {
+      // After a delay, navigate to the sign-in page
+      setTimeout(() => {
+        router.push('/');  // Adjust the path to your sign-in page
+      }, 1000);
+    }
+  }, [success, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -132,73 +141,115 @@ const SuccessPage = () => {
       setIsSubmitting(false);
       setLoading(false);
     }
+
+    if(success){
+      setSuccess(true);
+    }
   };
 
   if (loading) return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="max-w-lg w-full bg-white shadow-lg rounded-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-4 text-green-600">Payment Successful!</h1>
-        <p className="text-center text-gray-700 mb-6">Thank you for your subscription. Please complete your profile.</p>
-
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-center mb-4">Your profile has been updated successfully!</p>}
-
-        <form onSubmit={handleFormSubmit}>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="firstName">First Name:</label>
-            <input
-              type="text"
-              name="firstName"
-              id="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+    <div>
+      {success ? (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
+          <div className="flex justify-center mb-4">
+            <svg
+              className="animate-spin h-8 w-8 text-green-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8h8a8 8 0 11-16 0z"
+              ></path>
+            </svg>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2" htmlFor="lastName">Last Name:</label>
-            <input
-              type="text"
-              name="lastName"
-              id="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              required
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium mb-2">Profile Picture:</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full mb-2"
-            />
-            <p className="text-sm text-gray-500">or enter an image URL below:</p>
-            <input
-              type="text"
-              name="profilePictureUrl"
-              value={formData.profilePictureUrl}
-              onChange={handleInputChange}
-              placeholder="Enter image URL"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition duration-200 ${
-              isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isSubmitting ? 'Updating...' : 'Update Profile'}
-          </button>
-        </form>
+          <h2 className="text-2xl font-bold text-green-600 mb-2">Profile Updated!</h2>
+          <p className="text-gray-700 mb-6">
+            Thank you for updating your profile. You will be redirected to the sign-in page in a few seconds.
+          </p>
+          <p className="text-sm text-gray-500 italic">
+            If you are not redirected automatically, <a href="/sign-in" className="text-blue-500 underline">click here</a>.
+          </p>
+        </div>
       </div>
+      ) : (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+          <div className="max-w-lg w-full bg-white shadow-lg rounded-lg p-8">
+            <h1 className="text-2xl font-bold text-center mb-4 text-green-600">Payment Successful!</h1>
+            <p className="text-center text-gray-700 mb-6">Thank you for your subscription. Please complete your profile.</p>
+
+            {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {success && <p className="text-green-500 text-center mb-4">Your profile has been updated successfully!</p>}
+
+            <form onSubmit={handleFormSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2" htmlFor="firstName">First Name:</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  id="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2" htmlFor="lastName">Last Name:</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  id="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              {/* <div className="mb-4">
+                <label className="block text-gray-700 font-medium mb-2">Profile Picture:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full mb-2"
+                />
+                <p className="text-sm text-gray-500">or enter an image URL below:</p>
+                <input
+                  type="text"
+                  name="profilePictureUrl"
+                  value={formData.profilePictureUrl}
+                  onChange={handleInputChange}
+                  placeholder="Enter image URL"
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div> */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition duration-200 ${
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmitting ? 'Updating...' : 'Update Profile'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

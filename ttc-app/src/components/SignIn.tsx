@@ -1,18 +1,17 @@
-// src/components/SignIn.tsx
-
 'use client';
 
 import React, { useState } from 'react';
-import { signIn } from '../utils/cognito';
-import { useAuth } from '../context/AuthContext';
+import { Auth } from 'aws-amplify';
+import { useRouter } from 'next/navigation';
 
 const SignIn: React.FC = () => {
-  const { setUser, setSession } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -20,14 +19,33 @@ const SignIn: React.FC = () => {
 
   const handleSignIn = async () => {
     setError(null);
+    setLoading(true);
+
     try {
-      const result = await signIn(formData.username, formData.password);
-      console.log('Sign-in successful:', result);
-      setUser(result.getIdToken().payload);
-      setSession(result);
+      // Authenticate with Cognito
+      const user = await Auth.signIn(formData.username, formData.password);
+      console.log('Sign-in successful:', user);
+
+      // Check subscription status in your backend
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/check-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.attributes.email }), // Use email from authenticated user
+      });
+
+      const data = await response.json();
+
+      if (data.subscriptionStatus === 'active') {
+        // Redirect to the dashboard if active
+        router.push('/home'); // Adjust path as needed
+      } else {
+        setError('Your subscription is not active. Please contact support.');
+      }
     } catch (err: any) {
       console.error('Error signing in:', err);
       setError(err.message || 'Error signing in. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,9 +84,10 @@ const SignIn: React.FC = () => {
 
       <button
         onClick={handleSignIn}
+        disabled={loading}
         className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition duration-200"
       >
-        Sign In
+        {loading ? 'Signing In...' : 'Sign In'}
       </button>
     </div>
   );

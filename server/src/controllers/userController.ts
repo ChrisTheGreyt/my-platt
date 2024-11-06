@@ -313,3 +313,22 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
   }
 };
 
+export const checkUserStatus = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { subscriptionStatus: true },
+    });
+
+    if (user) {
+      return res.status(200).json({ subscriptionStatus: user.subscriptionStatus });
+    } else {
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error checking subscription status:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
