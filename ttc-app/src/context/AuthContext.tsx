@@ -3,15 +3,21 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { CognitoUser, CognitoUserSession } from 'amazon-cognito-identity-js';
+import { CognitoUserSession } from 'amazon-cognito-identity-js';
 import { getCurrentUser } from '../utils/cognito';
 
+// Define a simplified, serializable user type
+interface SerializableUser {
+  username: string;
+  attributes: { [key: string]: string };
+}
+
 interface AuthContextType {
-  user: CognitoUser | null;
+  user: SerializableUser | null;
   session: CognitoUserSession | null;
   username: string | null;
   setUsername: React.Dispatch<React.SetStateAction<string | null>>;
-  setUser: React.Dispatch<React.SetStateAction<CognitoUser | null>>;
+  setUser: React.Dispatch<React.SetStateAction<SerializableUser | null>>;
   setSession: React.Dispatch<React.SetStateAction<CognitoUserSession | null>>;
   isConfirmed: boolean;
   setIsConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
@@ -21,7 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsername] = useState<string | null>(null);
-  const [user, setUser] = useState<CognitoUser | null>(null);
+  const [user, setUser] = useState<SerializableUser | null>(null);
   const [session, setSession] = useState<CognitoUserSession | null>(null);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
@@ -35,22 +41,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setSession(null);
           setIsConfirmed(false);
         } else {
-          setUser(currentUser);
-          setSession(session);
-          // Check if the user is confirmed
-          currentUser.getUserAttributes((err, attributes ) => {
+          // Extract serializable data from the CognitoUser object
+          const serializableUser: SerializableUser = {
+            username: currentUser.getUsername(),
+            attributes: {}
+          };
+  
+          // Populate attributes if they are available
+          currentUser.getUserAttributes((err, attributes) => {
             if (err) {
               console.error('Error getting user attributes:', err);
               setIsConfirmed(false);
-            } else {
-              const emailVerified = attributes.find(attr => attr.Name === 'email_verified');
-              setIsConfirmed(emailVerified?.Value === 'true');
+            } else if (attributes) {
+              attributes.forEach(attr => {
+                serializableUser.attributes[attr.Name] = attr.Value;
+              });
+              const emailVerified = serializableUser.attributes['email_verified'];
+              setIsConfirmed(emailVerified === 'true');
             }
           });
+  
+          setUser(serializableUser);
+          setSession(session);
         }
       });
     }
   }, []);
+  
 
   return (
     <AuthContext.Provider value={{ user, session, username, setUsername, setUser, setSession, isConfirmed, setIsConfirmed }}>

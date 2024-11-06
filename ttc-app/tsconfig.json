@@ -27,6 +27,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/aws-exports.js", "src/aws-exports.js"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/aws-exports.js", "src/aws-exports.js", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", ".next",  "tailwind.config.ts"]
 }

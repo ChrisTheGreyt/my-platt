@@ -1,3 +1,4 @@
+//src/components/Sidebar/index.tsx
 "use client";
 
 import { useAppDispatch, useAppSelector } from '@/app/redux';
@@ -6,10 +7,13 @@ import { useGetAuthUserQuery, useGetProjectsQuery } from '@/state/api';
 import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, ChevronUp, Home, Layers3, LockIcon, LucideIcon, Search, Settings, ShieldAlert, User, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Auth } from 'aws-amplify';
+import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const Sidebar = () => {
+  const router = useRouter();
   const [showProjects, setShowProjects] = useState(true);
   const [showPriority, setShowPriority] = useState(true);
 
@@ -19,10 +23,11 @@ const Sidebar = () => {
     (state) => state.global.isSidebarCollapsed,
   )
 
-  const { data: currentUser } = useGetAuthUserQuery({});
+  const { data: currentUser } = useGetAuthUserQuery();
   const handleSignOut = async () =>{
       try{
           await Auth.signOut();
+          router.push('/');
       } catch (error){
           console.error("Error signging out: ", error)
       }

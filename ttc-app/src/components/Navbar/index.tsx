@@ -1,25 +1,33 @@
+//src/components/Navbar/index.tsx
+
 import React from 'react';
 import { Menu, Moon, Search, Settings, Sun, User } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/redux';
 import { setIsDarkMode, setIsSidebarCollapsed } from '@/state';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Auth } from 'aws-amplify';
+import { useRouter } from 'next/navigation';
 import { useGetAuthUserQuery } from '@/state/api';
 
 const Navbar = () => {
+    const router = useRouter();
     const dispatch = useAppDispatch();
     const isSidebarCollapsed = useAppSelector(
         (state) => state.global.isSidebarCollapsed,
     );
     const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-    const { data: currentUser } = useGetAuthUserQuery({});
+    const { data: currentUser } = useGetAuthUserQuery();
     const handleSignOut = async () =>{
-        try{
+        try {
             await Auth.signOut();
-        } catch (error){
-            console.error("Errorsignging out: ", error)
-        }
+            setUser(null); // Clear the serialized user from Redux
+            setCognitoUser(null); // Clear the CognitoUser reference from local state
+            router.push('/');
+          } catch (error) {
+            console.error("Error signing out: ", error);
+          }
     }
     if(!currentUser) return null; 
     const currentUserDetails = currentUser?.userDetails;
