@@ -48,9 +48,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
   
           // Populate attributes if they are available
-          currentUser.getUserAttributes((err, attributes) => {
-            if (err) {
-              console.error('Error getting user attributes:', err);
+          currentUser.getUserAttributes((attrErr, attributes) => {
+            if (attrErr) {
+              console.error('Error getting user attributes:', attrErr);
               setIsConfirmed(false);
             } else if (attributes) {
               attributes.forEach(attr => {
@@ -67,7 +67,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     }
   }, []);
-  
 
   return (
     <AuthContext.Provider value={{ user, session, username, setUsername, setUser, setSession, isConfirmed, setIsConfirmed }}>

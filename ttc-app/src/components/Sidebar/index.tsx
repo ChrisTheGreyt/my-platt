@@ -11,9 +11,11 @@ import { Auth } from 'aws-amplify';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 const Sidebar = () => {
   const router = useRouter();
+  const { setUser, setSession } = useAuth();
   const [showProjects, setShowProjects] = useState(true);
   const [showPriority, setShowPriority] = useState(true);
 
@@ -25,12 +27,13 @@ const Sidebar = () => {
 
   const { data: currentUser } = useGetAuthUserQuery();
   const handleSignOut = async () =>{
-      try{
-          await Auth.signOut();
-          router.push('/');
-      } catch (error){
-          console.error("Error signging out: ", error)
-      }
+    try {
+      await Auth.signOut();
+      setUser(null);  // Reset user to null on sign-out
+      setSession(null); // Reset session to null on sign-out
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   }
   if(!currentUser) return null; 
   const currentUserDetails = currentUser?.userDetails;
