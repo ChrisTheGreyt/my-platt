@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (user && session) {
       // Redirect authenticated users to the /home page
-      router.push('/');
+      router.push('/home');
     }
   }, [user, session, router]);
 

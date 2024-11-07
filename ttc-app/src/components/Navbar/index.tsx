@@ -1,5 +1,3 @@
-// src/components/Navbar/index.tsx
-
 import React from 'react';
 import { Menu, Moon, Search, Settings, Sun, User } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/app/redux';
@@ -17,20 +15,22 @@ const Navbar = () => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
+  // Access `setUser`, `setSession`, and other auth properties from `useAuth`
+  const { setUser, setSession, user } = useAuth();
   const { data: authData } = useGetAuthUserQuery();
 
-  // Ensure `authData` and `authData.userDetails` are defined before accessing properties
-  const currentUserDetails = authData?.userDetails
-    ? {
-        username: authData.userDetails.username,
-        profilePictureUrl: authData.userDetails.profilePictureUrl,
-      }
-    : null;
+  // Extract `userDetails` from `authData` if available
+  const currentUserDetails = authData?.userDetails || {
+    username: user?.username || '',
+    profilePictureUrl: user?.attributes?.profilePictureUrl || null,
+  };
 
   const handleSignOut = async () => {
     try {
       await Auth.signOut();
-      router.push('/'); // Redirect to the home page after sign-out
+      setUser(null); // Clear the user from context
+      setSession(null); // Clear the session from context
+      router.push('/'); // Redirect to home after sign-out
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -73,7 +73,7 @@ const Navbar = () => {
 
         <div className='ml-2 mr-5 hidden min-h[2em] w-[0.1rem] bg-gray-200 md:inline-block'></div>
 
-        {currentUserDetails && (
+        {currentUserDetails && currentUserDetails.username && (
           <div className="hidden items-center justify-between md:flex">
             <div className='align-center flex h-9 w-9 justify-center'>
               {currentUserDetails.profilePictureUrl ? (

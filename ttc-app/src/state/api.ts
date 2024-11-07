@@ -90,7 +90,7 @@ export const api = createApi({
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
         prepareHeaders: async (headers) => {
             try {
-              const session = await Session();
+              const session = await Auth.currentSession();
               const accessToken = session.getAccessToken().getJwtToken();
               if (accessToken) {
                 headers.set("Authorization", `Bearer ${accessToken}`);
@@ -108,32 +108,35 @@ export const api = createApi({
     endpoints: (build) => ({
 
         getAuthUser: build.query<{
-            user: CognitoUser;
+            user: { username: string; attributes: Record<string, string> };
             userSub: string;
             userDetails: User;
-        }, void>({
-            queryFn: async (_, _queryApi, _extraoptions, fetchWithBQ) => {
-                try {
-                    // Fetch current authenticated user
-                    const user = await Auth.currentAuthenticatedUser();
-                    if (!user) throw new Error("No user found");
-        
-                    // Get user attributes
-                    const userSub = user.attributes.sub;
-        
-                    // Fetch user details from backend
-                    const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
-                    if (userDetailsResponse.error) {
-                        throw new Error(userDetailsResponse.error.data?.message || "Failed to fetch user details");
-                    }
-                    const userDetails = userDetailsResponse.data as User;
-        
-                    return { data: { user, userSub, userDetails } };
-                } catch (error: any) {
-                    return { error: error.message || "Could not fetch user data" };
+          }, void>({
+            queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
+              try {
+                const cognitoUser = await Auth.currentAuthenticatedUser();
+                if (!cognitoUser) throw new Error("No user found");
+          
+                const user = {
+                  username: cognitoUser.getUsername(),
+                  attributes: cognitoUser.attributes || {},
+                };
+          
+                const userSub = user.attributes.sub;
+                const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
+                if (userDetailsResponse.error) {
+                  const errorMessage = (userDetailsResponse.error.data as { message?: string })?.message || "Failed to fetch user details";
+                  throw new Error(errorMessage);
                 }
+                const userDetails = userDetailsResponse.data as User;
+          
+                return { data: { user, userSub, userDetails } };
+              } catch (error: any) {
+                return { error: error?.message || "Could not fetch user data" };
+              }
             },
-        }),
+          }),
+          
         
         getProjects: build.query<Project[], void>({
             query: () => "projects",
