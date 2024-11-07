@@ -6,7 +6,7 @@
 
 // // Initialize AWS S3 instance using AWS SDK v2 for compatibility with multer-s3
 // const s3 = new AWS.S3({
-//   region: process.env.AWS_REGION,
+//   region: process.env.NEXT_PUBLIC_AWS_REGION,
 //   accessKeyId: process.env.MP_AWS_ACCESS_KEY_ID,
 //   secretAccessKey: process.env.MP_AWS_SECRET_ACCESS_KEY,
 // });
