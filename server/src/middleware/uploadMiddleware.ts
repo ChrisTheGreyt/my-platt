@@ -1,21 +1,31 @@
 import multer from 'multer';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import AWS from 'aws-sdk';
+import multerS3 from 'multer-s3';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize S3 client using AWS SDK v3
-const s3 = new S3Client({
+// Initialize AWS S3 instance using AWS SDK v2 for compatibility with multer-s3
+const s3 = new AWS.S3({
   region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.MP_AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.MP_AWS_SECRET_ACCESS_KEY!,
-  },
+  accessKeyId: process.env.MP_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.MP_AWS_SECRET_ACCESS_KEY,
 });
 
-// Configure multer to store files in memory for further processing
-const storage = multer.memoryStorage();
+// Configure multer with multer-s3 storage
 const upload = multer({
-  storage,
+  storage: multerS3({
+    s3,
+    bucket: process.env.MP_S3_BUCKET_NAME!,
+    acl: 'public-read', // Adjust as needed
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      const fileExtension = file.originalname.split('.').pop();
+      const uniqueFileName = `${uuidv4()}.${fileExtension}`;
+      cb(null, uniqueFileName);
+    },
+  }),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
@@ -26,36 +36,13 @@ const upload = multer({
   },
 });
 
-// Middleware to upload file to S3 after multer processes it
-const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
-  if (!req.file) {
-    return next(new Error('No file uploaded'));
+// Middleware to attach S3 URL to req.file object
+const uploadToS3 = (req: Request, res: Response, next: NextFunction) => {
+  const file = req.file as Express.MulterS3File; // Use the extended type
+  if (file && file.location) {
+    console.log(`File uploaded successfully. Accessible at: ${file.location}`);
   }
-
-  try {
-    const fileExtension = req.file.originalname.split('.').pop();
-    const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-    const bucketName = process.env.MP_S3_BUCKET_NAME!;
-
-    // Upload file to S3
-    const uploadParams = {
-      Bucket: bucketName,
-      Key: uniqueFileName,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype,
-      ACL: 'public-read' as const,
-    };
-
-    const command = new PutObjectCommand(uploadParams);
-    await s3.send(command);
-
-    // Attach S3 URL to req.file object
-    // req.file.s3Location = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
-    next();
-  } catch (error) {
-    console.error('Error uploading file to S3:', error);
-    next(error);
-  }
+  next();
 };
 
 export { upload, uploadToS3 };
