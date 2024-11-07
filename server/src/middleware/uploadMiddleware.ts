@@ -1,28 +1,19 @@
 // src/middleware/uploadMiddleware.ts
-
 import multer from 'multer';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import AWS from 'aws-sdk';
 
-// Define a custom file interface extending Multer.File with s3Location
-interface CustomFile extends Express.Multer.File {
-  s3Location?: string;
-}
-
-const s3 = new AWS.S3();
-
-// Initialize S3 client with v3 SDK configuration
-const s3Client = new S3Client({
-  region: process.env.MP_REGION,
+// Initialize S3 client with AWS SDK v3
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
   credentials: {
     accessKeyId: process.env.MP_ACCESS_KEY_ID!,
     secretAccessKey: process.env.MP_SECRET_ACCESS_KEY!,
   },
 });
 
-// Configure multer to store files in memory for further processing
+// Configure multer to store files in memory
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
@@ -36,7 +27,7 @@ const upload = multer({
   },
 });
 
-// Middleware to upload file to S3 after multer processes it
+// Custom middleware to upload to S3 after multer processes the file
 const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.file) {
     return next(new Error('No file uploaded'));
@@ -56,10 +47,10 @@ const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
     };
 
     const command = new PutObjectCommand(uploadParams);
-    await s3Client.send(command);
+    await s3.send(command);
 
-    // Cast req.file to CustomFile to add s3Location
-    (req.file as CustomFile).s3Location = `https://${bucketName}.s3.${process.env.MP_REGION}.amazonaws.com/${uniqueFileName}`;
+    // Attach the file location to the request for access in the route
+    (req.file as any).s3Location = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
     next();
   } catch (error) {
     console.error('Error uploading file to S3:', error);
