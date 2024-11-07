@@ -4,11 +4,14 @@ import multer from 'multer';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import AWS from 'aws-sdk';
 
 // Define a custom file interface extending Multer.File with s3Location
 interface CustomFile extends Express.Multer.File {
   s3Location?: string;
 }
+
+const s3 = new AWS.S3();
 
 // Initialize S3 client with v3 SDK configuration
 const s3Client = new S3Client({
