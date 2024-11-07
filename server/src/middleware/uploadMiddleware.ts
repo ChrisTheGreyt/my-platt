@@ -1,61 +1,24 @@
-// src/middleware/uploadMiddleware.ts
 import multer from 'multer';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Request, Response, NextFunction } from 'express';
+import AWS from 'aws-sdk';
+import multerS3 from 'multer-s3';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize S3 client with AWS SDK v3
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.MP_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.MP_SECRET_ACCESS_KEY!,
-  },
-});
+const s3 = new AWS.S3();
 
-// Configure multer to store files in memory
-const storage = multer.memoryStorage();
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) {
-      cb(new Error('Invalid file type. Only images are allowed.'));
-    } else {
-      cb(null, true);
-    }
-  },
+  storage: multerS3({
+    s3,
+    bucket: process.env.MP_S3_BUCKET_NAME!,
+    acl: 'public-read',
+    metadata: (req, file, cb) => {
+      cb(null, { fieldName: file.fieldname });
+    },
+    key: (req, file, cb) => {
+      const uniqueFileName = `${uuidv4()}-${file.originalname}`;
+      cb(null, uniqueFileName);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Custom middleware to upload to S3 after multer processes the file
-const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
-  if (!req.file) {
-    return next(new Error('No file uploaded'));
-  }
-
-  try {
-    const fileExtension = req.file.originalname.split('.').pop();
-    const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-    const bucketName = process.env.MP_S3_BUCKET_NAME!;
-
-    const uploadParams = {
-      Bucket: bucketName,
-      Key: uniqueFileName,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype,
-      ACL: "public-read" as const,
-    };
-
-    const command = new PutObjectCommand(uploadParams);
-    await s3.send(command);
-
-    // Attach the file location to the request for access in the route
-    (req.file as any).s3Location = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
-    next();
-  } catch (error) {
-    console.error('Error uploading file to S3:', error);
-    next(error);
-  }
-};
-
-export { upload, uploadToS3 };
+export default upload;
