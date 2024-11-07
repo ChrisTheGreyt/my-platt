@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 import { uploadImage } from "../controllers/uploadController";
-import { upload, uploadToS3 } from "../middleware/uploadMiddleware";
+import { upload, uploadToS3 } from "../middleware/uploadMiddleware"; // Import both as named exports
 
 const router = Router();
 
