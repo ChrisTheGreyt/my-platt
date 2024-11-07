@@ -72,20 +72,17 @@ const ConfirmSignUp: React.FC = () => {
     setError(null);
     setSuccess(null);
     setLoading(true);
-
+  
     try {
-      // Ensure the username is available
-      let currentUsername = username;
-      if (!username) {
-        if (user) {
-          currentUsername = user.getUsername();
-        } else {
-          setError('Username is missing. Please go back and sign up again.');
-          setLoading(false);
-          return;
-        }
+      // Ensure the username is available, falling back to an empty string if not
+      let currentUsername = username ?? user?.username ?? '';
+  
+      if (!currentUsername) {
+        setError('Username is missing. Please go back and sign up again.');
+        setLoading(false);
+        return;
       }
-
+  
       // Resend the confirmation code
       await Auth.resendSignUp(currentUsername);
       console.log('Confirmation code resent');
@@ -97,6 +94,7 @@ const ConfirmSignUp: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div
