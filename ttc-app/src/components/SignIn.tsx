@@ -37,7 +37,7 @@ const SignIn: React.FC = () => {
       setUser(serializableUser); // Set only serializable properties in context
       setSession(result); // Save full session if needed
       setCognitoUser(result); // Store full CognitoUser locally
-      router.push('/home'); // Redirect to home page after login
+      router.push('/'); // Redirect to home page after login
     } catch (err: any) {
       console.error('Error signing in:', err);
       setError(err.message || 'Error signing in. Please try again.');

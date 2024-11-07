@@ -18,13 +18,13 @@ const Sidebar = () => {
   const { setUser, setSession } = useAuth();
   const [showProjects, setShowProjects] = useState(true);
   const [showPriority, setShowPriority] = useState(true);
-
+  const { data: authData } = useGetAuthUserQuery();
   const {data: projects } = useGetProjectsQuery();
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed,
   )
-
+  
   const { data: currentUser } = useGetAuthUserQuery();
   const handleSignOut = async () =>{
     try {

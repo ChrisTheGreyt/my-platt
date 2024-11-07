@@ -1,7 +1,8 @@
 // src/app/page.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import SignUp from '../components/SignUp';
 import SignIn from '../components/SignIn';
 import { useAuth } from '../context/AuthContext';
@@ -9,21 +10,23 @@ import { useAuth } from '../context/AuthContext';
 const HomePage: React.FC = () => {
   const { user, session } = useAuth();
   const [isSignIn, setIsSignIn] = useState(true); // Toggle between SignIn and SignUp
+  const router = useRouter();
 
-  return (
+  useEffect(() => {
+    if (user && session) {
+      // Redirect authenticated users to the /home page
+      router.push('/');
+    }
+  }, [user, session, router]);
+
+return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-500 to-indigo-800 p-4">
-      {user && session ? (
-        <div className="text-center text-white">
-          <h2 className="text-3xl font-bold">Welcome, {user.username}!</h2> {/* Access `username` as a property */}
-          {/* Render authenticated user content here */}
-        </div>
-      ) : (
+      {user && session ? null : (
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
             {isSignIn ? 'Sign In' : 'Sign Up'}
           </h2>
 
-          {/* Toggle between SignIn and SignUp */}
           {isSignIn ? <SignIn /> : <SignUp />}
 
           <div className="text-center mt-4">
