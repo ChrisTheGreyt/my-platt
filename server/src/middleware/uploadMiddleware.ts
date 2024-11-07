@@ -12,10 +12,10 @@ interface CustomFile extends Express.Multer.File {
 
 // Initialize S3 client with v3 SDK configuration
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: process.env.MP_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.MP_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.MP_SECRET_ACCESS_KEY!,
   },
 });
 
@@ -42,7 +42,7 @@ const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const fileExtension = req.file.originalname.split('.').pop();
     const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const bucketName = process.env.MP_S3_BUCKET_NAME!;
 
     const uploadParams = {
       Bucket: bucketName,
@@ -56,7 +56,7 @@ const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
     await s3Client.send(command);
 
     // Cast req.file to CustomFile to add s3Location
-    (req.file as CustomFile).s3Location = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
+    (req.file as CustomFile).s3Location = `https://${bucketName}.s3.${process.env.MP_REGION}.amazonaws.com/${uniqueFileName}`;
     next();
   } catch (error) {
     console.error('Error uploading file to S3:', error);
