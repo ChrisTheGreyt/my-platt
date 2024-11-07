@@ -1,14 +1,16 @@
 // src/middleware/uploadMiddleware.ts
 
-import multer, { FileFilterCallback } from 'multer';
+import multer from 'multer';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { Request as ExpressRequest } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-// Use require syntax with type annotation to bypass type errors temporarily
-const multerS3: any = require('multer-s3');
+// Define an extended File type to include the s3Location property
+interface S3File extends Express.Multer.File {
+  s3Location?: string;
+}
 
-// Initialize the S3 client with @aws-sdk/client-s3
+// Initialize S3 client with v3 SDK configuration
 const s3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -17,36 +19,53 @@ const s3 = new S3Client({
   },
 });
 
-// File filter function to accept only image files
-const fileFilter = (
-  req: ExpressRequest,
-  file: Express.Multer.File,
-  cb: FileFilterCallback
-) => {
-  if (!file.mimetype.startsWith('image/')) {
-    cb(new Error('Invalid file type. Only images are allowed.'));
-  } else {
-    cb(null, true);
+// Configure multer to store files locally for further processing
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Invalid file type. Only images are allowed.'));
+    } else {
+      cb(null, true);
+    }
+  },
+});
+
+// Middleware to upload file to S3 after multer processes it
+const uploadToS3 = async (req: Request, res: Response, next: NextFunction) => {
+  const file = req.file as S3File; // Cast req.file to S3File
+
+  if (!file) {
+    return next(new Error('No file uploaded'));
+  }
+
+  try {
+    const fileExtension = file.originalname.split('.').pop();
+    const uniqueFileName = `${uuidv4()}.${fileExtension}`;
+    const bucketName = process.env.AWS_S3_BUCKET_NAME!;
+    const acl = 'public-read'; // Adjust as needed
+
+    // Upload file to S3
+    const uploadParams = {
+      Bucket: bucketName,
+      Key: uniqueFileName,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ACL: "public-read" as const,
+    };
+
+    const command = new PutObjectCommand(uploadParams);
+    await s3.send(command);
+
+    // Assign the S3 URL to s3Location property
+    file.s3Location = `https://${bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
+    next();
+  } catch (error) {
+    console.error('Error uploading file to S3:', error);
+    next(error);
   }
 };
 
-// Configure multer with multer-s3 storage
-const upload = multer({
-  storage: multerS3({
-    s3: s3,  // Uses our S3Client instance
-    bucket: process.env.AWS_S3_BUCKET_NAME!,
-    acl: 'public-read', // Adjust as needed
-    metadata: (req: ExpressRequest, file: Express.Multer.File, cb: (error: any, metadata?: any) => void) => {
-      cb(null, { fieldName: file.fieldname });
-    },
-    key: (req: ExpressRequest, file: Express.Multer.File, cb: (error: any, key?: string) => void) => {
-      const fileExtension = file.originalname.split('.').pop();
-      const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-      cb(null, uniqueFileName);
-    },
-  }),
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB limit
-});
-
-export default upload;
+export { upload, uploadToS3 };
