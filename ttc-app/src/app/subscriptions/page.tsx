@@ -8,5 +8,5 @@ import SubscriptionPage from '../../components/SubscriptionPage';
 const Subscriptions: React.FC = () => {
   return <SubscriptionPage />;
 };
-
+ 
 export default Subscriptions;
