@@ -21,39 +21,46 @@ const SuccessPage = () => {
   
 
   useEffect(() => {
-    const sessionIdFromURL = new URLSearchParams(window.location.search).get('session_id');
     const queryParams = new URLSearchParams(window.location.search);
+    const sessionIdFromURL = queryParams.get('session_id');
     const usernameFromURL = queryParams.get('username');
+
+    // Check if username is available in URL or localStorage
+    const storedUsername = localStorage.getItem('username');
+    const finalUsername = usernameFromURL || storedUsername || '';
 
     setFormData((prev) => ({
       ...prev,
-      username: usernameFromURL || '', // Set username directly from URL
+      username: finalUsername, // Use finalUsername (from URL or fallback to localStorage)
     }));
 
-    if (!usernameFromURL) {
+    // Handle missing username
+    if (!finalUsername) {
       setError('Username is missing. Please try registering again.');
       setLoading(false);
       return;
     }
 
+    // Handle session ID
     if (sessionIdFromURL) {
       setSessionId(sessionIdFromURL);
     } else {
       setError('Invalid session. Please try registering again.');
       setLoading(false);
+      return;
     }
 
-    if (sessionIdFromURL && usernameFromURL) {
-      setLoading(false);
-    }
+    // Finalize loading state
+    setLoading(false);
 
+    // Navigate to sign-in page on success
     if (success) {
-      // After a delay, navigate to the sign-in page
       setTimeout(() => {
-        router.push('/');  // Adjust the path to your sign-in page
+        router.push('/'); // Adjust the path to your sign-in page
       }, 1000);
     }
   }, [success, router]);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

@@ -30,6 +30,10 @@ const SubscriptionPage: React.FC = () => {
     console.log("Retrieved email from URL:", retrievedEmail);
 
     // Set error if username is missing
+    if (retrievedUsername) {
+      localStorage.setItem('username', retrievedUsername);
+      console.log('Username is', retrievedUsername);
+    }
     if (!retrievedUsername) {
       setError('Username is missing. Please go back and sign up again.');
     }
