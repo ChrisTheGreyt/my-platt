@@ -9,7 +9,7 @@ dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const createCheckoutSession = async (req: Request, res: Response) => {
-  const { priceId, email, username, planType, promotionCode } = req.body;
+  const { priceId, email, username, planType, promotionCode, cognitoId } = req.body;
 
   if (!priceId || !email) {
     return res.status(400).json({ error: 'Price ID and email are required.' });
@@ -44,6 +44,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         username: username || '',
         planType: planType,
       },
+      client_reference_id: cognitoId, 
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -58,6 +59,7 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
         username: username || '',
         planType: planType,
       },
+      client_reference_id: cognitoId, 
     });
 
     return res.status(200).json({ sessionId: session.id });

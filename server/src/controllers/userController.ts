@@ -33,6 +33,7 @@ export const updateAfterPayment = async (req: Request, res: Response) => {
   try {
     // Verify the sessionId with Stripe
     const session = await verifyStripeSession(sessionId);
+    console.log('Stripe Session:', session);
     if (!session || session.payment_status !== 'paid') {
       return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
     }

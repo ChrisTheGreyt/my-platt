@@ -125,6 +125,17 @@ const SuccessPage = () => {
       };
       console.log("Payload to be sent:", payload);
 
+      // const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(payload),
+      // });
+
+      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`;
+      console.log("API Request URL:", requestUrl);
+      
       const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
         method: 'POST',
         headers: {
@@ -132,6 +143,8 @@ const SuccessPage = () => {
         },
         body: JSON.stringify(payload),
       });
+      console.log('API Request URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`);
+      
 
       const result = await updateResponse.json();
       console.log("Server Response:", result);

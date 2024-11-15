@@ -31,7 +31,6 @@ router.post("/check-subscription", checkSubscriptionStatus);
 router.post("/webhook", handleStripeWebhook);
 router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
-router.post('/update-after-payment', updateUserAfterPayment);
 router.post('/check-status', checkUserStatus);
 router.post('/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
   const errors = validationResult(req);
