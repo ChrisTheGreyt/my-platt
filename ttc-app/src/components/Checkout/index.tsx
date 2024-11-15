@@ -44,7 +44,7 @@ const CheckoutComponent = () => {
     const result = await stripe.redirectToCheckout({
       sessionId,
     });
-  
+    console.log('Stripe sessionId:', sessionId);
     if (result.error) {
       console.error("Stripe Checkout error:", result.error.message);
     }

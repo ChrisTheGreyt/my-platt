@@ -78,7 +78,8 @@ const SubscriptionPage: React.FC = () => {
       const data = await response.json();
       console.log('Backend response:', data);
   
-      const { sessionId } = data;
+      // const { sessionId } = data;
+      const sessionId = data.sessionId || data.id;
   
       if (!sessionId) {
         setError('An error occurred while creating the checkout session.');
