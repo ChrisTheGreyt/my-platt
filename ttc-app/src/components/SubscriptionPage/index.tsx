@@ -76,6 +76,8 @@ const SubscriptionPage: React.FC = () => {
       });
   
       const data = await response.json();
+      console.log('Backend response:', data);
+  
       const { sessionId } = data;
   
       if (!sessionId) {
@@ -84,15 +86,25 @@ const SubscriptionPage: React.FC = () => {
         return;
       }
   
-      // Redirect to Stripe Checkout
-      await stripe.redirectToCheckout({ sessionId });
+      console.log('Stripe sessionId:', sessionId);
   
-    } catch (error: any) {
-      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      // Redirect to Stripe Checkout
+      const { error } = await stripe.redirectToCheckout({ sessionId });
+  
+      
+      if (error) {
+        console.error('Stripe redirection failed:', error.message);
+        setError(error.message || 'An unexpected error occurred during Stripe redirection.');
+      }
+      
+    } catch (err) {
+      console.error('Unexpected error during subscription:', err);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+  
   
   
 
