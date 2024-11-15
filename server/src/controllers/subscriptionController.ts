@@ -23,28 +23,33 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       },
     ];
 
+    // Ensure the mode logic is correct
     const mode = planType === 'subscription' ? 'subscription' : 'payment';
 
+    // Handle discounts only if promotionCode is provided
+    const discounts = promotionCode ? [{ promotion_code: promotionCode }] : undefined;
 
-    const session = await stripe.checkout.sessions.create({
+    // Log the payload being sent to Stripe
+    console.log({
       payment_method_types: ['card'],
       customer_email: email,
       line_items: lineItems,
-      mode, //planType === 'one-time' ? 'payment' : 'subscription',
-      discounts: promotionCode ? [{ promotion_code: promotionCode }] : undefined,
+      mode,
+      discounts,
       success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&username=${encodeURIComponent(username)}`,
       cancel_url: `${process.env.CLIENT_URL}/subscriptions`,
       metadata: {
         username: username || '',
         planType: planType,
       },
-      
     });
-    console.log({
+
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: email,
       line_items: lineItems,
       mode,
+      discounts,
       success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&username=${encodeURIComponent(username)}`,
       cancel_url: `${process.env.CLIENT_URL}/subscriptions`,
       metadata: {
