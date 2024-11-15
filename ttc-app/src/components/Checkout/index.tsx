@@ -29,7 +29,8 @@ const CheckoutComponent = () => {
     }
 
     // Call your backend (Lambda function) to create the Stripe Checkout session
-    const response = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/create-checkout-session', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-checkout-session`, {
+
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
