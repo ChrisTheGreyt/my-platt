@@ -61,7 +61,7 @@ const SubscriptionPage: React.FC = () => {
   
     try {
       // Call the backend to create a Stripe Checkout session
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/create-checkout-session`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
