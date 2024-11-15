@@ -23,7 +23,8 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       },
     ];
 
-    const mode = planType === 'one-time' ? 'payment' : 'subscription';
+    const mode = planType === 'subscription' ? 'subscription' : 'payment';
+
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -31,6 +32,19 @@ export const createCheckoutSession = async (req: Request, res: Response) => {
       line_items: lineItems,
       mode, //planType === 'one-time' ? 'payment' : 'subscription',
       discounts: promotionCode ? [{ promotion_code: promotionCode }] : undefined,
+      success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&username=${encodeURIComponent(username)}`,
+      cancel_url: `${process.env.CLIENT_URL}/subscriptions`,
+      metadata: {
+        username: username || '',
+        planType: planType,
+      },
+      
+    });
+    console.log({
+      payment_method_types: ['card'],
+      customer_email: email,
+      line_items: lineItems,
+      mode,
       success_url: `${process.env.CLIENT_URL}/success?session_id={CHECKOUT_SESSION_ID}&username=${encodeURIComponent(username)}`,
       cancel_url: `${process.env.CLIENT_URL}/subscriptions`,
       metadata: {

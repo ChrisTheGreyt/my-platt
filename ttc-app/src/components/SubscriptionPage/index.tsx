@@ -143,7 +143,7 @@ const SubscriptionPage: React.FC = () => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'one-time')}
+            onClick={() => handleSubscription('price_1QECH9G8jnQLC5SAWsaBiqiV', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
