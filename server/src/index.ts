@@ -51,7 +51,7 @@ app.use("/search", searchRoutes);
 app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
-app.post('/users/update-after-payment', updateUserAfterPayment); 
+app.post('/update-after-payment', updateUserAfterPayment); 
 // app.use("/upload", uploadRoutes); // Mount the upload routes
 
 app.use('/public', express.static(path.join(__dirname, '../public')));
