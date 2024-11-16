@@ -33,7 +33,6 @@ export const updateAfterPayment = async (req: Request, res: Response) => {
   try {
     // Verify the sessionId with Stripe
     const session = await verifyStripeSession(sessionId);
-    console.log('Stripe Session:', session);
     if (!session || session.payment_status !== 'paid') {
       return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
     }
@@ -282,6 +281,8 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Customer email not found in session.' });
     }
 
+    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with your actual default image URL
+
     let user = await prisma.user.findUnique({ where: { email: customerEmail } });
 
     if (!user) {
@@ -290,7 +291,7 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
           email: customerEmail,
           firstName,
           lastName,
-          profilePictureUrl,
+          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
           subscriptionStatus: 'active',
           username,
         },
@@ -301,7 +302,7 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
         data: {
           firstName,
           lastName,
-          profilePictureUrl,
+          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
           subscriptionStatus: 'active',
         },
       });
@@ -313,6 +314,7 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
 
 export const checkUserStatus = async (req: Request, res: Response) => {
   const { email } = req.body;

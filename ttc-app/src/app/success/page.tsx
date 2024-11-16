@@ -121,7 +121,7 @@ const SuccessPage = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         username: formData.username,
-        // profilePictureUrl: uploadedImageUrl,
+        profilePictureUrl: formData.profilePictureUrl || '',
       };
       console.log("Payload to be sent:", payload);
 
