@@ -94,77 +94,63 @@ const SuccessPage = () => {
   
     setIsSubmitting(true);
   
-    try {
-      let uploadedImageUrl = formData.profilePictureUrl;
 
-      if (selectedFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', selectedFile);
+      // let uploadedImageUrl = formData.profilePictureUrl;
 
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload`, {
-          method: 'POST',
-          body: uploadFormData,
-        });
+      // if (selectedFile) {
+      //   const uploadFormData = new FormData();
+      //   uploadFormData.append('file', selectedFile);
 
-        const uploadData = await uploadResponse.json();
-        if (uploadData.success) {
-          uploadedImageUrl = uploadData.filePath;
-        } else {
-          setError(uploadData.error || 'Failed to upload image.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      //   const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload`, {
+      //     method: 'POST',
+      //     body: uploadFormData,
+      //   });
+
+      //   const uploadData = await uploadResponse.json();
+      //   if (uploadData.success) {
+      //     uploadedImageUrl = uploadData.filePath;
+      //   } else {
+      //     setError(uploadData.error || 'Failed to upload image.');
+      //     setIsSubmitting(false);
+      //     return;
+      //   }
+      // }
 
       const payload = {
         sessionId,
         firstName: formData.firstName,
         lastName: formData.lastName,
         username: formData.username,
-        profilePictureUrl: uploadedImageUrl,
+        // profilePictureUrl: uploadedImageUrl,
       };
       console.log("Payload to be sent:", payload);
 
-      // const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(payload),
-      // });
+  
 
       const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`;
       console.log("API Request URL:", requestUrl);
       
-      const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      console.log('API Request URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`);
-      
-
-      const result = await updateResponse.json();
-      console.log("Server Response:", result);
-
-      if (result.success) {
-        setSuccess(true);
-      } else {
-        setError(result.error || 'Failed to update user information.');
+      try {
+        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+    
+        const result = await updateResponse.json();
+        console.log("Server Response:", result);
+    
+        if (result.success) {
+          setSuccess(true);
+        } else {
+          setError(result.error || 'Failed to update user information.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setError('An error occurred while updating your information.');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setError('An error occurred while updating your information.');
-    } finally {
-      setIsSubmitting(false);
-      setLoading(false);
-    }
-
-    if(success){
-      setSuccess(true);
-    }
   };
 
   if (loading) return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
