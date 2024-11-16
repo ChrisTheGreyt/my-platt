@@ -24,10 +24,10 @@ if (!process.env.STRIPE_SECRET_KEY) {
 
 
 export const updateAfterPayment = async (req: Request, res: Response) => {
-  const { sessionId, firstName, lastName, profilePictureUrl } = req.body;
+  const { sessionId, firstName, lastName, profilePictureUrl, username } = req.body;
 
-  if (!sessionId || !firstName || !lastName) {
-    return res.status(400).json({ success: false, error: 'Missing required fields.' });
+  if (!sessionId || !firstName || !lastName || !username) {
+    return res.status(400).json({ success: false, error: 'Session ID, first name, last name, and username are required.' });
   }
 
   try {
@@ -37,53 +37,54 @@ export const updateAfterPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
     }
 
-    // Extract user information from the session, e.g., Cognito ID
-    // Assuming you stored Cognito ID in metadata or client_reference_id during Stripe checkout
-    const cognitoId = session.client_reference_id;
-
-    if (!cognitoId) {
-      return res.status(400).json({ success: false, error: 'Cognito ID not found in session.' });
+    // Get the customer email from the Stripe session
+    const customerEmail = session.customer_details?.email;
+    if (!customerEmail) {
+      return res.status(400).json({ success: false, error: 'Customer email not found in session.' });
     }
 
-    // Check if user exists
+    // Default profile picture if none provided
+    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg';
+    const finalProfilePictureUrl = profilePictureUrl || defaultProfilePictureUrl;
+
+    // Check if the user already exists in the database
     let user = await prisma.user.findUnique({
-      where: { cognitoId: cognitoId },
+      where: { email: customerEmail },
     });
 
     if (user) {
       // Update existing user
       user = await prisma.user.update({
-        where: { cognitoId: cognitoId },
+        where: { email: customerEmail },
         data: {
           firstName,
           lastName,
-          profilePictureUrl,
+          profilePictureUrl: finalProfilePictureUrl,
           subscriptionStatus: 'active',
+          username,
         },
       });
     } else {
       // Create new user
       user = await prisma.user.create({
         data: {
-          cognitoId,
+          email: customerEmail,
           firstName,
           lastName,
-          profilePictureUrl,
+          profilePictureUrl: finalProfilePictureUrl,
           subscriptionStatus: 'active',
-          // You might need to set other required fields like username and email
-          // These should be passed from the frontend or extracted from Cognito
-          username: `user_${cognitoId}`, // Example username generation
-          email: `${cognitoId}@example.com`, // Replace with actual email extraction
+          username,
         },
       });
     }
 
     res.status(200).json({ success: true, user });
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('Error updating user after payment:', error);
     res.status(500).json({ success: false, error: 'Internal server error.' });
   }
 };
+
 
 export const checkSubscriptionStatus = async (req: Request, res: Response) => {
   const { email } = req.body;
