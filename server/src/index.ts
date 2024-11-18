@@ -63,7 +63,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Start the Server
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 8000;
 app.listen(port, "0.0.0.0", () => {
     console.log(`Server running on port ${port}`);
 });
