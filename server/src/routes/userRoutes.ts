@@ -4,6 +4,7 @@ import { Router, Request, Response } from "express";
 import { 
   getUser, 
   getUsers, 
+  createUser,
   checkSubscriptionStatus, 
   handleStripeWebhook, 
   fetchSessionData, 
@@ -38,6 +39,7 @@ router.post("/check-subscription", checkSubscriptionStatus);
 router.post("/webhook", handleStripeWebhook);
 router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
+router.post('/create-user', createUser);
 router.post('/check-status', checkUserStatus);
 router.post('/users/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
   const errors = validationResult(req);

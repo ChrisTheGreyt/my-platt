@@ -1,78 +1,93 @@
 'use client';
+import React, { useState } from "react";
 
-import React, { useState } from 'react';
-import { useUpdateAfterPaymentMutation } from '../state/api'; // Adjust the path as needed
+const TestPage: React.FC = () => {
+  const [cognitoId, setCognitoId] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [response, setResponse] = useState("");
 
-const TestUpdateAfterPayment = () => {
-  const [updateAfterPayment] = useUpdateAfterPaymentMutation();
-  const [response, setResponse] = useState('');
-  const [formData, setFormData] = useState({
-    sessionId: 'test_session_id',
-    firstName: 'Chris',
-    lastName: 'Grey',
-    username: 'Aponex',
-    profilePictureUrl: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     try {
-      const result = await updateAfterPayment(formData).unwrap();
-      setResponse(`Success: ${JSON.stringify(result)}`);
-    } catch (error: any) {
-      console.error('Error:', error);
-      setResponse(`Error: ${error?.data?.message || 'Unknown error'}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const endpoint = `${apiUrl}/api/users/create-user`;
+
+      const body = JSON.stringify({
+        cognitoId,
+        username,
+        email,
+      });
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        setResponse(`Error: ${res.status} ${errorText}`);
+        return;
+      }
+
+      const data = await res.json();
+      setResponse(JSON.stringify(data, null, 2));
+    } catch (error) {
+      setResponse(`Error: ${error}`);
     }
   };
 
   return (
-    <div>
-      <h1>Test Update After Payment</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Session ID:</label>
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <h1>Create User Test</h1>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          Cognito ID:
           <input
             type="text"
-            value={formData.sessionId}
-            onChange={(e) => setFormData({ ...formData, sessionId: e.target.value })}
+            value={cognitoId}
+            onChange={(e) => setCognitoId(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
           />
-        </div>
-        <div>
-          <label>First Name:</label>
+        </label>
+      </div>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          Username:
           <input
             type="text"
-            value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
           />
-        </div>
-        <div>
-          <label>Last Name:</label>
+        </label>
+      </div>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          Email:
           <input
-            type="text"
-            value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
           />
-        </div>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Profile Picture URL:</label>
-          <input
-            type="text"
-            value={formData.profilePictureUrl}
-            onChange={(e) => setFormData({ ...formData, profilePictureUrl: e.target.value })}
-          />
-        </div>
-        <button type="submit">Submit</button>
-      </form>
-      <div>
+        </label>
+      </div>
+      <button
+        onClick={handleSubmit}
+        style={{
+          backgroundColor: "#007bff",
+          color: "white",
+          padding: "10px 15px",
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Create User
+      </button>
+      <div style={{ marginTop: "20px", whiteSpace: "pre-wrap" }}>
         <h2>Response:</h2>
         <pre>{response}</pre>
       </div>
@@ -80,4 +95,4 @@ const TestUpdateAfterPayment = () => {
   );
 };
 
-export default TestUpdateAfterPayment;
+export default TestPage;
