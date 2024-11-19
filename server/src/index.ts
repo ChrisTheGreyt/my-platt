@@ -28,9 +28,12 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  origin: process.env.CLIENT_URL,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  credentials: true,
+  // origin: process.env.CLIENT_URL,
+  // methods: ['GET', 'POST', 'OPTIONS'],
+  // credentials: true,
+  origin: '*', // Allow all origins (adjust for production)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Logging middleware to log all incoming requests
@@ -69,6 +72,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled Error:', err);
   res.status(500).json({ success: false, error: 'An unexpected error occurred.' });
 });
+
 
 // Start the Server
 const port = Number(process.env.PORT) || 8000;
