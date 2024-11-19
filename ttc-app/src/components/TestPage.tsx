@@ -1,39 +1,34 @@
 'use client';
 import React, { useState } from "react";
+import { useCreateFreshUserMutation } from "../state/api";
 
 const TestPage: React.FC = () => {
   const [cognitoId, setCognitoId] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [response, setResponse] = useState("");
+
+  // Use the mutation hook from your Redux Toolkit setup
+  const [createFreshUser] = useCreateFreshUserMutation();
 
   const handleSubmit = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      const endpoint = `${apiUrl}/api/users/create-user`;
-
-      const body = JSON.stringify({
+      // Call the mutation with form data
+      const result = await createFreshUser({
         cognitoId,
         username,
         email,
+        firstName,
+        lastName,
       });
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body,
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        setResponse(`Error: ${res.status} ${errorText}`);
-        return;
+      if ("error" in result) {
+        setResponse(`Error: ${JSON.stringify(result.error, null, 2)}`);
+      } else {
+        setResponse(JSON.stringify(result.data, null, 2));
       }
-
-      const data = await res.json();
-      setResponse(JSON.stringify(data, null, 2));
     } catch (error) {
       setResponse(`Error: ${error}`);
     }
@@ -71,6 +66,28 @@ const TestPage: React.FC = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
+          />
+        </label>
+      </div>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          First Name:
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            style={{ marginLeft: "10px", padding: "5px" }}
+          />
+        </label>
+      </div>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          Last Name:
+          <input
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
             style={{ marginLeft: "10px", padding: "5px" }}
           />
         </label>

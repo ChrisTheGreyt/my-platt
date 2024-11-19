@@ -209,6 +209,14 @@ export const api = createApi({
             }),
             invalidatesTags: ["Users"],
         }),
+        createFreshUser: build.mutation<User, Partial<User>>({
+            query: (user) => ({
+              url: "/api/create-user",
+              method: "POST",
+              body: user,
+            }),
+          }),
+          
         updateAfterPayment: build.mutation<
             { success: boolean; user: User },
             { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
@@ -220,6 +228,7 @@ export const api = createApi({
             }),
             invalidatesTags: ["Users"],
             }),
+            
 
     }),
 });
@@ -239,5 +248,6 @@ export const {
     useGetAuthUserQuery,
     useLogPaymentMutation,
     useUpdateUserStatusMutation,
+    useCreateFreshUserMutation,
     useUpdateAfterPaymentMutation,
 } = api;
