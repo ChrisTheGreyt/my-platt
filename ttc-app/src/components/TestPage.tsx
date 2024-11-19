@@ -15,24 +15,41 @@ const TestPage: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
-      // Call the mutation with form data
-      const result = await createFreshUser({
+      // Replace this with your actual base URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  
+      // Ensure the endpoint matches your backend route
+      const endpoint = `${apiUrl}/users/create-user`;
+  
+      const body = JSON.stringify({
         cognitoId,
         username,
         email,
-        firstName,
-        lastName,
+        firstName: "Test", // Add additional fields if required
+        lastName: "User",
       });
-
-      if ("error" in result) {
-        setResponse(`Error: ${JSON.stringify(result.error, null, 2)}`);
-      } else {
-        setResponse(JSON.stringify(result.data, null, 2));
+  
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body,
+      });
+  
+      if (!res.ok) {
+        const errorText = await res.text();
+        setResponse(`Error: ${res.status} ${errorText}`);
+        return;
       }
+  
+      const data = await res.json();
+      setResponse(JSON.stringify(data, null, 2));
     } catch (error) {
       setResponse(`Error: ${error}`);
     }
   };
+  
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>

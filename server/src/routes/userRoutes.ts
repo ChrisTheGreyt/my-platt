@@ -49,6 +49,7 @@ router.post('/users/update-after-payment', validateUpdateAfterPayment, (req: Req
   }
   updateAfterPayment(req, res);
 });
-router.post("/api/create-user", createFreshUser);
+router.post("/api/users/create-user", createUser);
+
 
 export default router;
