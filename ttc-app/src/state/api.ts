@@ -209,6 +209,18 @@ export const api = createApi({
             }),
             invalidatesTags: ["Users"],
         }),
+        updateAfterPayment: build.mutation<
+            { success: boolean; user: User },
+            { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
+            >({
+            query: (data) => ({
+                url: 'users/update-after-payment',
+                method: 'POST',
+                body: data,
+            }),
+            invalidatesTags: ["Users"],
+            }),
+
     }),
 });
 
@@ -227,4 +239,5 @@ export const {
     useGetAuthUserQuery,
     useLogPaymentMutation,
     useUpdateUserStatusMutation,
+    useUpdateAfterPaymentMutation,
 } = api;

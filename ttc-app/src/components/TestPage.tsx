@@ -1,106 +1,83 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useUpdateAfterPaymentMutation } from '../state/api'; // Adjust the path as needed
 
-const TestPage = () => {
+const TestUpdateAfterPayment = () => {
+  const [updateAfterPayment] = useUpdateAfterPaymentMutation();
+  const [response, setResponse] = useState('');
   const [formData, setFormData] = useState({
-    sessionId: '',
-    firstName: '',
-    lastName: '',
-    username: '',
+    sessionId: 'test_session_id',
+    firstName: 'Chris',
+    lastName: 'Grey',
+    username: 'Aponex',
     profilePictureUrl: '',
   });
-  const [response, setResponse] = useState('');
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const res = await fetch('/api/users/update-after-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setResponse(`Success: ${JSON.stringify(data)}`);
-      } else {
-        setResponse(`Error: ${data.message || 'Unknown error'}`);
-      }
-    } catch (error: any ) {
-      console.error('Error submitting form:', error);
-      setResponse(`Error: ${error.message}`);
+      const result = await updateAfterPayment(formData).unwrap();
+      setResponse(`Success: ${JSON.stringify(result)}`);
+    } catch (error: any) {
+      console.error('Error:', error);
+      setResponse(`Error: ${error?.data?.message || 'Unknown error'}`);
     }
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Test User Creation</h1>
+    <div>
+      <h1>Test Update After Payment</h1>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Session ID:</label>
           <input
             type="text"
-            name="sessionId"
             value={formData.sessionId}
-            onChange={handleInputChange}
-            required
+            onChange={(e) => setFormData({ ...formData, sessionId: e.target.value })}
           />
         </div>
         <div>
           <label>First Name:</label>
           <input
             type="text"
-            name="firstName"
             value={formData.firstName}
-            onChange={handleInputChange}
-            required
+            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
           />
         </div>
         <div>
           <label>Last Name:</label>
           <input
             type="text"
-            name="lastName"
             value={formData.lastName}
-            onChange={handleInputChange}
-            required
+            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
           />
         </div>
         <div>
           <label>Username:</label>
           <input
             type="text"
-            name="username"
             value={formData.username}
-            onChange={handleInputChange}
-            required
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
           />
         </div>
         <div>
           <label>Profile Picture URL:</label>
           <input
             type="text"
-            name="profilePictureUrl"
             value={formData.profilePictureUrl}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({ ...formData, profilePictureUrl: e.target.value })}
           />
         </div>
         <button type="submit">Submit</button>
       </form>
-      <div style={{ marginTop: '1rem' }}>
-        <strong>Response:</strong> {response}
+      <div>
+        <h2>Response:</h2>
+        <pre>{response}</pre>
       </div>
     </div>
   );
 };
 
-export default TestPage;
+export default TestUpdateAfterPayment;
