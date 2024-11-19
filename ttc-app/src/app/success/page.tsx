@@ -127,11 +127,11 @@ const SuccessPage = () => {
 
   
 
-      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/update-after-payment`;
+      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`;
       console.log("API Request URL:", requestUrl);
       
       try {
-        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/update-after-payment`, {
+        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
