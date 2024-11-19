@@ -51,6 +51,7 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello, World!');
 });
 
+app.use("/", userRoutes); //FOR TESTING PURPOSES ONLY!!
 app.use("/projects", projectRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/search", searchRoutes);

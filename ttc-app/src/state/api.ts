@@ -85,6 +85,18 @@ export interface Project {
     endDate?: string;
     school: string;
 }
+
+export interface User {
+    userId?: number;
+    username: string;
+    email: string;
+    profilePictureUrl?: string;
+    cognitoId?: string;
+    teamId?: number;
+    subscriptionStatus?: string;
+    firstName?: string; // Added
+    lastName?: string;  // Added
+}
 export const api = createApi({
     baseQuery: fetchBaseQuery({ 
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -211,12 +223,12 @@ export const api = createApi({
         }),
         createFreshUser: build.mutation<User, Partial<User>>({
             query: (user) => ({
-              url: "/api/create-user",
-              method: "POST",
-              body: user,
+                url: "/api/users/create-user",
+                method: "POST",
+                body: user,
             }),
-          }),
-          
+            invalidatesTags: ["Users"],
+        }),                
         updateAfterPayment: build.mutation<
             { success: boolean; user: User },
             { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
