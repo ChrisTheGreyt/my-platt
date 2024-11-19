@@ -1,54 +1,103 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 
-const TestPage: React.FC = () => {
-  const [response, setResponse] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+const TestPage = () => {
+  const [formData, setFormData] = useState({
+    sessionId: '',
+    firstName: '',
+    lastName: '',
+    username: '',
+    profilePictureUrl: '',
+  });
+  const [response, setResponse] = useState('');
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-      sessionId: 'test_session_id',
-      firstName: 'Chris',
-      lastName: 'Grey',
-      username: 'Aponex',
-      profilePictureUrl: ''
-    };
-
     try {
-      const res = await fetch('https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod/users/update-after-payment', {
+      const res = await fetch('/api/users/update-after-payment', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(formData),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        setError(`Error: ${res.status} - ${JSON.stringify(errorData)}`);
+      const data = await res.json();
+      if (res.ok) {
+        setResponse(`Success: ${JSON.stringify(data)}`);
       } else {
-        const data = await res.json();
-        setResponse(JSON.stringify(data));
+        setResponse(`Error: ${data.message || 'Unknown error'}`);
       }
-    } catch (err: any) {
-      setError(`Request failed: ${err.message}`);
+    } catch (error: any ) {
+      console.error('Error submitting form:', error);
+      setResponse(`Error: ${error.message}`);
     }
   };
 
   return (
-    <div>
-      <h1>Test Update After Payment</h1>
+    <div style={{ padding: '2rem' }}>
+      <h1>Test User Creation</h1>
       <form onSubmit={handleSubmit}>
-        <button type="submit">Send Test Request</button>
+        <div>
+          <label>Session ID:</label>
+          <input
+            type="text"
+            name="sessionId"
+            value={formData.sessionId}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div>
+          <label>First Name:</label>
+          <input
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div>
+          <label>Last Name:</label>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div>
+          <label>Username:</label>
+          <input
+            type="text"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+        <div>
+          <label>Profile Picture URL:</label>
+          <input
+            type="text"
+            name="profilePictureUrl"
+            value={formData.profilePictureUrl}
+            onChange={handleInputChange}
+          />
+        </div>
+        <button type="submit">Submit</button>
       </form>
-      <div>
-        <h3>Response:</h3>
-        <pre>{response || 'No response yet'}</pre>
-        <h3>Error:</h3>
-        <pre>{error || 'No errors yet'}</pre>
+      <div style={{ marginTop: '1rem' }}>
+        <strong>Response:</strong> {response}
       </div>
     </div>
   );

@@ -342,8 +342,36 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 //   }
 // };
 
-
 export const updateUserAfterPayment = async (req: Request, res: Response) => {
+  try {
+    const { sessionId, firstName, lastName, username, profilePictureUrl } = req.body;
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const customerEmail = session.customer_details?.email;
+    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg';
+    if (!sessionId || !firstName || !lastName || !username) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email: customerEmail,
+        cognitoId: sessionId,
+        firstName,
+        lastName,
+        profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+        subscriptionStatus: 'active',
+        username,
+      },
+    });
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const updateUserAfterPayment__ = async (req: Request, res: Response) => {
   const { sessionId, firstName, lastName, profilePictureUrl, username } = req.body;
 
   if (!sessionId || !firstName || !lastName || !username) {
@@ -366,6 +394,7 @@ export const updateUserAfterPayment = async (req: Request, res: Response) => {
       user = await prisma.user.create({
         data: {
           email: customerEmail,
+          cognitoId: sessionId,
           firstName,
           lastName,
           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
