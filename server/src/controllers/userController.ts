@@ -216,31 +216,36 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// export const postUser = async (req: Request, res: Response) => {
-//   try {
-//     const {
-//       username,
-//       cognitoId,
-//       email,
-//       profilePictureUrl = "i1.jpg",
-//       teamId = 1,
-//     } = req.body;
-//     const newUser = await prisma.user.create({
-//       data: {
-//         username,
-//         cognitoId,
-//         email,
-//         profilePictureUrl,
-//         teamId,
-//       },
-//     });
-//     res.json({ message: "User Created Successfully", newUser });
-//   } catch (error: any) {
-//     res
-//       .status(500)
-//       .json({ message: `Error retrieving users: ${error.message}` });
-//   }
-// };
+export const postUser = async (req: Request, res: Response) =>{
+
+  try{ 
+    const {
+      firstName,
+      lastName,
+      email,
+      username,
+      cognitoId,
+      profilePictureUrl = "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+      teamId = 1,
+    } = req.body;
+    const newUser = await prisma.user.create({
+      data:{
+        firstName,
+        lastName,
+        email,
+        username,
+        cognitoId,
+        profilePictureUrl,
+        teamId,
+      },
+    });
+    res.json({ mesage: "User Created Successfully", newUser});
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ message: `Error retrieving users: ${error.message}` });
+  }
+};
 
 export const handleStripeWebhook = async (req: Request, res: Response) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;

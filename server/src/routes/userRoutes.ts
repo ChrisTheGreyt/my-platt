@@ -12,7 +12,8 @@ import {
   updateAfterPayment,
   updateUserAfterPayment,
   createFreshUser,
-  checkUserStatus
+  checkUserStatus,
+  postUser
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -36,6 +37,7 @@ const validateUpdateAfterPayment = [
 // Route Definitions
 router.get("/", getUsers);
 router.get("/:cognitoId", getUser);
+router.post("/", postUser)
 router.post("/check-subscription", checkSubscriptionStatus);
 router.post("/webhook", handleStripeWebhook);
 router.get("/fetch-session", fetchSessionData);
