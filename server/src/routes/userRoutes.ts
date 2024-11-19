@@ -39,7 +39,7 @@ router.post("/webhook", handleStripeWebhook);
 router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
 router.post('/check-status', checkUserStatus);
-router.post('/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
+router.post('/users/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ success: false, errors: errors.array() });

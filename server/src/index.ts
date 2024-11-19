@@ -57,7 +57,7 @@ app.use("/search", searchRoutes);
 app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
-app.post('/update-after-payment', (req, res) => {
+app.post('/users/update-after-payment', (req, res) => {
   console.log('POST /users/update-after-payment hit');
   console.log('Request Body:', req.body);
   res.json({ success: true, message: 'Request received successfully', data: req.body });
