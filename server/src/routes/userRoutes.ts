@@ -11,6 +11,7 @@ import {
   updateUserStatus, 
   updateAfterPayment,
   updateUserAfterPayment,
+  createFreshUser,
   checkUserStatus
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
@@ -48,5 +49,6 @@ router.post('/users/update-after-payment', validateUpdateAfterPayment, (req: Req
   }
   updateAfterPayment(req, res);
 });
+router.post("/api/create-user", createFreshUser);
 
 export default router;

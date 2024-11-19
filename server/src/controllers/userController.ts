@@ -315,32 +315,40 @@ export const updateUserStatus = async (req: Request, res: Response) => {
   }
 };
 
-// export const createUser = async (req: Request, res: Response) => {
-//   const { cognitoId, username, email } = req.body;
+export const createUser = async (req: Request, res: Response) => {
+  const { cognitoId, username, email, firstName, lastName } = req.body;
 
-//   try {
-//     // Use Prisma to insert the user into the database
-//     const newUser = await prisma.user.create({
-//       data: {
-//         cognitoId,
-//         username,
-//         email,
-//       },
-//     });
+  try {
+    // Validate required fields
+    if (!cognitoId || !username || !email || !firstName || !lastName) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
 
-//     // Send back success response
-//     res.status(201).json({
-//       message: 'User created successfully.',
-//       user: newUser,
-//     });
-//   } catch (error: any) {
-//     console.error('Error creating user:', error);
-//     res.status(500).json({
-//       message: 'An error occurred while creating the user in the database.',
-//       error: error.message,
-//     });
-//   }
-// };
+    // Use Prisma to insert the user into the database
+    const newUser = await prisma.user.create({
+      data: {
+        cognitoId,
+        username,
+        email,
+        firstName,
+        lastName,
+      },
+    });
+
+    // Send back success response
+    res.status(201).json({
+      message: 'User created successfully.',
+      user: newUser,
+    });
+  } catch (error: any) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      message: 'An error occurred while creating the user in the database.',
+      error: error.message,
+    });
+  }
+};
+
 
 export const updateUserAfterPayment = async (req: Request, res: Response) => {
   try {
@@ -439,5 +447,35 @@ export const checkUserStatus = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error checking subscription status:', error);
     return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const createFreshUser = async (req: Request, res: Response) => {
+  try {
+    const { cognitoId, username, email, firstName, lastName } = req.body;
+
+    // Validate required fields
+    if (!cognitoId || !username || !email || !firstName || !lastName) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // Create the user in the database
+    const newUser = await prisma.user.create({
+      data: {
+        cognitoId,
+        username,
+        email,
+        firstName,
+        lastName,
+      },
+    });
+
+    return res.status(201).json({
+      message: "User created successfully.",
+      user: newUser,
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };

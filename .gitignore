@@ -8,3 +8,4 @@ ttc-app/.next/
 stripeLambdaFunction/.env
 stripeLambdaFunction/function.zip
 stripe/
+my_key-pair.pem
