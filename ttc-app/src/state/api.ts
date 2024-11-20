@@ -228,10 +228,24 @@ export const api = createApi({
                 body: user,
             }),
             invalidatesTags: ["Users"],
-        }),                
+        }),
+        createUser: build.mutation<void, {
+            cognitoId: string;
+            username: string;
+            email: string;
+            firstName: string;
+            lastName: string;
+          }>({
+            query: (data) => ({
+              url: "users/create-user",
+              method: "POST",
+              body: data,
+            }),
+            invalidatesTags: ["Users"], // Optional
+          }),                
         updateAfterPayment: build.mutation<
-            { success: boolean; user: User },
-            { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
+                { success: boolean; user: User }, 
+                { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
             >({
             query: (data) => ({
                 url: 'users/update-after-payment',
@@ -261,5 +275,6 @@ export const {
     useLogPaymentMutation,
     useUpdateUserStatusMutation,
     useCreateFreshUserMutation,
+    useCreateUserMutation,
     useUpdateAfterPaymentMutation,
 } = api;

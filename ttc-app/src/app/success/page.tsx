@@ -1,211 +1,119 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCreateUserMutation } from "@/state/api";
 
 const SuccessPage = () => {
+  const [createUser, { isLoading }] = useCreateUserMutation();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    profilePictureUrl: '',
+    firstName: "",
+    lastName: "",
+    username: "",
+    profilePictureUrl: "",
   });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const sessionIdFromURL = queryParams.get('session_id');
-    const usernameFromURL = queryParams.get('username');
+    const sessionIdFromURL = queryParams.get("session_id");
+    const usernameFromURL = queryParams.get("username");
 
-    // Check if username is available in URL or localStorage
-    const storedUsername = localStorage.getItem('username');
-    const finalUsername = usernameFromURL || storedUsername || '';
+    const storedUsername = localStorage.getItem("username");
+    const finalUsername = usernameFromURL || storedUsername || "";
 
     setFormData((prev) => ({
       ...prev,
-      username: finalUsername, // Use finalUsername (from URL or fallback to localStorage)
+      username: finalUsername,
     }));
 
-    // Handle missing username
     if (!finalUsername) {
-      setError('Username is missing. Please try registering again.');
+      setError("Username is missing. Please try registering again.");
       setLoading(false);
       return;
     }
 
-    // Handle session ID
     if (sessionIdFromURL) {
       setSessionId(sessionIdFromURL);
     } else {
-      setError('Invalid session. Please try registering again.');
+      setError("Invalid session. Please try registering again.");
       setLoading(false);
       return;
     }
 
-    // Finalize loading state
     setLoading(false);
 
-    // Navigate to sign-in page on success
     if (success) {
       setTimeout(() => {
-        router.push('/'); // Adjust the path to your sign-in page
+        router.push("/");
       }, 1000);
     }
   }, [success, router]);
-
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
-  
-    console.log("Form Data - First Name:", formData.firstName);
-    console.log("Form Data - Last Name:", formData.lastName);
-    console.log("Form Data - Username:", formData.username);
 
     if (!formData.firstName || !formData.lastName || !formData.username) {
-      setError('First name, last name, and username are required.');
+      setError("First name, last name, and username are required.");
       return;
     }
-  
+
     if (!sessionId) {
-      setError('Session ID is missing.');
+      setError("Session ID is missing.");
       return;
     }
-  
+
     setIsSubmitting(true);
-  
 
-      // let uploadedImageUrl = formData.profilePictureUrl;
+    const payload = {
+      cognitoId: sessionId, // Assuming sessionId is used as Cognito ID
+      username: formData.username,
+      email: `${formData.username}@example.com`,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      profilePictureUrl: formData.profilePictureUrl || "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+    };
 
-      // if (selectedFile) {
-      //   const uploadFormData = new FormData();
-      //   uploadFormData.append('file', selectedFile);
-
-      //   const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/upload`, {
-      //     method: 'POST',
-      //     body: uploadFormData,
-      //   });
-
-      //   const uploadData = await uploadResponse.json();
-      //   if (uploadData.success) {
-      //     uploadedImageUrl = uploadData.filePath;
-      //   } else {
-      //     setError(uploadData.error || 'Failed to upload image.');
-      //     setIsSubmitting(false);
-      //     return;
-      //   }
-      // }
-
-      const payload_ = { //old payload info
-        sessionId,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        username: formData.username,
-        profilePictureUrl: formData.profilePictureUrl || '',
-      };
-
-      const payload = {
-        cognitoId: sessionId, // Assuming the sessionId corresponds to the Cognito ID
-        username: formData.username,
-        email: `${formData.username}@example.com`, // Default email if not provided
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        profilePictureUrl: formData.profilePictureUrl || "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
-      };
+    try {
       console.log("Payload to be sent:", payload);
-
-  
-
-      // const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`; //Old method
-      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`;
-
-      console.log("API Request URL:", requestUrl);
-      
-      try {
-        const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`;
-        const response = await fetch(requestUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionId}`, // Authorization  required for access to DB
-          },
-          body: JSON.stringify(payload),
-        });
-    
-        const result = await response.json();
-        if (response.ok) {
-          console.log('User created:', result);
-          setSuccess(true);
-        } else {
-          console.error('Error:', result);
-          setError(result.message || 'An error occurred.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        setError('An error occurred while updating your information.');
-      } finally {
-        setIsSubmitting(false);
-      }
+      await createUser(payload).unwrap();
+      setSuccess(true);
+      console.log("User successfully created");
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      setError("Failed to create user. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
+  }
 
   return (
     <div>
       {success ? (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
-          <div className="flex justify-center mb-4">
-            <svg
-              className="animate-spin h-8 w-8 text-green-500"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v8h8a8 8 0 11-16 0z"
-              ></path>
-            </svg>
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-bold text-green-600 mb-2">Profile Updated!</h2>
+            <p className="text-gray-700 mb-6">
+              Thank you for updating your profile. You will be redirected to the sign-in page in a few seconds.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-green-600 mb-2">Profile Updated!</h2>
-          <p className="text-gray-700 mb-6">
-            Thank you for updating your profile. You will be redirected to the sign-in page in a few seconds.
-          </p>
-          <p className="text-sm text-gray-500 italic">
-            If you are not redirected automatically, <a href="/sign-in" className="text-blue-500 underline">click here</a>.
-          </p>
         </div>
-      </div>
       ) : (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
           <div className="max-w-lg w-full bg-white shadow-lg rounded-lg p-8">
@@ -213,11 +121,12 @@ const SuccessPage = () => {
             <p className="text-center text-gray-700 mb-6">Thank you for your subscription. Please complete your profile.</p>
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-            {success && <p className="text-green-500 text-center mb-4">Your profile has been updated successfully!</p>}
 
             <form onSubmit={handleFormSubmit}>
               <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2" htmlFor="firstName">First Name:</label>
+                <label htmlFor="firstName" className="block text-gray-700 font-medium mb-2">
+                  First Name:
+                </label>
                 <input
                   type="text"
                   name="firstName"
@@ -229,7 +138,9 @@ const SuccessPage = () => {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2" htmlFor="lastName">Last Name:</label>
+                <label htmlFor="lastName" className="block text-gray-700 font-medium mb-2">
+                  Last Name:
+                </label>
                 <input
                   type="text"
                   name="lastName"
@@ -240,32 +151,27 @@ const SuccessPage = () => {
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
-              {/* <div className="mb-4">
-                <label className="block text-gray-700 font-medium mb-2">Profile Picture:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full mb-2"
-                />
-                <p className="text-sm text-gray-500">or enter an image URL below:</p>
+              <div className="mb-4">
+                <label htmlFor="profilePictureUrl" className="block text-gray-700 font-medium mb-2">
+                  Profile Picture URL:
+                </label>
                 <input
                   type="text"
                   name="profilePictureUrl"
+                  id="profilePictureUrl"
                   value={formData.profilePictureUrl}
                   onChange={handleInputChange}
-                  placeholder="Enter image URL"
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-              </div> */}
+              </div>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isLoading}
                 className={`w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition duration-200 ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
-                {isSubmitting ? 'Updating...' : 'Update Profile'}
+                {isSubmitting ? "Updating..." : "Update Profile"}
               </button>
             </form>
           </div>
