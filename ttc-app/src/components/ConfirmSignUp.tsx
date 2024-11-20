@@ -1,163 +1,138 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Auth } from 'aws-amplify';
-import { useAuth } from '../context/AuthContext';
-import { useRouter } from 'next/navigation';
+import React, { useState } from "react";
+import { Auth } from "aws-amplify";
 
-const ConfirmSignUp: React.FC = () => {
-  const { user, setIsConfirmed } = useAuth();
-  const router = useRouter();
-  const [username, setUsername] = useState<string | null>(null);
-  const [code, setCode] = useState('');
+const LoginPage: React.FC = () => {
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [success, setSuccess] = useState<string | null>(null);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [success, setSuccess] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Retrieve the username from localStorage when the component mounts
-    const storedUsername = localStorage.getItem('signUpUsername');
-    console.log("Retrieved username from localStorage:", storedUsername);
-    if (storedUsername) {
-      setUsername(storedUsername);
-    } else {
-      setError('Username is missing. Please go back and sign up again.');
-    }
-  }, []);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const handleConfirmSignUp = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
+    setSuccess(false);
+    setIsSubmitting(true);
 
     try {
-      if (!username) {
-        setError('Username is missing. Please go back and sign up again.');
-        setLoading(false);
-        return;
-      }
+      // Log in the user with Cognito
+      const user = await Auth.signIn(formData.username, formData.password);
+      console.log("User logged in successfully:", user);
 
-      // Confirm the sign-up with Cognito
-      await Auth.confirmSignUp(username, code);
-      console.log('User confirmed successfully');
+      // Retrieve the JWT token
+      const jwtToken = user.signInUserSession.accessToken.jwtToken;
+      console.log("JWT Token:", jwtToken);
 
-      // Retrieve the email from localStorage
-      const email = localStorage.getItem('signUpEmail');
-      console.log("Retrieved email from localStorage:", email);
+      // Store the JWT token for further API calls
+      localStorage.setItem("jwtToken", jwtToken);
 
-      // Redirect to the subscription page with email and username
-      if (email) {
-        router.push(`/subscriptions?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`);
+      // Update the database with the user information
+      const payload = {
+        cognitoId: user.attributes.sub,
+        username: formData.username,
+        email: user.attributes.email,
+        firstName: user.attributes.given_name || "DefaultFirstName",
+        lastName: user.attributes.family_name || "DefaultLastName",
+        profilePictureUrl: "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+      };
+
+      console.log("Payload to send:", payload);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+
+      if (response.ok) {
+        setSuccess(true);
       } else {
-        console.error("Email not found in local storage.");
-        setError("Unable to retrieve email. Please try logging in.");
+        setError(result.message || "Failed to create user.");
       }
-
-      // Log before clearing localStorage
-      console.log("Clearing localStorage - username:", localStorage.getItem("signUpUsername"), "email:", localStorage.getItem("signUpEmail"));
-      
-      // Clear the email and username from localStorage
-      localStorage.removeItem('signUpEmail');
-      localStorage.removeItem('signUpUsername');
     } catch (error: any) {
-      console.error('Error during confirmation:', error);
-      setError(error.message || 'An error occurred during account confirmation.');
+      console.error("Error:", error);
+      setError(error.message || "An error occurred during login.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
-
-  const handleResendCode = async () => {
-    setError(null);
-    setSuccess(null);
-    setLoading(true);
-  
-    try {
-      // Ensure the username is available, falling back to an empty string if not
-      let currentUsername = username ?? user?.username ?? '';
-  
-      if (!currentUsername) {
-        setError('Username is missing. Please go back and sign up again.');
-        setLoading(false);
-        return;
-      }
-  
-      // Resend the confirmation code
-      await Auth.resendSignUp(currentUsername);
-      console.log('Confirmation code resent');
-      setSuccess('Confirmation code resent! Please check your email.');
-    } catch (err: any) {
-      console.error('Error resending code:', err);
-      setError(err.message || 'Failed to resend confirmation code. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
 
   return (
     <div
       style={{
-        maxWidth: '400px',
-        margin: '50px auto',
-        padding: '20px',
-        border: '1px solid #ccc',
-        borderRadius: '5px',
+        maxWidth: "400px",
+        margin: "50px auto",
+        padding: "20px",
+        border: "1px solid #ccc",
+        borderRadius: "5px",
       }}
     >
-      <h2>Confirm Your Account</h2>
-      <p>Please enter the confirmation code sent to your email.</p>
-      <form onSubmit={handleConfirmSignUp}>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {success && <p style={{ color: 'green' }}>{success}</p>}
+      <h2>Log In</h2>
+      <p>Log in to your account to complete the setup.</p>
+      <form onSubmit={handleFormSubmit}>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        {success && <p style={{ color: "green" }}>User created successfully!</p>}
         <input
           type="text"
-          placeholder="Confirmation Code"
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
+          placeholder="Username"
+          name="username"
+          value={formData.username}
+          onChange={handleInputChange}
           required
           style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '15px',
-            boxSizing: 'border-box',
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+            boxSizing: "border-box",
+          }}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          name="password"
+          value={formData.password}
+          onChange={handleInputChange}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+            boxSizing: "border-box",
           }}
         />
         <button
           type="submit"
-          disabled={loading}
+          disabled={isSubmitting}
           style={{
-            width: '100%',
-            padding: '10px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
           }}
         >
-          {loading ? 'Confirming...' : 'Confirm Account'}
+          {isSubmitting ? "Logging in..." : "Log In"}
         </button>
       </form>
-      <p style={{ marginTop: '15px' }}>
-        Didn't receive a code?{' '}
-        <button
-          onClick={handleResendCode}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#0070f3',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-            padding: 0,
-          }}
-        >
-          Resend Code
-        </button>
-      </p>
     </div>
   );
 };
 
-export default ConfirmSignUp;
+export default LoginPage;
