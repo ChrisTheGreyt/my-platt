@@ -57,8 +57,8 @@ app.use("/search", searchRoutes);
 app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
-app.post('/api/users/create-user', createUser);
-app.post('/users/create-user', createUser);
+// app.post('/api/users/create-user', createUser);
+app.post('/create-user', createUser);
 
 
 // app.post("/create-user", async (req: Request, res: Response) =>{

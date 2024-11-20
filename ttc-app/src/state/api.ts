@@ -237,7 +237,7 @@ export const api = createApi({
             lastName: string;
           }>({
             query: (data) => ({
-              url: "users/create-user",
+              url: "/create-user",
               method: "POST",
               body: data,
             }),
