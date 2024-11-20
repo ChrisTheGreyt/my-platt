@@ -6,19 +6,17 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 const ConfirmSignUp: React.FC = () => {
-  const { user, setIsConfirmed } = useAuth();
+  const { setIsConfirmed } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
-    // Retrieve the username from localStorage when the component mounts
     const storedUsername = localStorage.getItem('signUpUsername');
-    console.log("Retrieved username from localStorage:", storedUsername);
+    console.log('Retrieved username from localStorage:', storedUsername);
     if (storedUsername) {
       setUsername(storedUsername);
     } else {
@@ -42,22 +40,29 @@ const ConfirmSignUp: React.FC = () => {
       await Auth.confirmSignUp(username, code);
       console.log('User confirmed successfully');
 
-      // Retrieve the email from localStorage
-      const email = localStorage.getItem('signUpEmail');
-      console.log("Retrieved email from localStorage:", email);
+      // Generate the JWT token after confirmation
+      const session = await Auth.currentSession();
+      const accessToken = session.getAccessToken().getJwtToken();
 
-      // Redirect to the subscription page with email and username
+      console.log('Access token:', accessToken);
+
+      // Store the token securely
+      localStorage.setItem('jwtToken', accessToken);
+
+      // Retrieve email from localStorage
+      const email = localStorage.getItem('signUpEmail');
+      console.log('Retrieved email from localStorage:', email);
+
+      // Redirect to the subscription page
       if (email) {
         router.push(`/subscriptions?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`);
       } else {
-        console.error("Email not found in local storage.");
-        setError("Unable to retrieve email. Please try logging in.");
+        console.error('Email not found in local storage.');
+        setError('Unable to retrieve email. Please try logging in.');
       }
 
-      // Log before clearing localStorage
-      console.log("Clearing localStorage - username:", localStorage.getItem("signUpUsername"), "email:", localStorage.getItem("signUpEmail"));
-      
-      // Clear the email and username from localStorage
+      // Clear localStorage
+      console.log('Clearing localStorage - username and email');
       localStorage.removeItem('signUpEmail');
       localStorage.removeItem('signUpUsername');
     } catch (error: any) {
@@ -72,19 +77,16 @@ const ConfirmSignUp: React.FC = () => {
     setError(null);
     setSuccess(null);
     setLoading(true);
-  
+
     try {
-      // Ensure the username is available, falling back to an empty string if not
-      let currentUsername = username ?? user?.username ?? '';
-  
-      if (!currentUsername) {
+      if (!username) {
         setError('Username is missing. Please go back and sign up again.');
         setLoading(false);
         return;
       }
-  
+
       // Resend the confirmation code
-      await Auth.resendSignUp(currentUsername);
+      await Auth.resendSignUp(username);
       console.log('Confirmation code resent');
       setSuccess('Confirmation code resent! Please check your email.');
     } catch (err: any) {
@@ -94,7 +96,6 @@ const ConfirmSignUp: React.FC = () => {
       setLoading(false);
     }
   };
-  
 
   return (
     <div

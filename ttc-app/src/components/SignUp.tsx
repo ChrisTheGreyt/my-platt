@@ -1,3 +1,5 @@
+// src/components/SignUp.tsx
+
 'use client';
 
 import React, { useState } from 'react';
@@ -34,22 +36,12 @@ const SignUp: React.FC = () => {
       });
       console.log('Sign-up successful:', user);
 
-      // Automatically log in the user after sign-up
-      const loggedInUser = await Auth.signIn(formData.username, formData.password);
-      console.log('Sign-in successful:', loggedInUser);
-
-      // Retrieve the JWT token
-      const session = await Auth.currentSession();
-      const jwtToken = session.getAccessToken().getJwtToken();
-      console.log('JWT Token:', jwtToken);
-
-      // Store the email, username, and JWT token in localStorage for later use
+      // Store the email and username in localStorage for later
       localStorage.setItem('signUpEmail', formData.email);
       localStorage.setItem('signUpUsername', formData.username);
-      localStorage.setItem('jwtToken', jwtToken);
 
-      // Redirect to a post-sign-up page
-      router.push('/success');
+      // Redirect to confirmation page
+      router.push('/confirm');
     } catch (error: any) {
       console.error('Error during sign-up:', error);
       setError(error.message || 'An error occurred during sign-up.');
