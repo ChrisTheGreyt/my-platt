@@ -116,40 +116,55 @@ const SuccessPage = () => {
       //   }
       // }
 
-      const payload = {
+      const payload_ = { //old payload info
         sessionId,
         firstName: formData.firstName,
         lastName: formData.lastName,
         username: formData.username,
         profilePictureUrl: formData.profilePictureUrl || '',
       };
+
+      const payload = {
+        cognitoId: sessionId, // Assuming the sessionId corresponds to the Cognito ID
+        username: formData.username,
+        email: `${formData.username}@example.com`, // Default email if not provided
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        profilePictureUrl: formData.profilePictureUrl || "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+      };
       console.log("Payload to be sent:", payload);
 
   
 
-      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`;
+      // const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`; //Old method
+      const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`;
+
       console.log("API Request URL:", requestUrl);
       
       try {
-        const updateResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-after-payment`, {
+        const requestUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`;
+        const response = await fetch(requestUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionId}`, // Authorization  required for access to DB
           },
           body: JSON.stringify(payload),
         });
     
-        const result = await updateResponse.json();
-        console.log("Server Response:", result);
-    
-        if (result.success) {
+        const result = await response.json();
+        if (response.ok) {
+          console.log('User created:', result);
           setSuccess(true);
         } else {
-          setError(result.error || 'Failed to update user information.');
+          console.error('Error:', result);
+          setError(result.message || 'An error occurred.');
         }
       } catch (error) {
         console.error('Error:', error);
         setError('An error occurred while updating your information.');
+      } finally {
+        setIsSubmitting(false);
       }
   };
 
