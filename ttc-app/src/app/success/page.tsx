@@ -78,7 +78,6 @@ const SuccessPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Retrieve the JWT token from localStorage
       const jwtToken = localStorage.getItem('jwtToken');
       if (!jwtToken) {
         throw new Error('JWT token is missing. Please log in again.');
@@ -95,7 +94,6 @@ const SuccessPage = () => {
 
       console.log("Payload to be sent:", payload);
 
-      // Use fetch with Authorization header
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`, {
         method: 'POST',
         headers: {
@@ -113,9 +111,9 @@ const SuccessPage = () => {
       } else {
         setError(result.message || 'Failed to create user.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error);
-      setError('An error occurred while creating the user.');
+      setError(error.message || 'An error occurred while creating the user.');
     } finally {
       setIsSubmitting(false);
     }
