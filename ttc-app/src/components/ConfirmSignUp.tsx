@@ -6,17 +6,19 @@ import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 const ConfirmSignUp: React.FC = () => {
-  const { setIsConfirmed } = useAuth();
+  const { user, setIsConfirmed } = useAuth();
   const router = useRouter();
   const [username, setUsername] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
+    // Retrieve the username from localStorage when the component mounts
     const storedUsername = localStorage.getItem('signUpUsername');
-    console.log('Retrieved username from localStorage:', storedUsername);
+    console.log("Retrieved username from localStorage:", storedUsername);
     if (storedUsername) {
       setUsername(storedUsername);
     } else {
@@ -28,42 +30,36 @@ const ConfirmSignUp: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-  
+
     try {
       if (!username) {
         setError('Username is missing. Please go back and sign up again.');
         setLoading(false);
         return;
       }
-  
+
       // Confirm the sign-up with Cognito
       await Auth.confirmSignUp(username, code);
       console.log('User confirmed successfully');
-  
-      // Automatically sign the user in after confirmation
-      const user = await Auth.signIn(username, localStorage.getItem('signUpPassword') || '');
-      console.log('User signed in successfully:', user);
-  
-      // Retrieve the JWT token and store it in localStorage
-      const session = user.getSignInUserSession();
-      if (session) {
-        const jwtToken = session.getIdToken().getJwtToken();
-        localStorage.setItem('jwtToken', jwtToken);
-        console.log('JWT token stored in localStorage:', jwtToken);
-      }
-  
-      // Redirect to the subscription page with email and username
+
+      // Retrieve the email from localStorage
       const email = localStorage.getItem('signUpEmail');
+      console.log("Retrieved email from localStorage:", email);
+
+      // Redirect to the subscription page with email and username
       if (email) {
         router.push(`/subscriptions?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`);
       } else {
-        setError('Unable to retrieve email. Please try logging in.');
+        console.error("Email not found in local storage.");
+        setError("Unable to retrieve email. Please try logging in.");
       }
-  
-      // Clear sensitive data from localStorage
+
+      // Log before clearing localStorage
+      console.log("Clearing localStorage - username:", localStorage.getItem("signUpUsername"), "email:", localStorage.getItem("signUpEmail"));
+      
+      // Clear the email and username from localStorage
       localStorage.removeItem('signUpEmail');
       localStorage.removeItem('signUpUsername');
-      localStorage.removeItem('signUpPassword');
     } catch (error: any) {
       console.error('Error during confirmation:', error);
       setError(error.message || 'An error occurred during account confirmation.');
@@ -71,22 +67,24 @@ const ConfirmSignUp: React.FC = () => {
       setLoading(false);
     }
   };
-  
 
   const handleResendCode = async () => {
     setError(null);
     setSuccess(null);
     setLoading(true);
-
+  
     try {
-      if (!username) {
+      // Ensure the username is available, falling back to an empty string if not
+      let currentUsername = username ?? user?.username ?? '';
+  
+      if (!currentUsername) {
         setError('Username is missing. Please go back and sign up again.');
         setLoading(false);
         return;
       }
-
+  
       // Resend the confirmation code
-      await Auth.resendSignUp(username);
+      await Auth.resendSignUp(currentUsername);
       console.log('Confirmation code resent');
       setSuccess('Confirmation code resent! Please check your email.');
     } catch (err: any) {
@@ -96,6 +94,7 @@ const ConfirmSignUp: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   return (
     <div
