@@ -28,43 +28,42 @@ const ConfirmSignUp: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
+  
     try {
       if (!username) {
         setError('Username is missing. Please go back and sign up again.');
         setLoading(false);
         return;
       }
-
+  
       // Confirm the sign-up with Cognito
       await Auth.confirmSignUp(username, code);
       console.log('User confirmed successfully');
-
-      // Generate the JWT token after confirmation
-      const session = await Auth.currentSession();
-      const accessToken = session.getAccessToken().getJwtToken();
-
-      console.log('Access token:', accessToken);
-
-      // Store the token securely
-      localStorage.setItem('jwtToken', accessToken);
-
-      // Retrieve email from localStorage
+  
+      // Automatically sign the user in after confirmation
+      const user = await Auth.signIn(username, localStorage.getItem('signUpPassword') || '');
+      console.log('User signed in successfully:', user);
+  
+      // Retrieve the JWT token and store it in localStorage
+      const session = user.getSignInUserSession();
+      if (session) {
+        const jwtToken = session.getIdToken().getJwtToken();
+        localStorage.setItem('jwtToken', jwtToken);
+        console.log('JWT token stored in localStorage:', jwtToken);
+      }
+  
+      // Redirect to the subscription page with email and username
       const email = localStorage.getItem('signUpEmail');
-      console.log('Retrieved email from localStorage:', email);
-
-      // Redirect to the subscription page
       if (email) {
         router.push(`/subscriptions?username=${encodeURIComponent(username)}&email=${encodeURIComponent(email)}`);
       } else {
-        console.error('Email not found in local storage.');
         setError('Unable to retrieve email. Please try logging in.');
       }
-
-      // Clear localStorage
-      console.log('Clearing localStorage - username and email');
+  
+      // Clear sensitive data from localStorage
       localStorage.removeItem('signUpEmail');
       localStorage.removeItem('signUpUsername');
+      localStorage.removeItem('signUpPassword');
     } catch (error: any) {
       console.error('Error during confirmation:', error);
       setError(error.message || 'An error occurred during account confirmation.');
@@ -72,6 +71,7 @@ const ConfirmSignUp: React.FC = () => {
       setLoading(false);
     }
   };
+  
 
   const handleResendCode = async () => {
     setError(null);

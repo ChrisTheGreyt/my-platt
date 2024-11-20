@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useCreateUserMutation } from "@/state/api";
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useCreateUserMutation } from '@/state/api';
 
 const SuccessPage = () => {
   const [createUser, { isLoading }] = useCreateUserMutation();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    username: "",
-    profilePictureUrl: "",
+    firstName: '',
+    lastName: '',
+    username: '',
+    profilePictureUrl: '',
   });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +21,11 @@ const SuccessPage = () => {
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    const sessionIdFromURL = queryParams.get("session_id");
-    const usernameFromURL = queryParams.get("username");
+    const sessionIdFromURL = queryParams.get('session_id');
+    const usernameFromURL = queryParams.get('username');
 
-    const storedUsername = localStorage.getItem("username");
-    const finalUsername = usernameFromURL || storedUsername || "";
+    const storedUsername = localStorage.getItem('username');
+    const finalUsername = usernameFromURL || storedUsername || '';
 
     setFormData((prev) => ({
       ...prev,
@@ -33,7 +33,7 @@ const SuccessPage = () => {
     }));
 
     if (!finalUsername) {
-      setError("Username is missing. Please try registering again.");
+      setError('Username is missing. Please try registering again.');
       setLoading(false);
       return;
     }
@@ -41,7 +41,7 @@ const SuccessPage = () => {
     if (sessionIdFromURL) {
       setSessionId(sessionIdFromURL);
     } else {
-      setError("Invalid session. Please try registering again.");
+      setError('Invalid session. Please try registering again.');
       setLoading(false);
       return;
     }
@@ -50,7 +50,7 @@ const SuccessPage = () => {
 
     if (success) {
       setTimeout(() => {
-        router.push("/");
+        router.push('/');
       }, 1000);
     }
   }, [success, router]);
@@ -66,42 +66,62 @@ const SuccessPage = () => {
     setSuccess(false);
 
     if (!formData.firstName || !formData.lastName || !formData.username) {
-      setError("First name, last name, and username are required.");
+      setError('First name, last name, and username are required.');
       return;
     }
 
     if (!sessionId) {
-      setError("Session ID is missing.");
+      setError('Session ID is missing.');
       return;
     }
 
     setIsSubmitting(true);
 
-    const payload = {
-      cognitoId: sessionId, // Assuming sessionId is used as Cognito ID
-      username: formData.username,
-      email: `${formData.username}@example.com`,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      profilePictureUrl: formData.profilePictureUrl || "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
-    };
-
     try {
+      // Retrieve the JWT token from localStorage
+      const jwtToken = localStorage.getItem('jwtToken');
+      if (!jwtToken) {
+        throw new Error('JWT token is missing. Please log in again.');
+      }
+
+      const payload = {
+        cognitoId: sessionId,
+        username: formData.username,
+        email: `${formData.username}@example.com`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        profilePictureUrl: formData.profilePictureUrl || "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+      };
+
       console.log("Payload to be sent:", payload);
-      await createUser(payload).unwrap();
-      setSuccess(true);
-      console.log("User successfully created");
-    } catch (error: any) {
-      console.error("Error creating user:", error);
-      setError("Failed to create user. Please try again.");
+
+      // Use fetch with Authorization header
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      console.log("Server Response:", result);
+
+      if (response.ok) {
+        setSuccess(true);
+      } else {
+        setError(result.message || 'Failed to create user.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('An error occurred while creating the user.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
-  }
+  if (loading) return <div className="flex justify-center items-center min-h-screen text-lg">Loading...</div>;
 
   return (
     <div>
@@ -121,12 +141,11 @@ const SuccessPage = () => {
             <p className="text-center text-gray-700 mb-6">Thank you for your subscription. Please complete your profile.</p>
 
             {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+            {success && <p className="text-green-500 text-center mb-4">Your profile has been updated successfully!</p>}
 
             <form onSubmit={handleFormSubmit}>
               <div className="mb-4">
-                <label htmlFor="firstName" className="block text-gray-700 font-medium mb-2">
-                  First Name:
-                </label>
+                <label className="block text-gray-700 font-medium mb-2" htmlFor="firstName">First Name:</label>
                 <input
                   type="text"
                   name="firstName"
@@ -138,9 +157,7 @@ const SuccessPage = () => {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="lastName" className="block text-gray-700 font-medium mb-2">
-                  Last Name:
-                </label>
+                <label className="block text-gray-700 font-medium mb-2" htmlFor="lastName">Last Name:</label>
                 <input
                   type="text"
                   name="lastName"
@@ -151,27 +168,14 @@ const SuccessPage = () => {
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
-              <div className="mb-4">
-                <label htmlFor="profilePictureUrl" className="block text-gray-700 font-medium mb-2">
-                  Profile Picture URL:
-                </label>
-                <input
-                  type="text"
-                  name="profilePictureUrl"
-                  id="profilePictureUrl"
-                  value={formData.profilePictureUrl}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-              </div>
               <button
                 type="submit"
-                disabled={isSubmitting || isLoading}
+                disabled={isSubmitting}
                 className={`w-full bg-green-500 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition duration-200 ${
-                  isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                {isSubmitting ? "Updating..." : "Update Profile"}
+                {isSubmitting ? 'Updating...' : 'Update Profile'}
               </button>
             </form>
           </div>
