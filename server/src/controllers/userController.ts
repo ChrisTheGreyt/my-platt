@@ -321,15 +321,28 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { cognitoId, username, email, firstName, lastName } = req.body;
+  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId } = req.body;
 
   try {
+    console.log('Incoming Request Body:', req.body);
+
     // Validate required fields
     if (!cognitoId || !username || !email || !firstName || !lastName) {
+      console.error('Validation Error: Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Use Prisma to insert the user into the database
+    // Prisma insert operation with detailed logging
+    console.log('Attempting to create user with data:', {
+      cognitoId,
+      username,
+      email,
+      firstName,
+      lastName,
+      profilePictureUrl,
+      teamId,
+    });
+
     const newUser = await prisma.user.create({
       data: {
         cognitoId,
@@ -337,8 +350,12 @@ export const createUser = async (req: Request, res: Response) => {
         email,
         firstName,
         lastName,
+        profilePictureUrl,
+        teamId,
       },
     });
+
+    console.log('User created successfully:', newUser);
 
     // Send back success response
     res.status(201).json({
@@ -347,6 +364,14 @@ export const createUser = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error creating user:', error);
+
+    if (error.code === 'P2002') {
+      // Prisma unique constraint violation
+      return res.status(400).json({
+        message: 'User with the same email or username already exists.',
+      });
+    }
+
     res.status(500).json({
       message: 'An error occurred while creating the user in the database.',
       error: error.message,
