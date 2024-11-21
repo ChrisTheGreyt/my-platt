@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const verifyStripeSession_ = async (sessionId: string): Promise<Stripe.Checkout.Session | null> => {
   try {
