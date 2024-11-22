@@ -323,19 +323,38 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId } = req.body;
-
   try {
-    console.log('Incoming Request Body:', req.body);
+    // Parse request body (ensuring compatibility with Lambda)
+    let body = req.body;
+    if (typeof req.body === 'string') {
+      body = JSON.parse(req.body);
+    }
+
+    const { 
+      cognitoId, 
+      username, 
+      email, 
+      firstName, 
+      lastName, 
+      profilePictureUrl = 'https://default-picture.url', 
+      teamId = null 
+    } = body;
+
+    console.log('Incoming Request Body:', body);
 
     // Validate required fields
     if (!cognitoId || !username || !email || !firstName || !lastName) {
-      console.error('Validation Error: Missing required fields');
+      console.error('Validation Error: Missing required fields', {
+        cognitoId,
+        username,
+        email,
+        firstName,
+        lastName,
+      });
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
     // Prisma insert operation with detailed logging
-    console.log('Incoming Request:', req.body);
     console.log('Attempting to create user with data:', {
       cognitoId,
       username,
@@ -375,12 +394,28 @@ export const createUser = async (req: Request, res: Response) => {
       });
     }
 
+    if (error.code === 'P2003') {
+      // Foreign key constraint violation
+      return res.status(400).json({
+        message: 'Foreign key constraint failed. Please verify teamId exists.',
+      });
+    }
+
+    if (error.code === 'P2025') {
+      // Record not found for update/delete
+      return res.status(404).json({
+        message: 'Record to update/delete does not exist.',
+      });
+    }
+
+    // Send generic error response
     res.status(500).json({
       message: 'An error occurred while creating the user in the database.',
       error: error.message,
     });
   }
 };
+
 
 
 export const updateUserAfterPayment = async (req: Request, res: Response) => {
