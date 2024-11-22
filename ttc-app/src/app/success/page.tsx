@@ -40,8 +40,8 @@ const SuccessPage: React.FC = () => {
         cognitoId: user.attributes.sub,
         username: formData.username,
         email: user.attributes.email,
-        firstName: "Chris", //user.attributes.given_name || "DefaultFirstName",
-        lastName: "Grey", // user.attributes.family_name || "DefaultLastName",
+        firstName: "Default", //user.attributes.given_name || "DefaultFirstName",
+        lastName: "User", // user.attributes.family_name || "DefaultLastName",
         profilePictureUrl: "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
       };
 

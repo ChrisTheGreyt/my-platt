@@ -13,7 +13,7 @@ import searchRoutes from "./routes/searchRoutes";
 import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
-import { createUser, updateUserAfterPayment } from "./controllers/userController";
+import { createUser } from "./controllers/userController";
 import path from "path";
 
 /* CONFIGURATIONS */

@@ -44,123 +44,63 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing STRIPE_SECRET_KEY environment variable");
 }
 
-//test version remove underscore to test
-export const updateAfterPayment_ = async (req: Request, res: Response) => {
-  const { sessionId, firstName, lastName, username, profilePictureUrl } = req.body;
-
-  if (!sessionId || !firstName || !lastName || !username) {
-    return res.status(400).json({ success: false, error: 'Missing required fields.' });
-  }
-
-  try {
-    // Mock session verification for local testing
-    const session = {
-      payment_status: 'paid', // Simulate a successful payment
-      client_reference_id: 'test_cognito_id', // Simulate a Cognito ID
-    };
-
-    const cognitoId = session.client_reference_id;
-
-    if (!cognitoId) {
-      return res.status(400).json({ success: false, error: 'Cognito ID not found in session.' });
-    }
-
-    // Check if user exists in the database
-    let user = await prisma.user.findUnique({
-      where: { cognitoId },
-    });
-
-    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg';
-
-    if (user) {
-      // Update existing user
-      user = await prisma.user.update({
-        where: { cognitoId },
-        data: {
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-        },
-      });
-    } else {
-      // Create a new user
-      user = await prisma.user.create({
-        data: {
-          cognitoId,
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-          username: `user_${cognitoId}`, // Example username generation
-          email: `${cognitoId}@example.com`, // Replace with actual email if available
-        },
-      });
-    }
-
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ success: false, error: 'Internal server error.' });
-  }
-};
 
 //production version
-export const updateAfterPayment = async (req: Request, res: Response) => {
-  const { sessionId, firstName, lastName, profilePictureUrl, email } = req.body;
+// export const updateAfterPayment = async (req: Request, res: Response) => {
+//   const { sessionId, firstName, lastName, profilePictureUrl, email } = req.body;
 
-  if (!sessionId || !firstName || !lastName) {
-    return res.status(400).json({ success: false, error: 'Missing required fields.' });
-  }
+//   if (!sessionId || !firstName || !lastName) {
+//     return res.status(400).json({ success: false, error: 'Missing required fields.' });
+//   }
 
-  const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with actual default
+//   const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with actual default
 
-  try {
-    const session = await verifyStripeSession(sessionId);
-    if (!session || session.payment_status !== 'paid') {
-      return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
-    }
+//   try {
+//     const session = await verifyStripeSession(sessionId);
+//     if (!session || session.payment_status !== 'paid') {
+//       return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
+//     }
 
-    const cognitoId = session.client_reference_id;
+//     const cognitoId = session.client_reference_id;
 
-    if (!cognitoId) {
-      return res.status(400).json({ success: false, error: 'Cognito ID not found in session.' });
-    }
+//     if (!cognitoId) {
+//       return res.status(400).json({ success: false, error: 'Cognito ID not found in session.' });
+//     }
 
-    let user = await prisma.user.findUnique({
-      where: { cognitoId },
-    });
+//     let user = await prisma.user.findUnique({
+//       where: { cognitoId },
+//     });
 
-    if (user) {
-      user = await prisma.user.update({
-        where: { cognitoId },
-        data: {
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-        },
-      });
-    } else {
-      user = await prisma.user.create({
-        data: {
-          cognitoId,
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-          username: `${cognitoId}`, // Example username generation
-          email: `${email}`, // Replace with actual email if available
-        },
-      });
-    }
+//     if (user) {
+//       user = await prisma.user.update({
+//         where: { cognitoId },
+//         data: {
+//           firstName,
+//           lastName,
+//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+//           subscriptionStatus: 'active',
+//         },
+//       });
+//     } else {
+//       user = await prisma.user.create({
+//         data: {
+//           cognitoId,
+//           firstName,
+//           lastName,
+//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+//           subscriptionStatus: 'active',
+//           username: `${cognitoId}`, // Example username generation
+//           email: `${email}`, // Replace with actual email if available
+//         },
+//       });
+//     }
 
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error('Error updating user:', error);
-    res.status(500).json({ success: false, error: 'Internal server error.' });
-  }
-};
+//     res.status(200).json({ success: true, user });
+//   } catch (error) {
+//     console.error('Error updating user:', error);
+//     res.status(500).json({ success: false, error: 'Internal server error.' });
+//   }
+// };
 
 
 
@@ -342,6 +282,7 @@ export const createUser = async (req: Request, res: Response) => {
       lastName,
       profilePictureUrl,
       teamId,
+      subscriptionStatus,
     });
 
     // Create user with Prisma
@@ -398,84 +339,84 @@ export const createUser = async (req: Request, res: Response) => {
 
 
 
-export const updateUserAfterPayment = async (req: Request, res: Response) => {
-  try {
-    const { sessionId, firstName, lastName, username, profilePictureUrl } = req.body;
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const customerEmail = session.customer_details?.email;
-    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg';
-    if (!sessionId || !firstName || !lastName || !username) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
+// export const updateUserAfterPayment = async (req: Request, res: Response) => {
+//   try {
+//     const { sessionId, firstName, lastName, username, profilePictureUrl } = req.body;
+//     const session = await stripe.checkout.sessions.retrieve(sessionId);
+//     const customerEmail = session.customer_details?.email;
+//     const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg';
+//     if (!sessionId || !firstName || !lastName || !username) {
+//       return res.status(400).json({ message: 'Missing required fields' });
+//     }
 
-    const user = await prisma.user.create({
-      data: {
-        email: customerEmail,
-        cognitoId: sessionId,
-        firstName,
-        lastName,
-        profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-        subscriptionStatus: 'active',
-        username,
-      },
-    });
+//     const user = await prisma.user.create({
+//       data: {
+//         email: customerEmail,
+//         cognitoId: sessionId,
+//         firstName,
+//         lastName,
+//         profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+//         subscriptionStatus: 'active',
+//         username,
+//       },
+//     });
 
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-};
+//     res.status(200).json({ success: true, user });
+//   } catch (error) {
+//     console.error('Error creating user:', error);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// };
 
-export const updateUserAfterPayment__ = async (req: Request, res: Response) => {
-  const { sessionId, firstName, lastName, profilePictureUrl, username } = req.body;
+// export const updateUserAfterPayment__ = async (req: Request, res: Response) => {
+//   const { sessionId, firstName, lastName, profilePictureUrl, username } = req.body;
 
-  if (!sessionId || !firstName || !lastName || !username) {
-    return res.status(400).json({ error: 'Session ID, first name, last name, and username are required.' });
-  }
+//   if (!sessionId || !firstName || !lastName || !username) {
+//     return res.status(400).json({ error: 'Session ID, first name, last name, and username are required.' });
+//   }
 
-  try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const customerEmail = session.customer_details?.email;
+//   try {
+//     const session = await stripe.checkout.sessions.retrieve(sessionId);
+//     const customerEmail = session.customer_details?.email;
 
-    if (!customerEmail) {
-      return res.status(400).json({ error: 'Customer email not found in session.' });
-    }
+//     if (!customerEmail) {
+//       return res.status(400).json({ error: 'Customer email not found in session.' });
+//     }
 
-    const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with your actual default image URL
+//     const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with your actual default image URL
 
-    let user = await prisma.user.findUnique({ where: { email: customerEmail } });
+//     let user = await prisma.user.findUnique({ where: { email: customerEmail } });
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: customerEmail,
-          cognitoId: sessionId,
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-          username,
-        },
-      });
-    } else {
-      user = await prisma.user.update({
-        where: { email: customerEmail },
-        data: {
-          firstName,
-          lastName,
-          profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-          subscriptionStatus: 'active',
-        },
-      });
-    }
+//     if (!user) {
+//       user = await prisma.user.create({
+//         data: {
+//           email: customerEmail,
+//           cognitoId: sessionId,
+//           firstName,
+//           lastName,
+//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+//           subscriptionStatus: 'active',
+//           username,
+//         },
+//       });
+//     } else {
+//       user = await prisma.user.update({
+//         where: { email: customerEmail },
+//         data: {
+//           firstName,
+//           lastName,
+//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
+//           subscriptionStatus: 'active',
+//         },
+//       });
+//     }
 
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    console.error('Error updating user after payment:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-};
+//     res.status(200).json({ success: true, user });
+//   } catch (error) {
+//     console.error('Error updating user after payment:', error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// };
 
 
 export const checkUserStatus = async (req: Request, res: Response) => {
