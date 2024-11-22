@@ -335,6 +335,7 @@ export const createUser = async (req: Request, res: Response) => {
     }
 
     // Prisma insert operation with detailed logging
+    console.log('Incoming Request:', req.body);
     console.log('Attempting to create user with data:', {
       cognitoId,
       username,
