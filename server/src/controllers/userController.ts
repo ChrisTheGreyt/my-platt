@@ -169,6 +169,7 @@ export const postUser = async (req: Request, res: Response) =>{
       cognitoId,
       profilePictureUrl = "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
       teamId = 1,
+      subscriptionStatus,
     } = req.body;
     const newUser = await prisma.user.create({
       data: {
@@ -286,17 +287,18 @@ export const createUser = async (req: Request, res: Response) => {
       subscriptionStatus,
     });
 
+     
     // Create user with Prisma
     const newUser = await prisma.user.create({
       data: {
-        cognitoId,
         username,
+        cognitoId,
         email, // Ensure this is included
         firstName, // Ensure this is included
         lastName, // Ensure this is included
         profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional
         teamId: teamId || 1, // Optional
-        subscriptionStatus: subscriptionStatus || "inactive", // Optional
+        subscriptionStatus: "inactive", // Optional
       },
     });
 
@@ -442,7 +444,7 @@ export const checkUserStatus = async (req: Request, res: Response) => {
 
 export const createFreshUser = async (req: Request, res: Response) => {
   try {
-    const { cognitoId, username, email, firstName, lastName } = req.body;
+    const { cognitoId, username, email, firstName, lastName, teamId, profilePictureUrl, subscriptionStatus } = req.body;
 
     // Validate required fields
     if (!cognitoId || !username || !email || !firstName || !lastName) {
@@ -452,14 +454,14 @@ export const createFreshUser = async (req: Request, res: Response) => {
     // Create the user in the database
     const newUser = await prisma.user.create({
       data: {
-        cognitoId,
-        username,
-        email, // Ensure this is included
-        firstName, // Ensure this is included
-        lastName, // Ensure this is included
-        profilePictureUrl:"https://default.url/picture.jpg", // Optional
-        teamId:  1, // Optional
-        subscriptionStatus: "inactive", // Optional
+        username,             // Ensure this is present in the request
+        cognitoId,            // Ensure this is present in the request
+        profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional with default
+        teamId,               // Ensure this is present in the request
+        email,                // Ensure this is present in the request
+        firstName,            // Ensure this is present in the request
+        lastName,             // Ensure this is present in the request
+        subscriptionStatus: subscriptionStatus || "inactive", // Optional with default
       },
     });
 
