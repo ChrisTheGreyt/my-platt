@@ -171,14 +171,15 @@ export const postUser = async (req: Request, res: Response) =>{
       teamId = 1,
     } = req.body;
     const newUser = await prisma.user.create({
-      data:{
-        firstName,
-        lastName,
-        email,
-        username,
+      data: {
         cognitoId,
-        profilePictureUrl,
-        teamId,
+        username,
+        email, // Ensure this is included
+        firstName, // Ensure this is included
+        lastName, // Ensure this is included
+        profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional
+        teamId: teamId || 1, // Optional
+        subscriptionStatus: "inactive", // Optional
       },
     });
     res.json({ mesage: "User Created Successfully", newUser});
@@ -290,12 +291,12 @@ export const createUser = async (req: Request, res: Response) => {
       data: {
         cognitoId,
         username,
-        email,
-        firstName,
-        lastName,
-        profilePictureUrl,
-        teamId,
-        subscriptionStatus,
+        email, // Ensure this is included
+        firstName, // Ensure this is included
+        lastName, // Ensure this is included
+        profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional
+        teamId: teamId || 1, // Optional
+        subscriptionStatus: subscriptionStatus || "inactive", // Optional
       },
     });
 
@@ -453,9 +454,12 @@ export const createFreshUser = async (req: Request, res: Response) => {
       data: {
         cognitoId,
         username,
-        email,
-        firstName,
-        lastName,
+        email, // Ensure this is included
+        firstName, // Ensure this is included
+        lastName, // Ensure this is included
+        profilePictureUrl:"https://default.url/picture.jpg", // Optional
+        teamId:  1, // Optional
+        subscriptionStatus: "inactive", // Optional
       },
     });
 
