@@ -323,39 +323,18 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
+  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId } = req.body;
+
   try {
-    // Parse request body (ensuring compatibility with Lambda)
-    let body = req.body;
-    if (typeof req.body === 'string') {
-      body = JSON.parse(req.body);
-    }
-
-    const { 
-      cognitoId, 
-      username, 
-      email, 
-      firstName, 
-      lastName, 
-      profilePictureUrl = 'https://default-picture.url', 
-      teamId = null 
-    } = body;
-
-    console.log('Incoming Request Body:', body);
+    console.log('Incoming Request Body:', req.body);
 
     // Validate required fields
     if (!cognitoId || !username || !email || !firstName || !lastName) {
-      console.error('Validation Error: Missing required fields', {
-        cognitoId,
-        username,
-        email,
-        firstName,
-        lastName,
-      });
+      console.error('Validation Error: Missing required fields');
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Prisma insert operation with detailed logging
-    console.log('Attempting to create user with data:', {
+    console.log('Attempting to create user with:', {
       cognitoId,
       username,
       email,
@@ -365,6 +344,7 @@ export const createUser = async (req: Request, res: Response) => {
       teamId,
     });
 
+    // Create user with Prisma
     const newUser = await prisma.user.create({
       data: {
         cognitoId,
@@ -379,42 +359,36 @@ export const createUser = async (req: Request, res: Response) => {
 
     console.log('User created successfully:', newUser);
 
-    // Send back success response
-    res.status(201).json({
-      message: 'User created successfully.',
+    return res.status(201).json({
+      message: 'User created successfully',
       user: newUser,
     });
   } catch (error: any) {
-    console.error('Error creating user:', error);
+    console.error('Error while creating user:', error);
 
+    // Handle specific Prisma errors
     if (error.code === 'P2002') {
-      // Prisma unique constraint violation
+      console.error('Duplicate entry error:', error.meta);
       return res.status(400).json({
-        message: 'User with the same email or username already exists.',
+        message: 'User with this email or username already exists.',
       });
     }
 
     if (error.code === 'P2003') {
-      // Foreign key constraint violation
+      console.error('Foreign key constraint error:', error.meta);
       return res.status(400).json({
-        message: 'Foreign key constraint failed. Please verify teamId exists.',
+        message: 'Invalid foreign key: teamId might not exist.',
       });
     }
 
-    if (error.code === 'P2025') {
-      // Record not found for update/delete
-      return res.status(404).json({
-        message: 'Record to update/delete does not exist.',
-      });
-    }
-
-    // Send generic error response
-    res.status(500).json({
+    return res.status(500).json({
       message: 'An error occurred while creating the user in the database.',
       error: error.message,
+      details: error,
     });
   }
 };
+
 
 
 
