@@ -323,7 +323,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId } = req.body;
+  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId, subscriptionStatus } = req.body;
 
   try {
     console.log('Incoming Request Body:', req.body);
@@ -354,6 +354,7 @@ export const createUser = async (req: Request, res: Response) => {
         lastName,
         profilePictureUrl,
         teamId,
+        subscriptionStatus,
       },
     });
 
@@ -381,6 +382,11 @@ export const createUser = async (req: Request, res: Response) => {
       });
     }
 
+    // Log specific Prisma error codes
+    if (error.code) {
+      console.error(`Prisma Error Code: ${error.code}`);
+    }
+    
     return res.status(500).json({
       message: 'An error occurred while creating the user in the database.',
       error: error.message,
