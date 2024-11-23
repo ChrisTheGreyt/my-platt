@@ -288,55 +288,45 @@ export const createUser = async (req: Request, res: Response) => {
     });
 
      
-    // Create user with Prisma
     const newUser = await prisma.user.create({
       data: {
-        username,
-        cognitoId,
-        email, // Ensure this is included
-        firstName, // Ensure this is included
-        lastName, // Ensure this is included
-        profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional
-        teamId: teamId || 1, // Optional
-        subscriptionStatus: "inactive", // Optional
+          cognitoId,
+          username,
+          email,
+          firstName,
+          lastName,
+          profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg",
+          teamId: teamId || 1,
+          subscriptionStatus: subscriptionStatus || "inactive",
       },
-    });
+  });
+  console.log("User created successfully:", newUser);
+  return res.status(200).json({
+      message: "User created successfully",
+      data: newUser,
+  });
+} catch (error: any) {
+  console.error("Error while creating user:", error);
 
-    console.log('User created successfully:', newUser);
-
-    return res.status(201).json({
-      message: 'User created successfully',
-      user: newUser,
-    });
-  } catch (error: any) {
-    console.error('Error while creating user:', error);
-
-    // Handle specific Prisma errors
-    if (error.code === 'P2002') {
-      console.error('Duplicate entry error:', error.meta);
+  if (error.code === "P2002") {
+      console.error("Duplicate entry error:", error.meta);
       return res.status(400).json({
-        message: 'User with this email or username already exists.',
+          message: "User with this email or username already exists.",
       });
-    }
-
-    if (error.code === 'P2003') {
-      console.error('Foreign key constraint error:', error.meta);
-      return res.status(400).json({
-        message: 'Invalid foreign key: teamId might not exist.',
-      });
-    }
-
-    // Log specific Prisma error codes
-    if (error.code) {
-      console.error(`Prisma Error Code: ${error.code}`);
-    }
-    
-    return res.status(500).json({
-      message: 'An error occurred while creating the user in the database.',
-      error: error.message,
-      details: error,
-    });
   }
+
+  if (error.code === "P2003") {
+      console.error("Foreign key constraint error:", error.meta);
+      return res.status(400).json({
+          message: "Invalid foreign key: teamId might not exist.",
+      });
+  }
+
+  return res.status(500).json({
+      message: "Internal server error",
+      details: error.message,
+  });
+}
 };
 
 
