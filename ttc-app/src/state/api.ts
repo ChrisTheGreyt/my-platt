@@ -236,7 +236,7 @@ export const api = createApi({
             firstName: string;
             lastName: string;
             profilePictureUrl: string;
-            teamId: string;
+            teamId?: number;
             subscriptionStatus: string;
           }>({
             query: (data) => ({
