@@ -45,62 +45,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 
-//production version
-// export const updateAfterPayment = async (req: Request, res: Response) => {
-//   const { sessionId, firstName, lastName, profilePictureUrl, email } = req.body;
 
-//   if (!sessionId || !firstName || !lastName) {
-//     return res.status(400).json({ success: false, error: 'Missing required fields.' });
-//   }
-
-//   const defaultProfilePictureUrl = 'https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg'; // Replace with actual default
-
-//   try {
-//     const session = await verifyStripeSession(sessionId);
-//     if (!session || session.payment_status !== 'paid') {
-//       return res.status(400).json({ success: false, error: 'Invalid or unpaid session ID.' });
-//     }
-
-//     const cognitoId = session.client_reference_id;
-
-//     if (!cognitoId) {
-//       return res.status(400).json({ success: false, error: 'Cognito ID not found in session.' });
-//     }
-
-//     let user = await prisma.user.findUnique({
-//       where: { cognitoId },
-//     });
-
-//     if (user) {
-//       user = await prisma.user.update({
-//         where: { cognitoId },
-//         data: {
-//           firstName,
-//           lastName,
-//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-//           subscriptionStatus: 'active',
-//         },
-//       });
-//     } else {
-//       user = await prisma.user.create({
-//         data: {
-//           cognitoId,
-//           firstName,
-//           lastName,
-//           profilePictureUrl: profilePictureUrl || defaultProfilePictureUrl,
-//           subscriptionStatus: 'active',
-//           username: `${cognitoId}`, // Example username generation
-//           email: `${email}`, // Replace with actual email if available
-//         },
-//       });
-//     }
-
-//     res.status(200).json({ success: true, user });
-//   } catch (error) {
-//     console.error('Error updating user:', error);
-//     res.status(500).json({ success: false, error: 'Internal server error.' });
-//   }
-// };
 
 
 
@@ -306,25 +251,25 @@ export const createUser = async (req: Request, res: Response) => {
       data: newUser,
   });
 } catch (error: any) {
-  console.log("Error while creating user:", error);
+  // console.log("Error while creating user:", error);
 
-  if (error.code === "P2002") {
-      console.log("Duplicate entry error:", error.meta);
-      return res.status(400).json({
-          message: "User with this email or username already exists.",
-      });
-  }
+  // if (error.code === "P2002") {
+  //     console.log("Duplicate entry error:", error.meta);
+  //     return res.status(400).json({
+  //         message: "User with this email or username already exists.",
+  //     });
+  // }
 
-  if (error.code === "P2003") {
-      console.log("Foreign key constraint error:", error.meta);
-      return res.status(400).json({
-          message: "Invalid foreign key: teamId might not exist.",
-      });
-  }
+  // if (error.code === "P2003") {
+  //     console.log("Foreign key constraint error:", error.meta);
+  //     return res.status(400).json({
+  //         message: "Invalid foreign key: teamId might not exist.",
+  //     });
+  // }
 
   return res.status(500).json({
-      message: error.message,
-      details: error.message,
+      message: error.toString(),
+      details: error.toString(),
   });
 }
 };
