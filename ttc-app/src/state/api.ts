@@ -235,6 +235,9 @@ export const api = createApi({
             email: string;
             firstName: string;
             lastName: string;
+            profilePictureUrl: string;
+            teamId: string;
+            subscriptionStatus: string;
           }>({
             query: (data) => ({
               url: "/create-user",
