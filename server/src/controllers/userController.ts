@@ -251,21 +251,21 @@ export const createUser = async (req: Request, res: Response) => {
       data: newUser,
   });
 } catch (error: any) {
-  // console.log("Error while creating user:", error);
+  console.log("Error while creating user:", error);
 
-  // if (error.code === "P2002") {
-  //     console.log("Duplicate entry error:", error.meta);
-  //     return res.status(400).json({
-  //         message: "User with this email or username already exists.",
-  //     });
-  // }
+  if (error.code === "P2002") {
+      console.log("Duplicate entry error:", error.meta);
+      return res.status(400).json({
+          message: "User with this email or username already exists.",
+      });
+  }
 
-  // if (error.code === "P2003") {
-  //     console.log("Foreign key constraint error:", error.meta);
-  //     return res.status(400).json({
-  //         message: "Invalid foreign key: teamId might not exist.",
-  //     });
-  // }
+  if (error.code === "P2003") {
+      console.log("Foreign key constraint error:", error.meta);
+      return res.status(400).json({
+          message: "Invalid foreign key: teamId might not exist.",
+      });
+  }
 
   return res.status(500).json({
       message: error.toString(),

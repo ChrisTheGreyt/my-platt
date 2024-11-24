@@ -12,6 +12,9 @@ const SignUp: React.FC = () => {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
+    firstName: '',
+    lastName: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -23,22 +26,39 @@ const SignUp: React.FC = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const { username, email, password, confirmPassword, firstName, lastName } = formData;
+
+    // Validate all fields
+    if (!username || !email || !password || !confirmPassword || !firstName || !lastName) {
+      setError('All fields are required.');
+      return;
+    }
+
+    // Validate password confirmation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       // Sign up the user with Cognito
       const { user } = await Auth.signUp({
-        username: formData.username,
-        password: formData.password,
+        username,
+        password,
         attributes: {
-          email: formData.email,
+          email,
         },
       });
       console.log('Sign-up successful:', user);
 
-      // Store the email and username in localStorage for later
-      localStorage.setItem('signUpEmail', formData.email);
-      localStorage.setItem('signUpUsername', formData.username);
+      // Store the email, username, first name, and last name in localStorage for later
+      localStorage.setItem('signUpEmail', email);
+      localStorage.setItem('signUpUsername', username);
+      localStorage.setItem('signUpFirstName', firstName);
+      localStorage.setItem('signUpLastName', lastName);
 
       // Redirect to confirmation page
       router.push('/confirm');
@@ -64,11 +84,19 @@ const SignUp: React.FC = () => {
           style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
         />
         <input
-          name="password"
-          type="password"
-          value={formData.password}
+          name="firstName"
+          type="text"
+          value={formData.firstName}
           onChange={handleChange}
-          placeholder="Password"
+          placeholder="First Name"
+          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+        />
+        <input
+          name="lastName"
+          type="text"
+          value={formData.lastName}
+          onChange={handleChange}
+          placeholder="Last Name"
           style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
         />
         <input
@@ -77,6 +105,22 @@ const SignUp: React.FC = () => {
           value={formData.email}
           onChange={handleChange}
           placeholder="Email"
+          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+        />
+        <input
+          name="password"
+          type="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder="Password"
+          style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+        />
+        <input
+          name="confirmPassword"
+          type="password"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          placeholder="Confirm Password"
           style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
         />
         <button

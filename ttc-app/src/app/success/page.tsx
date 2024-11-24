@@ -1,16 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Auth } from "aws-amplify";
 
 const SuccessPage: React.FC = () => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
+    firstName: "",
+    lastName: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Load data from localStorage
+    const username = localStorage.getItem("signUpUsername") || "";
+    const firstName = localStorage.getItem("signUpFirstName") || "";
+    const lastName = localStorage.getItem("signUpLastName") || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      username,
+      firstName,
+      lastName,
+    }));
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,16 +48,13 @@ const SuccessPage: React.FC = () => {
       const jwtToken = user.signInUserSession.accessToken.jwtToken;
       console.log("JWT Token:", jwtToken);
 
-      // Store the JWT token for further API calls
-      localStorage.setItem("jwtToken", jwtToken);
-
-      // Update the database with the user information
+      // Prepare the payload
       const payload = {
         cognitoId: user.attributes.sub,
         username: formData.username,
         email: user.attributes.email,
-        firstName: "Default", //user.attributes.given_name || "DefaultFirstName",
-        lastName: "User", // user.attributes.family_name || "DefaultLastName",
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         profilePictureUrl: "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
       };
 
@@ -82,7 +95,7 @@ const SuccessPage: React.FC = () => {
         borderRadius: "5px",
       }}
     >
-      <h2>Log In</h2>
+      <h2>Payment Successful</h2>
       <p>Log in to your account to complete the setup.</p>
       <form onSubmit={handleFormSubmit}>
         {error && <p style={{ color: "red" }}>{error}</p>}
@@ -100,6 +113,37 @@ const SuccessPage: React.FC = () => {
             marginBottom: "15px",
             boxSizing: "border-box",
           }}
+          disabled // Pre-filled and disabled
+        />
+        <input
+          type="text"
+          placeholder="First Name"
+          name="firstName"
+          value={formData.firstName}
+          onChange={handleInputChange}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+            boxSizing: "border-box",
+          }}
+          disabled // Pre-filled and disabled
+        />
+        <input
+          type="text"
+          placeholder="Last Name"
+          name="lastName"
+          value={formData.lastName}
+          onChange={handleInputChange}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+            boxSizing: "border-box",
+          }}
+          disabled // Pre-filled and disabled
         />
         <input
           type="password"
