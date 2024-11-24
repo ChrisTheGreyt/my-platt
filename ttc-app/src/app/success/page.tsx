@@ -74,6 +74,8 @@ const SuccessPage: React.FC = () => {
 
       if (response.ok) {
         setSuccess(true);
+        // Redirect to /home after successful login
+        window.location.href = "/home";
       } else {
         setError(result.message || "Failed to create user.");
       }
@@ -86,95 +88,71 @@ const SuccessPage: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "400px",
-        margin: "50px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "5px",
-      }}
-    >
-      <h2>Payment Successful</h2>
-      <p>Log in to your account to complete the setup.</p>
-      <form onSubmit={handleFormSubmit}>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        {success && <p style={{ color: "green" }}>User created successfully!</p>}
-        <input
-          type="text"
-          placeholder="Username"
-          name="username"
-          value={formData.username}
-          onChange={handleInputChange}
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            boxSizing: "border-box",
-          }}
-          disabled // Pre-filled and disabled
-        />
-        <input
-          type="text"
-          placeholder="First Name"
-          name="firstName"
-          value={formData.firstName}
-          onChange={handleInputChange}
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            boxSizing: "border-box",
-          }}
-          disabled // Pre-filled and disabled
-        />
-        <input
-          type="text"
-          placeholder="Last Name"
-          name="lastName"
-          value={formData.lastName}
-          onChange={handleInputChange}
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            boxSizing: "border-box",
-          }}
-          disabled // Pre-filled and disabled
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          name="password"
-          value={formData.password}
-          onChange={handleInputChange}
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            boxSizing: "border-box",
-          }}
-        />
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          {isSubmitting ? "Logging in..." : "Log In"}
-        </button>
-      </form>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center text-green-500 mb-4">Payment Successful</h1>
+        <p className="text-center text-gray-700 mb-6">Log in to your account to complete the setup.</p>
+
+        <form onSubmit={handleFormSubmit} className="space-y-4">
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {success && <p className="text-green-500 text-sm">User created successfully!</p>}
+
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              required
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <div className="hidden">
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              readOnly
+            />
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              readOnly
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full p-2 bg-green-500 text-white font-bold rounded-md hover:bg-green-600 disabled:bg-gray-300"
+          >
+            {isSubmitting ? "Logging in..." : "Log In"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
