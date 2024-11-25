@@ -13,17 +13,16 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       include: {
         author: true,
         assignee: true,
-        comments: true,
+        comments: true, // Correct field name
         attachments: true,
       },
     });
     res.json(tasks);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving tasks: ${error.message}` });
+    res.status(500).json({ message: `Error retrieving tasks: ${error.message}` });
   }
 };
+
 
 export const createTask = async (
   req: Request,
