@@ -12,7 +12,9 @@ import {
   createFreshUser,
   checkUserStatus,
   postUser,
-  resolve
+  resolve,
+  getUserTrack,
+  updateUserTrack
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -45,5 +47,8 @@ router.post('/create-user', createUser);
 router.post('/check-status', checkUserStatus);
 
 router.get('/resolve', resolve);
+router.get("/track", getUserTrack);
+router.patch("/track", updateUserTrack);
+
 
 export default router;

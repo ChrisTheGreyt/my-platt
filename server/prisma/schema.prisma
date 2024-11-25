@@ -15,6 +15,7 @@ model User {
   profilePictureUrl  String?
   teamId             Int?
   email              String           @unique
+  selectedTrack      String?
   firstName          String
   lastName           String
   subscriptionStatus String?

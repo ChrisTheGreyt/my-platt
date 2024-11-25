@@ -432,3 +432,49 @@ export const resolve = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to resolve userId' });
   }
 };
+
+export const getUserTrack = async (req: Request, res: Response) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: "Missing userId" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { userId: Number(userId) },
+      select: { selectedTrack: true }, // Include selectedTrack
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ selectedTrack: user.selectedTrack });
+  } catch (error) {
+    console.error("Error fetching user track:", error);
+    res.status(500).json({ error: "Failed to fetch user track" });
+  }
+};
+
+
+export const updateUserTrack = async (req: Request, res: Response) => {
+  const { userId, selectedTrack } = req.body;
+
+  if (!userId || !selectedTrack) {
+    return res.status(400).json({ error: "Missing userId or selectedTrack" });
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { userId: Number(userId) },
+      data: { selectedTrack },
+    });
+
+    res.json({ selectedTrack: user.selectedTrack });
+  } catch (error) {
+    console.error("Error updating user track:", error);
+    res.status(500).json({ error: "Failed to update user track" });
+  }
+};
+

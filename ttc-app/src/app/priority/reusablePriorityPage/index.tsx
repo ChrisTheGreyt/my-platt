@@ -5,7 +5,7 @@ import Header from '@/components/Header'
 import ModalNewTask from '@/components/ModalNewTask'
 import TaskCard from '@/components/TaskCard'
 import { dataGridClassName, dataGridSxStyles } from '@/lib/utils'
-import { Priority, Task, useGetAuthUserQuery, useGetTasksByUserQuery } from '@/state/api'
+import { Priority, Status, Task, useGetAuthUserQuery, useGetTasksByUserQuery, Task as TaskType} from '@/state/api'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import React, { useState } from 'react'
 
@@ -67,76 +67,114 @@ const columns: GridColDef[] = [
       renderCell: (params) => params.value.username || "Unassigned",
     }
   ]
-    const ReusablePriorityPage = ({ priority }: Props) => {
-    const [ view, setView ] = useState( "list" );
-    const [ isModalNewTaskOpen, setIsModalNewTaskOpen ] = useState(false);
-
+  const ReusablePriorityPage = ({ priority }: Props) => {
+    const [view, setView] = useState("list");
+    const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false);
+  
     const { data: currentUser } = useGetAuthUserQuery();
     const userId = currentUser?.userDetails?.userId ?? null;
-    const { data: tasks, isLoading, isError: isTasksError } = useGetTasksByUserQuery( userId || 0, {
-        skip: userId === null
-    })
+  
+    const { data: tasks, isLoading, isError: isTasksError } = useGetTasksByUserQuery(
+      { userId: userId || 0, projectId: 0 }, // Pass both userId and projectId
+      { skip: userId === null }
+    );
+  
+    const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  
+    const filteredTasks = tasks
+  ?.map((userTask) => {
+    if (!userTask.task) {
+      console.warn(`Task data is missing for userTask with ID ${userTask.id}`);
+      return {
+        id: -1,
+        title: "Untitled Task",
+        description: "",
+        tags: "",
+        startDate: "",
+        dueDate: "",
+        points: 0,
+        projectId: -1,
+        authorUserId: -1,
+        assignedUserId: -1,
+        attachments: [],
+        status: userTask.status as TaskType['status'], // Cast to TaskType's status
+        priority: userTask.priority as TaskType['priority'], // Cast to TaskType's priority
+      } as TaskType; // Cast entire object as TaskType
+    }
 
-    const isDarkMode = useAppSelector(( state ) => state.global.isDarkMode);
+    return {
+      ...userTask.task,
+      id: userTask.task.id ?? -1,
+      status: userTask.status as TaskType['status'], // Override with user-specific status
+      priority: userTask.priority as TaskType['priority'], // Override with user-specific priority
+    };
+  })
+  .filter((task): task is TaskType => {
+    return task.status !== undefined && task.priority !== undefined && task.priority === priority;
+  });
 
-    const filteredTasks = tasks?.filter(( task: Task) => task.priority === priority);
 
-    if( isTasksError || !tasks ) return <div> Error fetching tasks</div>;
+    
 
-  return (
-    <div className='m-5 p-4'>
-        <ModalNewTask isOpen = { isModalNewTaskOpen } onClose={() => setIsModalNewTaskOpen(false)} />
-            <Header name = "Priority Page" buttonComponent={
-                <button 
-                    className='mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700'
-                    onClick={() => setIsModalNewTaskOpen( true )}
-                >
-                    Add Task 
-                </button>
-            }
-            />
-            <div className='mb-4 flex justify-start'>
-                <button
-                    className={`px-4 py-2 ${
-                        view === 'list' ? 'bg-gray-300' : 'bg-white'
-                    } rouned-l`}
-                    onClick={() => setView('list')}
-                >
-                    List
-                </button>
-                <button
-                    className={`px-4 py-2 ${
-                        view === 'table' ? 'bg-gray-300' : 'bg-white'
-                    } rouned-l`}
-                    onClick={() => setView('table')}
-                >
-                    Table
-                </button>
+  
+
+  
+    if (isTasksError || !tasks) return <div>Error fetching tasks</div>;
+  
+    return (
+      <div className="m-5 p-4">
+        <ModalNewTask isOpen={isModalNewTaskOpen} onClose={() => setIsModalNewTaskOpen(false)} />
+        <Header
+          name="Priority Page"
+          buttonComponent={
+            <button
+              className="mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+              onClick={() => setIsModalNewTaskOpen(true)}
+            >
+              Add Task
+            </button>
+          }
+        />
+        <div className="mb-4 flex justify-start">
+          <button
+            className={`px-4 py-2 ${view === "list" ? "bg-gray-300" : "bg-white"} rounded-l`}
+            onClick={() => setView("list")}
+          >
+            List
+          </button>
+          <button
+            className={`px-4 py-2 ${view === "table" ? "bg-gray-300" : "bg-white"} rounded-l`}
+            onClick={() => setView("table")}
+          >
+            Table
+          </button>
+        </div>
+        {isLoading ? (
+          <div>Loading tasks...</div>
+        ) : view === "list" ? (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredTasks?.map((task: Task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        ) : (
+          view === "table" &&
+          filteredTasks && (
+            <div className="w-full">
+              <DataGrid
+                rows={filteredTasks}
+                columns={columns}
+                checkboxSelection
+                getRowId={(row) => row.id}
+                className={dataGridClassName}
+                sx={dataGridSxStyles(isDarkMode)}
+              />
             </div>
-            { isLoading 
-                ? (<div>Loading tasks...</div>) : view === "list" ? (
-                    <div className='grid grid-cols-1 gap-4'>
-                        { filteredTasks?.map(( task: Task) => (
-                            <TaskCard key={ task.id } task = { task } />
-                        ))}
-                    </div>
-                ) : (
-                    view === 'table' && filteredTasks && (
-                        <div className='w-full'>
-                            <DataGrid
-                                rows = { filteredTasks }
-                                columns = { columns }
-                                checkboxSelection
-                                getRowId={( row ) => row.id }
-                                className = { dataGridClassName }
-                                sx = { dataGridSxStyles( isDarkMode )}
-                            />
-                        </div>
-                    )
-                )
-            }
-    </div>
-  )
-}
+          )
+        )}
+      </div>
+    );
+  };
+  
 
 export default ReusablePriorityPage

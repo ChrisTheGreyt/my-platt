@@ -323,5 +323,6 @@ export const {
     useUpdateUserTaskStatusMutation,
     useGetUserTasksQuery,
     useCreateUserTaskMutation,
+    useGetTasksByUserQuery,
 
 } = api;
