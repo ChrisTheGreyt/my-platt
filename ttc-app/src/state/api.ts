@@ -96,6 +96,7 @@ export interface User {
     subscriptionStatus?: string;
     firstName?: string; // Added
     lastName?: string;  // Added
+    selectedTrack?: string; 
 }
 
 export interface UserTasks {
