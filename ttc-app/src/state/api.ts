@@ -97,6 +97,17 @@ export interface User {
     firstName?: string; // Added
     lastName?: string;  // Added
 }
+
+export interface UserTasks {
+    id: number;
+    userId: number;
+    taskId: number;
+    status: string;
+    priority: string;
+    user?: User; // Optional reference to the User
+    task?: Task; // Optional reference to the Task
+  }
+  
 export const api = createApi({
     baseQuery: fetchBaseQuery({ 
         baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -116,7 +127,7 @@ export const api = createApi({
         
     }),
     reducerPath: 'api',
-    tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment"],
+    tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment", "UserTasks"],
     endpoints: (build) => ({
 
         getAuthUser: build.query<{
@@ -169,14 +180,29 @@ export const api = createApi({
                     ? result.map(({ id }) => ({ type: "Tasks" as const, id })) 
                     : [{ type: "Tasks" as const }],
         }),
-        getTasksByUser: build.query<Task[], number>({
-            query: (userId ) => `tasks/user/${userId}`,
-            providesTags: (result, error, userId) =>
-                result
-                    ? result.map(({ id }) =>({ type: "Tasks", id}))
-                    :[{ type: "Tasks", id: userId }],
-        }),
-        createTask: build.mutation<Task, Partial<Task>>({
+        // getTasksByUser: build.query<Task[], number>({
+        //     query: (userId ) => `tasks/user/${userId}`,
+        //     providesTags: (result, error, userId) =>
+        //         result
+        //             ? result.map(({ id }) =>({ type: "Tasks", id}))
+        //             :[{ type: "Tasks", id: userId }],
+        // }),
+        getTasksByUser: build.query<UserTasks[], { userId: number; projectId: number }>({
+            query: ({ userId, projectId }) => `api/tasks/user-tasks?userId=${userId}&projectId=${projectId}`,
+            providesTags: ["Tasks"],
+          }),
+          
+          
+          createUserTask: build.mutation<UserTasks, { userId: number; taskId: number }>({
+            query: (data) => ({
+              url: "tasks/user-tasks",
+              method: "POST",
+              body: data,
+            }),
+            invalidatesTags: ["UserTasks"], // Ensure tasks for this user are refetched
+          }),
+
+          createTask: build.mutation<Task, Partial<Task>>({
             query: (task) => ({
                 url: "tasks",
                 method: "POST",
@@ -247,17 +273,32 @@ export const api = createApi({
             invalidatesTags: ["Users"], // Optional
           }),                
         updateAfterPayment: build.mutation<
-                { success: boolean; user: User }, 
-                { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
-            >({
-            query: (data) => ({
-                url: 'users/update-after-payment',
-                method: 'POST',
-                body: data,
+            { success: boolean; user: User }, 
+            { sessionId: string; firstName: string; lastName: string; username: string; profilePictureUrl: string }
+        >({
+        query: (data) => ({
+            url: 'users/update-after-payment',
+            method: 'POST',
+            body: data,
+        }),
+        invalidatesTags: ["Users"],
+        }),
+        
+        getUserTasks: build.query<UserTasks[], { userId: number; projectId: number }>({
+            query: ({ userId, projectId }) => `tasks/user-tasks?userId=${userId}&projectId=${projectId}`,
+            providesTags: ["Tasks"],
+        }),
+        
+        updateUserTaskStatus: build.mutation<UserTasks, { userId: number; taskId: number; status: string }>({
+            query: ({ userId, taskId, status }) => ({
+              url: `tasks/user-tasks`,
+              method: "PATCH",
+              body: { userId, taskId, status },
             }),
-            invalidatesTags: ["Users"],
-            }),
-            
+            invalidatesTags: ["UserTasks"],
+          }),
+          
+                
 
     }),
 });
@@ -273,11 +314,14 @@ export const {
     useSearchQuery, 
     useGetUsersQuery, 
     useGetTeamsQuery,
-    useGetTasksByUserQuery,
     useGetAuthUserQuery,
     useLogPaymentMutation,
     useUpdateUserStatusMutation,
     useCreateFreshUserMutation,
     useCreateUserMutation,
     useUpdateAfterPaymentMutation,
+    useUpdateUserTaskStatusMutation,
+    useGetUserTasksQuery,
+    useCreateUserTaskMutation,
+
 } = api;

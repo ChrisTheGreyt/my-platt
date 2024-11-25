@@ -55,7 +55,7 @@ const SuccessPage: React.FC = () => {
         email: user.attributes.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        profilePictureUrl: "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
+        profilePictureUrl: "pd1.jpg",
       };
 
       console.log("Payload to send:", payload);

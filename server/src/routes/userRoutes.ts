@@ -11,7 +11,8 @@ import {
   updateUserStatus, 
   createFreshUser,
   checkUserStatus,
-  postUser
+  postUser,
+  resolve
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -42,14 +43,7 @@ router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
 router.post('/create-user', createUser);
 router.post('/check-status', checkUserStatus);
-// router.post('/users/update-after-payment', validateUpdateAfterPayment, (req: Request, res: Response) => {
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({ success: false, errors: errors.array() });
-//   }
-//   updateAfterPayment(req, res);
-// });
-// router.post("/api/users/create-user", createUser);
 
+router.get('/resolve', resolve);
 
 export default router;

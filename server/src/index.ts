@@ -14,6 +14,7 @@ import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import { createUser } from "./controllers/userController";
+import userTaskRoutes from './routes/userTaskRoutes';
 import path from "path";
 
 /* CONFIGURATIONS */
@@ -59,7 +60,7 @@ app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 // app.post('/api/users/create-user', createUser);
 app.post('/create-user', createUser);
-
+app.use('/api', userTaskRoutes);
 
 // app.post("/create-user", async (req: Request, res: Response) =>{
 

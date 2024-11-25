@@ -103,7 +103,7 @@ const Sidebar = () => {
             <SidebarLink key={project.id} icon={Briefcase} label={project.name} href={`/projects/${project.id}`} />
           ))
         ) : (
-          <div className='px-8 py-2 text-sm text-gray-500'>No projects available</div>
+          <div className='px-8 py-2 text-sm text-gray-500'>No Schools Available</div>
         )}
 
         {/* PRIORITY SECTION */}

@@ -409,3 +409,26 @@ export const createFreshUser = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const resolve = async (req: Request, res: Response) => {
+  const { cognitoSub } = req.query;
+
+  if (!cognitoSub) {
+    return res.status(400).json({ error: 'Missing cognitoSub' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { cognitoId: String(cognitoSub) },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ userId: user.userId });
+  } catch (error) {
+    console.error('Error resolving userId:', error);
+    res.status(500).json({ error: 'Failed to resolve userId' });
+  }
+};
