@@ -32,7 +32,7 @@ app.use(cors({
   // methods: ['GET', 'POST', 'OPTIONS'],
   // credentials: true,
   origin: '*', // Allow all origins (adjust for production)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH',  'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 

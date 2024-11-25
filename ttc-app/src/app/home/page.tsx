@@ -1,13 +1,15 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import {
   Priority,
   Project,
   Task,
   useGetProjectsQuery,
   useGetTasksQuery,
+  useGetAuthUserQuery,
+  useUpdateUserMutation,
 } from "@/state/api";
-import React from "react";
 import { useAppSelector } from "../redux";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Header from "@/components/Header";
@@ -36,6 +38,35 @@ const taskColumns: GridColDef[] = [
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const HomePage = () => {
+  const { data: currentUser, isLoading: isAuthLoading } = useGetAuthUserQuery();
+  const [updateUser] = useUpdateUserMutation();
+  const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
+
+  // Fetch the selectedTrack from the user data
+  useEffect(() => {
+    if (currentUser?.userDetails?.selectedTrack) {
+      setSelectedTrack(currentUser.userDetails.selectedTrack);
+    }
+  }, [currentUser]);
+
+  const handleTrackSelection = async (track: string) => {
+    try {
+      if (!currentUser?.userDetails?.userId) {
+        console.error("User ID is missing.");
+        return;
+      }
+
+      await updateUser({
+        userId: currentUser.userDetails.userId,
+        selectedTrack: track,
+      });
+ 
+      setSelectedTrack(track); // Update local state
+    } catch (error) {
+      console.error("Error updating user track:", error);
+    }
+  };
+
   const {
     data: tasks,
     isLoading: tasksLoading,
@@ -46,8 +77,33 @@ const HomePage = () => {
 
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  if (tasksLoading || isProjectsLoading) return <div>Loading..</div>;
-  if (tasksError || !tasks || !projects) return <div>Error fetching data</div>;
+  if (isAuthLoading || tasksLoading || isProjectsLoading)
+    return <div>Loading..</div>;
+  if (tasksError || !tasks || !projects)
+    return <div>Error fetching data</div>;
+
+  if (!selectedTrack) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="w-96 p-6 bg-white shadow-lg rounded-lg text-center">
+          <h2 className="text-2xl font-bold mb-4">Select Your Track</h2>
+          <p className="mb-6">Choose your application timeline:</p>
+          <button
+            className="block w-full bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700"
+            onClick={() => handleTrackSelection("2025")}
+          >
+            Fall 2025 Application Timeline
+          </button>
+          <button
+            className="block w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700"
+            onClick={() => handleTrackSelection("2026")}
+          >
+            Fall 2026 Application Timeline
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const priorityCount = tasks.reduce(
     (acc: Record<string, number>, task: Task) => {
@@ -55,7 +111,7 @@ const HomePage = () => {
       acc[priority as Priority] = (acc[priority as Priority] || 0) + 1;
       return acc;
     },
-    {},
+    {}
   );
 
   const taskDistribution = Object.keys(priorityCount).map((key) => ({
@@ -69,7 +125,7 @@ const HomePage = () => {
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     },
-    {},
+    {}
   );
 
   const projectStatus = Object.keys(statusCount).map((key) => ({

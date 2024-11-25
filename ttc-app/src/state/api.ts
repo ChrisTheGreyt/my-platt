@@ -247,6 +247,15 @@ export const api = createApi({
             }),
             invalidatesTags: ["Users"],
         }),
+        updateUser: build.mutation<void, { userId: number; selectedTrack: string }>({
+          query: (data) => ({
+            url: "users/update",
+            method: "PATCH",
+            body: data,
+          }),
+          invalidatesTags: ["Users"], // Ensure the cached user data is refreshed
+        }),
+        
         createFreshUser: build.mutation<User, Partial<User>>({
             query: (user) => ({
                 url: "/api/users/create-user",
@@ -324,5 +333,6 @@ export const {
     useGetUserTasksQuery,
     useCreateUserTaskMutation,
     useGetTasksByUserQuery,
+    useUpdateUserMutation,
 
 } = api;

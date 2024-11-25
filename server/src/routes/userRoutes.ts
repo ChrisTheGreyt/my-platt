@@ -14,7 +14,8 @@ import {
   postUser,
   resolve,
   getUserTrack,
-  updateUserTrack
+  updateUserTrack,
+  updateUser
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -45,6 +46,7 @@ router.get("/fetch-session", fetchSessionData);
 router.post('/update-user-status', updateUserStatus);
 router.post('/create-user', createUser);
 router.post('/check-status', checkUserStatus);
+router.patch('/update', updateUser); // Ensure this is defined in userRoutes.ts
 
 router.get('/resolve', resolve);
 router.get("/track", getUserTrack);

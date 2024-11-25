@@ -478,3 +478,17 @@ export const updateUserTrack = async (req: Request, res: Response) => {
   }
 };
 
+export const updateUser = async (req: Request, res: Response) => {
+  const { userId, selectedTrack } = req.body;
+  console.log("Updating user with data:", { userId, selectedTrack });
+  try {
+    const user = await prisma.user.update({
+      where: { userId },
+      data: { selectedTrack },
+    });
+    res.json(user);
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+};
