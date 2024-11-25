@@ -1,4 +1,4 @@
-import { useUpdateUserTaskStatusMutation, useCreateUserTaskMutation, useGetUserTasksQuery, Task as TaskType } from '@/state/api';
+import { useUpdateUserTaskStatusMutation, useCreateUserTaskMutation, useGetUserTasksQuery, Task as TaskType, Status, Priority } from '@/state/api';
 import React from 'react'
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -101,18 +101,43 @@ type BoardProps = {
 
     return (
         <DndProvider backend={HTML5Backend}>
-        <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
-          {taskStatus.map(status => (
-            <TaskColumn
-              key={status}
-              status={status}
-              tasks={tasks.filter(task => task.status === status)} // Filter tasks by status
-              moveTask={moveTask}
-              setIsModalNewTaskOpen={setIsModalNewTaskOpen}
-            />
-          ))}
-        </div>
-      </DndProvider>
+            <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
+                {taskStatus.map((status) => (
+                <TaskColumn
+                    key={status}
+                    status={status}
+                    tasks={(userTasks || []).map((userTask) => {
+                    if (!userTask.task) {
+                        console.warn(`Task data is missing for userTask with ID ${userTask.id}`);
+                        return {
+                        id: -1,
+                        title: "Untitled Task",
+                        description: "",
+                        tags: "",
+                        startDate: "",
+                        dueDate: "",
+                        points: 0,
+                        projectId: -1,
+                        authorUserId: -1,
+                        assignedUserId: -1,
+                        attachments: [],
+                        status: userTask.status as Status, // Cast to Status enum
+                        priority: userTask.priority as Priority, // Cast to Priority enum if needed
+                        };
+                    }
+
+                    return {
+                        ...userTask.task,
+                        status: userTask.status as Status, // Override with user-specific value
+                        priority: userTask.priority as Priority, // Override with user-specific value
+                    };
+                    })}
+                    moveTask={moveTask}
+                    setIsModalNewTaskOpen={setIsModalNewTaskOpen}
+                />
+                ))}
+            </div>
+        </DndProvider>
       
 
       
