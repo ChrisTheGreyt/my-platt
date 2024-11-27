@@ -21,8 +21,10 @@ const ProjectHeader = ({ activeTab, setActiveTab}: Props) => {
     <div className='pb-6 pt-6 lg:pb-4 lg:pt-8'>
       <Header name = "Application Submission Dashboard"
         buttonComponent={
-          <button className='flex items-center rounded-md bg-blue-primary px-3 py-2 text-white hver:bg-blue-600'
-          onClick={() => setIsModalNewProjectOpen( true )}
+          <button className='flex items-center rounded-md bg-blue-primary px-3 py-2 text-white hover:bg-blue-600 opacity-0'
+          // onClick={() => setIsModalNewProjectOpen( true )}
+          onClick={() => setIsModalNewProjectOpen( false )}
+
         >
           <PlusSquare className='mr-2 h-5 w-5' /> New School
         </button>

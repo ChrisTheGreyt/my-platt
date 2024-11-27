@@ -62,36 +62,6 @@ app.use('/subscriptions', subscriptionRoutes);
 app.post('/create-user', createUser);
 app.use('/api', userTaskRoutes);
 
-// app.post("/create-user", async (req: Request, res: Response) =>{
-
-//     try{ 
-//       const {
-//         firstName,
-//         lastName,
-//         email,
-//         username,
-//         cognitoId,
-//         profilePictureUrl = "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
-//         teamId = 1,
-//       } = req.body;
-//       const newUser = await prisma.user.create({
-//         data:{
-//           firstName,
-//           lastName,
-//           email,
-//           username,
-//           cognitoId,
-//           profilePictureUrl,
-//           teamId,
-//         },
-//       });
-//       res.json({ mesage: "User Created Successfully", newUser});
-//     } catch (error: any) {
-//       res
-//         .status(500)
-//         .json({ message: `Error retrieving users: ${error.message}` });
-//     }
-// });
 
 app.post('/users/update-after-payment', (req, res) => {
   console.log('POST /users/update-after-payment hit');
@@ -109,6 +79,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ success: false, error: 'An unexpected error occurred.' });
 });
 
+app.use('/', userTaskRoutes);
 
 // Start the Server
 const port = Number(process.env.PORT) || 8000;

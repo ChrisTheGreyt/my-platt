@@ -128,8 +128,8 @@ const columns: GridColDef[] = [
           name="Priority Page"
           buttonComponent={
             <button
-              className="mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
-              onClick={() => setIsModalNewTaskOpen(true)}
+              className="mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 opacity-0"
+              // onClick={() => setIsModalNewTaskOpen(true)}
             >
               Add Task
             </button>

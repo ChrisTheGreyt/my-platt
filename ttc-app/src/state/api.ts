@@ -108,6 +108,17 @@ export interface UserTasks {
     user?: User; // Optional reference to the User
     task?: Task; // Optional reference to the Task
   }
+  export interface AuthData {
+    user: {
+      attributes: {
+        email: string;
+        sub: string;
+      };
+      username: string;
+    };
+    userSub: string;
+    userDetails: User; // Add userDetails here
+  }
   
 export const api = createApi({
     baseQuery: fetchBaseQuery({ 
@@ -131,37 +142,85 @@ export const api = createApi({
     tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment", "UserTasks"],
     endpoints: (build) => ({
 
-        getAuthUser: build.query<{
-            user: { username: string; attributes: Record<string, string> };
-            userSub: string;
-            userDetails: User;
-          }, void>({
-            queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
-              try {
-                const cognitoUser = await Auth.currentAuthenticatedUser();
-                if (!cognitoUser) throw new Error("No user found");
-          
-                const user = {
-                  username: cognitoUser.getUsername(),
-                  attributes: cognitoUser.attributes || {},
-                };
-          
-                const userSub = user.attributes.sub;
-                const userDetailsResponse = await fetchWithBQ(`users/${userSub}`);
-                if (userDetailsResponse.error) {
-                  const errorMessage = (userDetailsResponse.error.data as { message?: string })?.message || "Failed to fetch user details";
-                  throw new Error(errorMessage);
-                }
-                const userDetails = userDetailsResponse.data as User;
-          
-                return { data: { user, userSub, userDetails } };
-              } catch (error: any) {
-                return { error: error?.message || "Could not fetch user data" };
-              }
-            },
-          }),
-          
         
+        
+    getAuthUser: build.query<{
+        user: { username: string; attributes: Record<string, string> };
+        userSub: string;
+        userDetails: User;
+      }, void>({
+        queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
+          try {
+            const cognitoUser = await Auth.currentAuthenticatedUser();
+            if (!cognitoUser) throw new Error("No user found");
+      
+            const user = {
+              username: cognitoUser.getUsername(),
+              attributes: cognitoUser.attributes || {},
+            };
+      
+            const userSub = user.attributes.sub;
+            const userDetailsResponse = await fetchWithBQ(`users/resolve?cognitoSub=${userSub}`);
+            if (userDetailsResponse.error) {
+              const errorMessage = (userDetailsResponse.error.data as { message?: string })?.message || "Failed to fetch user details";
+              throw new Error(errorMessage);
+            }
+            const userDetails = userDetailsResponse.data as User;
+      
+            return { data: { user, userSub, userDetails } };
+          } catch (error: any) {
+            return { error: error?.message || "Could not fetch user data" };
+          }
+        },
+      }),
+
+      // getAuthUser: build.query<{
+      //     user: { username: string; attributes: Record<string, string> };
+      //     userSub: string;
+      //     userDetails: User; // Make sure the `User` interface matches your backend response
+      //   },void>({
+      //   queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
+      //     try {
+      //       // Fetch current authenticated Cognito user
+      //       const cognitoUser = await Auth.currentAuthenticatedUser();
+      //       if (!cognitoUser) throw new Error("No authenticated user found");
+
+      //       const user = {
+      //         username: cognitoUser.getUsername(),
+      //         attributes: cognitoUser.attributes || {}, // Ensure attributes exist
+      //       };
+
+      //       const userSub = user.attributes.sub;
+      //       if (!userSub) throw new Error("Cognito userSub is missing");
+
+      //       // Fetch user details from backend
+      //       const userDetailsResponse = await fetchWithBQ(`users/resolve?cognitoSub=${userSub}`);
+      //       if (userDetailsResponse.error) {
+      //         const errorMessage =
+      //           (userDetailsResponse.error.data as { message?: string })?.message ||
+      //           "Failed to fetch user details";
+      //         throw new Error(errorMessage);
+      //       }
+
+      //       const userDetails = userDetailsResponse.data as User;
+
+      //       // Ensure userDetails includes all necessary fields
+      //       if (!userDetails.userId || !userDetails.selectedTrack) {
+      //         throw new Error("Incomplete user details: Missing userId or selectedTrack");
+      //       }
+
+      //       // Return the complete user data
+      //       return { data: { user, userSub, userDetails } };
+      //     } catch (error: any) {
+      //       console.error("Error in getAuthUser query:", error.message || error);
+      //       return { error: { status: "FETCH_ERROR", message: error?.message || "Unknown error" } };
+      //     }
+      //   },
+      // }),
+
+          
+       
+
         getProjects: build.query<Project[], void>({
             query: () => "projects",
             providesTags: ["Projects"],
