@@ -137,7 +137,7 @@ const SubscriptionPage: React.FC = () => {
           {/* Monthly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QDBKIG8jnQLC5SAlTXUbqhI', 'subscription')}
+            onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'subscription')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
@@ -149,7 +149,7 @@ const SubscriptionPage: React.FC = () => {
           {/* 6-Month Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QECEOG8jnQLC5SAFtP5c1d4', 'one-time')}
+            onClick={() => handleSubscription('price_1QPp1IG8jnQLC5SAi8U6QAel', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
@@ -160,7 +160,7 @@ const SubscriptionPage: React.FC = () => {
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QECH9G8jnQLC5SAWsaBiqiV', 'one-time')}
+            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
