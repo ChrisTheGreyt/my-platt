@@ -14,7 +14,7 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
       try {
         // Get the current authenticated user
         const currentUser = await Auth.currentAuthenticatedUser();
-        console.log("<AuthInitializer> Cognito Current User:", currentUser);
+        console.log("<AuthInitializer>Cognito Current User:", currentUser);
         const cognitoSub = currentUser.attributes.sub; // Extract Cognito sub
         const email = currentUser.attributes.email; // Extract email (optional for debugging)
   
@@ -65,7 +65,6 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
       
       console.log("Dispatched setUser action. Check Redux state:");
-      console.log(store.getState().auth);
       
         
         console.log("Dispatching setUser with:", {
