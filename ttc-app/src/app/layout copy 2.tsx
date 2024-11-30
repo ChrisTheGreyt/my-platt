@@ -8,6 +8,7 @@ import awsConfig from '../aws-exports';
 import { Provider as ReduxProvier } from 'react-redux';
 import { AuthProvider } from '../context/AuthContext'; // Import AuthProvider
 import { store } from '../state/store';
+import AppInitializer from '@/components/AppInitializer';
 
 import type { Metadata } from "next";
 import localFont from "next/font/local";
@@ -43,11 +44,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ReduxProvier store={store}>
             <AuthProvider >
+              <AppInitializer>
                 <DashboardWrapper>
                   {children}
                 </DashboardWrapper>
-              </AuthProvider>
-            </ReduxProvier>
+              </AppInitializer>
+            </AuthProvider>
+          </ReduxProvier>
       </body>
     </html>
   );

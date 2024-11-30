@@ -15,7 +15,9 @@ import {
   resolve,
   getUserTrack,
   updateUserTrack,
-  updateUser
+  updateUser,
+  getDetails,
+  getProjects,
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -51,6 +53,8 @@ router.patch('/update', updateUser); // Ensure this is defined in userRoutes.ts
 router.get('/resolve', resolve);
 router.get("/track", getUserTrack);
 router.patch("/track", updateUserTrack);
+router.get('/details', getDetails );
+router.get('/:cognitoId/projects', getProjects);
 
 
 export default router;

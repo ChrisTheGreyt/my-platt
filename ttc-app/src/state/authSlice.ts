@@ -25,7 +25,6 @@ const initialState: AuthState = {
   userDetails: null, // Backend user details
   userId: null, // Optional Cognito sub or backend user ID
   selectedTrack: null,
-  
   authData: null,
 };
 

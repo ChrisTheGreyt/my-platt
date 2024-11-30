@@ -492,3 +492,74 @@ export const updateUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update user" });
   }
 };
+
+
+export const getDetails = async (req:Request, res:Response) => {
+  const cognitoId = req.headers.authorization?.split(' ')[1];
+
+  if (!cognitoId) {
+    console.error("Missing cognitoId in Authorization header.");
+    return res.status(400).json({ error: "Authorization header missing or invalid" });
+  }
+
+  try {
+    console.log("Fetching user for cognitoId:", cognitoId);
+    const user = await prisma.user.findUnique({
+      where: { cognitoId },
+      select: { userId: true, selectedTrack: true },
+    });
+
+    if (!user) {
+      console.error("No user found for cognitoId:", cognitoId);
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ error: "Failed to fetch user details" });
+  }
+};
+
+export const getProjects = async (req:Request, res:Response) => {
+  const cognitoId = req.params.cognitoId;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { cognitoId },
+      select: { selectedTrack: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const trackProjectRanges: Record<string, [number, number]> = {
+      "2025": [1, 12],
+      "2026": [101, 112],
+    };
+
+    if (!user.selectedTrack) {
+      return res.status(400).json({ error: "User does not have a valid selectedTrack" });
+    }
+
+    const [startProjectId, endProjectId] = trackProjectRanges[user.selectedTrack] || [];
+    if (!startProjectId || !endProjectId) {
+      return res.status(400).json({ error: "Invalid selectedTrack" });
+    }
+
+    const projects = await prisma.project.findMany({
+      where: {
+        id: {
+          gte: startProjectId,
+          lte: endProjectId,
+        },
+      },
+    });
+
+    res.json(projects);
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    res.status(500).json({ error: "Failed to fetch projects" });
+  }
+};

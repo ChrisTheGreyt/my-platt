@@ -17,7 +17,7 @@ const Project = ({ params }: Props) => {
   const { id } = params;
   const [activeTab, setActiveTab] = useState("Board");
   const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false);
-
+  
   // Fetching authData and projects at the Project level
   const { data: authData, isLoading: authLoading, error: authError } = useGetAuthUserQuery();
   const { data: projects, isLoading: projectsLoading, error: projectsError } = useGetProjectsQuery();
@@ -78,10 +78,10 @@ const Project = ({ params }: Props) => {
       <ProjectHeader activeTab={activeTab} setActiveTab={setActiveTab} />
       {activeTab === "Board" && (
         <Board
-          id={id}
+          id={String(id)}
           setIsModalNewTaskOpen={setIsModalNewTaskOpen}
-          authData={completeAuthData}// Pass authData to BoardView
-          projects={projects || []} // Pass projects to BoardView
+          authData={completeAuthData} // Pass authData to BoardView
+          projects={projects || []}
         />
       )}
       {activeTab === "List" && (

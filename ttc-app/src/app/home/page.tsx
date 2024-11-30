@@ -35,56 +35,52 @@ const taskColumns: GridColDef[] = [
   { field: "dueDate", headerName: "Due Date", width: 150 },
 ];
 
+
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const HomePage = () => {
   const { data: currentUser, isLoading: isAuthLoading } = useGetAuthUserQuery();
   const [updateUser] = useUpdateUserMutation();
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
-  const [completeUserData, setCompleteUserData] = useState<any>(null);
+  const [completeUserData, setCompleteUserData] = useState<any>(null); // Add state here
 
-  // Fetch userDetails if it's missing
+  // Fetch the selectedTrack from the user data
   useEffect(() => {
-    if (currentUser && !currentUser.userDetails && currentUser.userSub) {
-      const fetchUserDetails = async () => {
-        try {
-          const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-          const response = await fetch(`${backendUrl}/users/${currentUser.userSub}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              // Include authentication headers if necessary
-            },
-          });
+    const fetchUserDetails = async () => {
+      try {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${backendUrl}/api/users/resolve?cognitoSub=${currentUser?.userSub}`
+        );
 
-          if (!response.ok) {
-            throw new Error("Failed to fetch user details");
-          }
-
-          const userDetails = await response.json();
-
-          // Combine currentUser with userDetails
-          setCompleteUserData({
-            ...currentUser,
-            userDetails,
-          });
-        } catch (error) {
-          console.error("Error fetching user details:", error);
+        if (!response.ok) {
+          console.error("Failed to fetch user details.");
+          return;
         }
-      };
 
+        const userDetails = await response.json();
+        console.log("Fetched User Details:", userDetails);
+
+        // Combine userDetails with currentUser
+        setCompleteUserData({
+          ...currentUser,
+          userDetails,
+        });
+
+        // Update selectedTrack if available
+        if (userDetails?.selectedTrack) {
+          setSelectedTrack(userDetails.selectedTrack);
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+
+    if (currentUser?.userSub) {
       fetchUserDetails();
-    } else if (currentUser) {
-      setCompleteUserData(currentUser);
     }
   }, [currentUser]);
-
-  // Update selectedTrack when completeUserData changes
-  useEffect(() => {
-    if (completeUserData?.userDetails?.selectedTrack) {
-      setSelectedTrack(completeUserData.userDetails.selectedTrack);
-    }
-  }, [completeUserData]);
 
   const handleTrackSelection = async (track: string) => {
     try {
@@ -94,7 +90,7 @@ const HomePage = () => {
       }
 
       await updateUser({
-        userId: completeUserData.userDetails.userId,
+        userId: completeUserData.userDetails.userId, // Use completeUserData here
         selectedTrack: track,
       });
 
@@ -114,27 +110,26 @@ const HomePage = () => {
 
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  if (isAuthLoading || tasksLoading || isProjectsLoading || !completeUserData)
+  if (isAuthLoading || tasksLoading || isProjectsLoading)
     return <div>Loading..</div>;
   if (tasksError || !tasks || !projects)
     return <div>Error fetching data</div>;
 
+
   if (!selectedTrack) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-r from-blue-500 to-green-500">
-        <div className="w-96 p-8 bg-white shadow-2xl rounded-lg text-center">
-          <h2 className="text-3xl font-extrabold mb-6 text-gray-800">
-            Select Your Track
-          </h2>
-          <p className="mb-8 text-gray-600">Choose your application timeline:</p>
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="w-96 p-6 bg-white shadow-lg rounded-lg text-center">
+          <h2 className="text-2xl font-bold mb-4">Select Your Track</h2>
+          <p className="mb-6">Choose your application timeline:</p>
           <button
-            className="block w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-3 px-6 rounded-full mb-6 text-lg font-semibold shadow-lg transform hover:scale-105 transition-transform"
+            className="block w-full bg-blue-500 text-white py-2 px-4 rounded mb-4 hover:bg-blue-700"
             onClick={() => handleTrackSelection("2025")}
           >
             Fall 2025 Application Timeline
           </button>
           <button
-            className="block w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 px-6 rounded-full text-lg font-semibold shadow-lg transform hover:scale-105 transition-transform"
+            className="block w-full bg-green-500 text-white py-2 px-4 rounded hover:bg-green-700"
             onClick={() => handleTrackSelection("2026")}
           >
             Fall 2026 Application Timeline
@@ -143,6 +138,7 @@ const HomePage = () => {
       </div>
     );
   }
+  
 
   const priorityCount = tasks.reduce(
     (acc: Record<string, number>, task: Task) => {
@@ -185,6 +181,7 @@ const HomePage = () => {
         pieFill: "#82ca9d",
         text: "#000000",
       };
+
   return (
     <div className="container h-full w-[100%] bg-gray-100 bg-transparent p-8">
       <Header name="Project Management Dashboard" />

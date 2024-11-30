@@ -173,52 +173,6 @@ export const api = createApi({
           }
         },
       }),
-
-      // getAuthUser: build.query<{
-      //     user: { username: string; attributes: Record<string, string> };
-      //     userSub: string;
-      //     userDetails: User; // Make sure the `User` interface matches your backend response
-      //   },void>({
-      //   queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
-      //     try {
-      //       // Fetch current authenticated Cognito user
-      //       const cognitoUser = await Auth.currentAuthenticatedUser();
-      //       if (!cognitoUser) throw new Error("No authenticated user found");
-
-      //       const user = {
-      //         username: cognitoUser.getUsername(),
-      //         attributes: cognitoUser.attributes || {}, // Ensure attributes exist
-      //       };
-
-      //       const userSub = user.attributes.sub;
-      //       if (!userSub) throw new Error("Cognito userSub is missing");
-
-      //       // Fetch user details from backend
-      //       const userDetailsResponse = await fetchWithBQ(`users/resolve?cognitoSub=${userSub}`);
-      //       if (userDetailsResponse.error) {
-      //         const errorMessage =
-      //           (userDetailsResponse.error.data as { message?: string })?.message ||
-      //           "Failed to fetch user details";
-      //         throw new Error(errorMessage);
-      //       }
-
-      //       const userDetails = userDetailsResponse.data as User;
-
-      //       // Ensure userDetails includes all necessary fields
-      //       if (!userDetails.userId || !userDetails.selectedTrack) {
-      //         throw new Error("Incomplete user details: Missing userId or selectedTrack");
-      //       }
-
-      //       // Return the complete user data
-      //       return { data: { user, userSub, userDetails } };
-      //     } catch (error: any) {
-      //       console.error("Error in getAuthUser query:", error.message || error);
-      //       return { error: { status: "FETCH_ERROR", message: error?.message || "Unknown error" } };
-      //     }
-      //   },
-      // }),
-
-          
        
 
         getProjects: build.query<Project[], void>({
@@ -240,13 +194,7 @@ export const api = createApi({
                     ? result.map(({ id }) => ({ type: "Tasks" as const, id })) 
                     : [{ type: "Tasks" as const }],
         }),
-        // getTasksByUser: build.query<Task[], number>({
-        //     query: (userId ) => `tasks/user/${userId}`,
-        //     providesTags: (result, error, userId) =>
-        //         result
-        //             ? result.map(({ id }) =>({ type: "Tasks", id}))
-        //             :[{ type: "Tasks", id: userId }],
-        // }),
+
         getTasksByUser: build.query<UserTasks[], { userId: number; projectId: number }>({
             query: ({ userId, projectId }) => `api/tasks/user-tasks?userId=${userId}&projectId=${projectId}`,
             providesTags: ["Tasks"],
@@ -366,8 +314,11 @@ export const api = createApi({
             }),
             invalidatesTags: ["UserTasks"],
           }),
+
+        getUserProjects: build.query<Project[], number>({
+          query: (userId) => `/users/${userId}/projects`,
+        }),
           
-                
 
     }),
 });
@@ -394,5 +345,6 @@ export const {
     useCreateUserTaskMutation,
     useGetTasksByUserQuery,
     useUpdateUserMutation,
+    useGetUserProjectsQuery,
 
 } = api;

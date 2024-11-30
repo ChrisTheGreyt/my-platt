@@ -28,10 +28,6 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  // origin: process.env.CLIENT_URL,
-  // methods: ['GET', 'POST', 'OPTIONS'],
-  // credentials: true,
-  origin: '*', // Allow all origins (adjust for production)
   methods: ['GET', 'POST', 'PUT', 'PATCH',  'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -58,7 +54,6 @@ app.use("/search", searchRoutes);
 app.use("/users", userRoutes);
 app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
-// app.post('/api/users/create-user', createUser);
 app.post('/create-user', createUser);
 app.use('/api', userTaskRoutes);
 
@@ -68,7 +63,6 @@ app.post('/users/update-after-payment', (req, res) => {
   console.log('Request Body:', req.body);
   res.json({ success: true, message: 'Request received successfully', data: req.body });
 });
-// app.use("/upload", uploadRoutes); // Mount the upload routes
 
 // Serve static files
 app.use('/public', express.static(path.join(__dirname, '../public')));

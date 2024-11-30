@@ -14,6 +14,7 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
       try {
         // Get the current authenticated user
         const currentUser = await Auth.currentAuthenticatedUser();
+        console.log("<AuthInitializer> Cognito Current User:", currentUser);
         const cognitoSub = currentUser.attributes.sub; // Extract Cognito sub
         const email = currentUser.attributes.email; // Extract email (optional for debugging)
   

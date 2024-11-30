@@ -14,7 +14,83 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 
+type Project = {
+  id: number;
+  name: string;
+  description?: string;
+};
+
 const Sidebar = () => {
+
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userSub, setUserSub] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserSub = async () => {
+      try {
+        const user = await Auth.currentAuthenticatedUser();
+        const cognitoId = user.attributes.sub; // Cognito userSub
+        setUserSub(cognitoId);
+      } catch (error) {
+        console.error("Failed to fetch userSub:", error);
+      }
+    };
+
+    fetchUserSub();
+  }, []);
+
+  // Step 2: Fetch userId from the backend using userSub
+  useEffect(() => {
+    const fetchUserId = async () => {
+      if (!userSub) return;
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${userSub}`);
+
+        if (!response.ok) {
+          console.error("Failed to fetch userId:", response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        setUserId(data.userId);
+      } catch (error) {
+        console.error("Error fetching userId:", error);
+      }
+    };
+
+    fetchUserId();
+  }, [userSub]);
+
+  // Step 3: Fetch projects using userId
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!userId) return;
+
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(`${backendUrl}/api/users/${userId}/projects`);
+
+        if (!response.ok) {
+          console.error("Failed to fetch projects:", response.statusText);
+          return;
+        }
+
+        const data: Project[] = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [userId]);
+
   const router = useRouter();
   const { setUser, setSession } = useAuth();
   const [showProjects, setShowProjects] = useState(true);
@@ -24,7 +100,7 @@ const Sidebar = () => {
 
   // Fetching user data and projects
   const { data: authData, isLoading: authLoading } = useGetAuthUserQuery();
-  const { data: projects, isLoading: projectsLoading } = useGetProjectsQuery();
+  // const { data: projects, isLoading: projectsLoading } = useGetProjectsQuery();
 
   // Debugging outputs
   useEffect(() => {
@@ -45,9 +121,6 @@ const Sidebar = () => {
     }
   };
 
-  if (authLoading || projectsLoading) {
-    return <div>Loading sidebar...</div>;
-  }
 
   const sidebarClassNames = `fixed flex flex-col h-[100%] justify-between shadow-xl transition-all duration-300 h-full z-40 dark:bg-black overflow-y-auto bg-white ${
     isSidebarCollapsed ? 'w-0 hidden' : 'w-64'
