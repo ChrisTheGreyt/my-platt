@@ -1,40 +1,31 @@
 // src/components/AuthTest.tsx
 
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/state/store";
-import { setUser } from "@/state/authSlice";
+'use client';
 
-const TestRedux = () => {
-  const dispatch = useDispatch();
-  const authState = useSelector((state: RootState) => state.auth);
+import React from 'react';
+import { useGetAuthUserQuery } from '../state/api';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
-  const testDispatch = () => {
-    dispatch(
-      setUser({
-        user: {
-          attributes: { sub: "mockSub", email: "mock@example.com" },
-          username: "mockUser",
-        },
-        userSub: "mockSub",
-        userDetails: {
-          userId: 123,
-          selectedTrack: "2025",
-          email: "mock@example.com",
-          firstName: "Mock",
-          lastName: "User",
-          subscriptionStatus: "active",
-          profilePictureUrl: "",
-        },
-      })
+
+const AuthTest: React.FC = () => {
+    const { data, error, isLoading } = useGetAuthUserQuery();
+
+    if (isLoading) return <p>Loading...</p>;
+    if (error) {
+        const errorMessage = (error as FetchBaseQueryError)?.data?.['message'] || 'An unexpected error occurred';
+        return <p>Error: {errorMessage}</p>;
+
+      }
+
+    return (
+        <div>
+            <h2>Authenticated User Details</h2>
+            <p>Username: {data?.user.username}</p>
+            <p>User Sub: {data?.userSub}</p>
+            <p>Email: {data?.userDetails.email}</p>
+            {/* Add more fields as necessary */}
+        </div>
     );
-  };
-
-  return (
-    <div>
-      <button onClick={testDispatch}>Test Redux Dispatch</button>
-      <pre>{JSON.stringify(authState, null, 2)}</pre>
-    </div>
-  );
 };
 
-export default TestRedux;
+export default AuthTest;
