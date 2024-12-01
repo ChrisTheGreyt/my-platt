@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAppSelector } from "@/app/redux";
 import "gantt-task-react/dist/index.css";
 import { DisplayOption, Gantt, ViewMode } from "gantt-task-react";
@@ -11,8 +11,8 @@ type TaskTypeItems = "task" | "milestone" | "project";
 
 const Timeline = () => {
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userSub, setUserSub] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -21,76 +21,100 @@ const Timeline = () => {
     locale: "en-us",
   });
 
-  // Fetch the user's selected track and userId
+  // Step 1: Fetch userSub (Cognito ID)
   useEffect(() => {
-    const fetchUserDetails = async () => {
+    const fetchUserSub = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
-        const cognitoSub = user.attributes.sub;
-
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch user details");
-        }
-        const userDetails = await response.json();
-        console.log("Fetched user details:", userDetails);
-        setSelectedTrack(userDetails.selectedTrack || null);
-        setUserId(userDetails.userId);
-
-        // Fetch projects for the user
-        const projectsResponse = await fetch(`${backendUrl}/api/users/${userDetails.userId}/projects`);
-        if (!projectsResponse.ok) {
-          throw new Error("Failed to fetch projects");
-        }
-        const projectsData = await projectsResponse.json();
-        console.log("Fetched projects:", projectsData);
-        setProjects(projectsData);
+        const cognitoId = user.attributes.sub; // Cognito userSub
+        setUserSub(cognitoId);
       } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error("Failed to fetch userSub:", error);
+        setIsLoading(false); // Stop loading if userSub fetch fails
+      }
+    };
+
+    fetchUserSub();
+  }, []);
+
+  // Step 2: Resolve userId using userSub
+  useEffect(() => {
+    const fetchUserId = async () => {
+      if (!userSub) return;
+
+      try {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${backendUrl}/api/users/resolve?cognitoSub=${userSub}`
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch userId:", response.statusText);
+          setIsLoading(false); // Stop loading if userId fetch fails
+          return;
+        }
+
+        const data = await response.json();
+        setUserId(data.userId);
+      } catch (error) {
+        console.error("Error fetching userId:", error);
+        setIsLoading(false); // Stop loading if userId fetch fails
+      }
+    };
+
+    fetchUserId();
+  }, [userSub]);
+
+  // Step 3: Fetch projects using userId
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!userId) return;
+
+      try {
+        const backendUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(
+          `${backendUrl}/api/users/${userId}/projects`
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch projects:", response.statusText);
+          setIsLoading(false); // Stop loading if projects fetch fails
+          return;
+        }
+
+        const data = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchUserDetails();
-  }, []);
 
-  // Filter projects based on the selected track
-const filteredProjects = useMemo(() => {
-  if (!projects || !selectedTrack) return [];
-  
-  // Adjust this condition to match your backend schema
-  const filtered = projects.filter((project) => project.selectedTrack === selectedTrack);
-  
-  console.log("Filtered Projects:", filtered);
-  return filtered;
-}, [projects, selectedTrack]);
+    fetchProjects();
+  }, [userId]);
 
-
-  const safeDate = (date: string | undefined): Date => {
-    const parsedDate = date ? new Date(date) : new Date();
-    if (isNaN(parsedDate.getTime())) {
-      console.warn("Invalid date:", date);
-      return new Date(); // Fallback to current date
-    }
-    return parsedDate;
-  };
-
+  // Prepare tasks for the Gantt chart
   const ganttTasks = useMemo(() => {
-    return (
-      filteredProjects.map((project) => ({
-        start: safeDate(project.startDate),
-        end: safeDate(project.endDate),
-        name: project.name || "Unnamed Project",
-        id: `Project-${project.id}`,
-        type: "project" as TaskTypeItems,
-        progress: 50,
-        isDisabled: false,
-      })) || []
-    );
-  }, [filteredProjects]);
+    return projects.map((project) => ({
+      start: new Date(project.startDate || Date.now()),
+      end: new Date(
+        project.endDate ||
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+      ), // Default 1-week range
+      name: project.name || "Unnamed Project",
+      id: `Project-${project.id}`,
+      type: "project" as TaskTypeItems,
+      progress: project.progress || 0,
+      isDisabled: false,
+    }));
+  }, [projects]);
 
-  const handleViewModeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleViewModeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setDisplayOptions((prev) => ({
       ...prev,
       viewMode: event.target.value as ViewMode,
@@ -98,13 +122,13 @@ const filteredProjects = useMemo(() => {
   };
 
   if (isLoading) return <div>Loading...</div>;
-  if (!filteredProjects.length) return <div>No projects available for your selected track.</div>;
+  if (!projects.length)
+    return <div>No projects available for your selected track.</div>;
 
   return (
     <div className="max-w-full p-8">
       <header className="mb-4 flex items-center justify-between">
         <Header name="Projects Timeline" />
-
         <div className="relative inline-block w-64">
           <select
             className="focus:shadow-outline block w-full appearance-none rounded border border-gray-400 bg-white px-4 py-2 pr-8 leading-tight shadow hover:border-gray-500 focus:outline-none dark:border-dark-secondary dark:bg-dark-secondary dark:text-white"
@@ -123,7 +147,9 @@ const filteredProjects = useMemo(() => {
           <Gantt
             tasks={ganttTasks}
             {...displayOptions}
-            columnWidth={displayOptions.viewMode === ViewMode.Month ? 150 : 100}
+            columnWidth={
+              displayOptions.viewMode === ViewMode.Month ? 150 : 100
+            }
             listCellWidth="100px"
             projectBackgroundColor={isDarkMode ? "#101214" : "#1f2937"}
             projectProgressColor={isDarkMode ? "#1f2937" : "#aeb8c2"}
