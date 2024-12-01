@@ -15,6 +15,8 @@ import { RootState } from "@/state/store";
 import { skipToken } from "@reduxjs/toolkit/query/react";
 import Image from "next/image";
 import { format } from "date-fns";
+import Linkify from 'react-linkify';
+import ReactMarkdown from "react-markdown";
 
 type BoardProps = {
     id: string;
@@ -24,7 +26,16 @@ type BoardProps = {
   };
 
 const taskStatus = ["To Do", "Work In Progress", "Under Review", "Completed"];
-
+const linkDecorator = (href, text) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{ textDecoration: "underline", color: "teal" }} // Customize styles
+  >
+    {href.length > 130 ? "Click here" : text}
+  </a>
+);
 const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps) => {
     const userId = authData?.userDetails?.userId || null;
     useEffect(() => {
@@ -360,7 +371,11 @@ const Task = ({ task }: TaskProps) => {
           {formattedDueDate && <span>{formattedDueDate}</span>}
         </div>
         <p className="text-sm text-gray-600 dark:text-neutral-500">
-          {task.description}
+        <ReactMarkdown
+          components={{
+            a: ({ href, children }) => linkDecorator(href, children),
+          }}
+        >{task.description}</ReactMarkdown>
         </p>
         <div className="mt-4 border-t border-gray-200 dark:border-stroke-dark" />
 
