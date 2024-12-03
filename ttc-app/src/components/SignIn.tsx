@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Auth } from 'aws-amplify';
-import { CognitoUser } from '@aws-amplify/auth'; // Import CognitoUser from auth types
+import { CognitoUser } from '@aws-amplify/auth';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -28,15 +28,14 @@ const SignIn: React.FC = () => {
     try {
       const result = await Auth.signIn(formData.username, formData.password);
 
-      // Create a simplified version of the user object for state storage
       const serializableUser = {
         username: result.getUsername(),
         attributes: result.attributes,
       };
 
-      setUser(serializableUser); // Set only serializable properties in context
-      setSession(result); // Save full session if needed
-      setCognitoUser(result); // Store full CognitoUser locally
+      setUser(serializableUser);
+      setSession(result);
+      setCognitoUser(result);
       router.push('/'); // Redirect to home page after login
     } catch (err: any) {
       console.error('Error signing in:', err);
@@ -82,6 +81,14 @@ const SignIn: React.FC = () => {
       >
         {loading ? 'Signing In...' : 'Sign In'}
       </button>
+      <div className="mt-4 text-center">
+        <button
+          onClick={() => router.push('/reset-password')} // Redirect to the reset password page
+          className="text-blue-500 hover:underline"
+        >
+          Forgot Password?
+        </button>
+      </div>
     </div>
   );
 };
