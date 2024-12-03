@@ -61,14 +61,14 @@ const ResetPassword = () => {
           <h1 className="text-xl font-bold mb-4">Reset Password</h1>
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-2">
-              Username
+              Username or Email
             </label>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="Enter your username"
+              placeholder="Enter your username or email"
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
