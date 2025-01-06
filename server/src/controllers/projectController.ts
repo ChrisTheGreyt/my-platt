@@ -68,6 +68,7 @@ export const createProject = async (
 };
 
 
+
 // Get time-gated projects
 export const getTimeGatedProjects = async (req: Request, res: Response) => {
   const { userId } = req.query; // User ID from query params
@@ -76,7 +77,8 @@ export const getTimeGatedProjects = async (req: Request, res: Response) => {
     // Fetch user data to get createdAt
     const user = await prisma.user.findUnique({
       where: { userId: Number(userId) },
-      select: { createdAt: true },
+      select: { createdAt: true, selectedTrack: true }
+
     });
 
     if (!user) {
@@ -94,8 +96,21 @@ export const getTimeGatedProjects = async (req: Request, res: Response) => {
 
     console.log(`Months since joined: ${monthsSinceJoined}`);
 
-    // Determine track based on project ID ranges
-    const is2025Track = Number(userId) <= 100; // IDs <= 100 are 2025
+    type UserWithTrack = {
+      createdAt: Date;
+      selectedTrack: string | null; // Allow null values
+    };
+    
+    const userData: UserWithTrack | null = await prisma.user.findUnique({
+      where: { userId: Number(userId) },
+      select: { createdAt: true, selectedTrack: true }, // Include both fields
+    });
+    
+    if (!userData || !userData.selectedTrack) {
+      return res.status(404).json({ message: "User not found or track not set" });
+    }
+    
+    const is2025Track = userData.selectedTrack === "2025"; // Use 'selectedTrack'
     const startId = is2025Track ? 1 : 101;
     const endId = is2025Track ? 100 : 200;
 
