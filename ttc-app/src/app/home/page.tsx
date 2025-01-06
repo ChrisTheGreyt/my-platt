@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { dataGridClassName, dataGridSxStyles } from "@/lib/utils";
 
+// Task columns for the DataGrid
 const taskColumns: GridColDef[] = [
   { field: "title", headerName: "Title", width: 200 },
   { field: "status", headerName: "Status", width: 150 },
@@ -26,9 +27,12 @@ const taskColumns: GridColDef[] = [
   { field: "dueDate", headerName: "Due Date", width: 150 },
 ];
 
+// Home Page Component
 const HomePage = () => {
   const { data: currentUser, isLoading: isAuthLoading } = useGetAuthUserQuery();
   const [updateUser] = useUpdateUserMutation();
+
+  // State management
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -39,6 +43,8 @@ const HomePage = () => {
       if (!currentUser?.userSub) return;
       try {
         const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+        // Fetch user details
         const response = await fetch(
           `${backendUrl}/api/users/resolve?cognitoSub=${currentUser.userSub}`
         );
@@ -49,14 +55,17 @@ const HomePage = () => {
         }
 
         const userDetails = await response.json();
+        console.log("Fetched User Details:", userDetails);
+
+        // Set track and fetch time-gated tasks
         setSelectedTrack(userDetails.selectedTrack || null);
 
-        // Fetch time-gated tasks for the selected track
         if (userDetails.selectedTrack) {
           const taskResponse = await fetch(
-            `${backendUrl}/tasks/time-gated?userId=${userDetails.userId}`
+            `${backendUrl}/tasks/time-gated?userId=${userDetails.userId}&track=${userDetails.selectedTrack}`
           );
           const taskData = await taskResponse.json();
+          console.log("Fetched Tasks:", taskData);
           setTasks(taskData);
         }
       } catch (error) {
@@ -73,6 +82,7 @@ const HomePage = () => {
   const handleTrackSelection = async (track: string) => {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
       const response = await fetch(`${backendUrl}/api/users/update-track`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -123,7 +133,7 @@ const HomePage = () => {
   // Analyze tasks for charts
   const priorityCount = tasks.reduce(
     (acc: Record<string, number>, task: any) => {
-      const { priority } = task;
+      const priority = task.priority || "Medium"; // Default to Medium
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     },
@@ -133,6 +143,15 @@ const HomePage = () => {
   const taskDistribution = Object.keys(priorityCount).map((key) => ({
     name: key,
     count: priorityCount[key],
+  }));
+
+  // Prepare task rows for DataGrid
+  const taskRows = tasks.map((task) => ({
+    id: task.id,
+    title: task.title || "Untitled Task",
+    status: task.status || "To Do",
+    priority: task.priority || "Medium",
+    dueDate: task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "N/A",
   }));
 
   return (
@@ -158,7 +177,7 @@ const HomePage = () => {
           <h3 className="mb-4 text-lg font-semibold">Your Tasks</h3>
           <div style={{ height: 400, width: "100%" }}>
             <DataGrid
-              rows={tasks}
+              rows={taskRows}
               columns={taskColumns}
               checkboxSelection
               loading={isLoading}
