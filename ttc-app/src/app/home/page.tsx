@@ -2,25 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Priority,
-  Project,
-  Task,
-  useGetProjectsQuery,
-  useGetTasksQuery,
   useGetAuthUserQuery,
   useUpdateUserMutation,
 } from "@/state/api";
-import { useAppSelector } from "@/state/hooks";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Header from "@/components/Header";
 import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell,
   Legend,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -35,23 +26,21 @@ const taskColumns: GridColDef[] = [
   { field: "dueDate", headerName: "Due Date", width: 150 },
 ];
 
-
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
-
 const HomePage = () => {
   const { data: currentUser, isLoading: isAuthLoading } = useGetAuthUserQuery();
   const [updateUser] = useUpdateUserMutation();
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
-  const [completeUserData, setCompleteUserData] = useState<any>(null); // Add state here
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Fetch the selectedTrack from the user data
+  // Fetch user's selected track and tasks based on time-gating
   useEffect(() => {
     const fetchUserDetails = async () => {
+      if (!currentUser?.userSub) return;
       try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
         const response = await fetch(
-          `${backendUrl}/api/users/resolve?cognitoSub=${currentUser?.userSub}`
+          `${backendUrl}/api/users/resolve?cognitoSub=${currentUser.userSub}`
         );
 
         if (!response.ok) {
@@ -60,62 +49,54 @@ const HomePage = () => {
         }
 
         const userDetails = await response.json();
-        console.log("Fetched User Details:", userDetails);
+        setSelectedTrack(userDetails.selectedTrack || null);
 
-        // Combine userDetails with currentUser
-        setCompleteUserData({
-          ...currentUser,
-          userDetails,
-        });
-
-        // Update selectedTrack if available
-        if (userDetails?.selectedTrack) {
-          setSelectedTrack(userDetails.selectedTrack);
+        // Fetch time-gated tasks for the selected track
+        if (userDetails.selectedTrack) {
+          const taskResponse = await fetch(
+            `${backendUrl}/tasks/time-gated?userId=${userDetails.userId}`
+          );
+          const taskData = await taskResponse.json();
+          setTasks(taskData);
         }
       } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error("Error fetching user details or tasks:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (currentUser?.userSub) {
-      fetchUserDetails();
-    }
+    fetchUserDetails();
   }, [currentUser]);
 
+  // Handle track selection
   const handleTrackSelection = async (track: string) => {
     try {
-      if (!completeUserData?.userDetails?.userId) {
-        console.error("User ID is missing.");
-        return;
-      }
-
-      await updateUser({
-        userId: completeUserData.userDetails.userId, // Use completeUserData here
-        selectedTrack: track,
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const response = await fetch(`${backendUrl}/api/users/update-track`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userSub: currentUser?.userSub,
+          selectedTrack: track,
+        }),
       });
 
-      setSelectedTrack(track); // Update local state
+      if (!response.ok) {
+        throw new Error("Failed to update track.");
+      }
+
+      setSelectedTrack(track);
+      window.location.reload(); // Reload to fetch tasks after track selection
     } catch (error) {
-      console.error("Error updating user track:", error);
+      console.error("Error updating track:", error);
     }
   };
 
-  const {
-    data: tasks,
-    isLoading: tasksLoading,
-    isError: tasksError,
-  } = useGetTasksQuery({ projectId: parseInt("1") });
-  const { data: projects, isLoading: isProjectsLoading } =
-    useGetProjectsQuery();
+  // Show loading state
+  if (isAuthLoading || isLoading) return <div>Loading..</div>;
 
-  const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-
-  if (isAuthLoading || tasksLoading || isProjectsLoading)
-    return <div>Loading..</div>;
-  if (tasksError || !tasks || !projects)
-    return <div>Error fetching data</div>;
-
-
+  // Show track selection modal if no track is chosen
   if (!selectedTrack) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100">
@@ -138,12 +119,12 @@ const HomePage = () => {
       </div>
     );
   }
-  
 
+  // Analyze tasks for charts
   const priorityCount = tasks.reduce(
-    (acc: Record<string, number>, task: Task) => {
+    (acc: Record<string, number>, task: any) => {
       const { priority } = task;
-      acc[priority as Priority] = (acc[priority as Priority] || 0) + 1;
+      acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     },
     {}
@@ -154,94 +135,35 @@ const HomePage = () => {
     count: priorityCount[key],
   }));
 
-  const statusCount = projects.reduce(
-    (acc: Record<string, number>, project: Project) => {
-      const status = project.endDate ? "Completed" : "Active";
-      acc[status] = (acc[status] || 0) + 1;
-      return acc;
-    },
-    {}
-  );
-
-  const projectStatus = Object.keys(statusCount).map((key) => ({
-    name: key,
-    count: statusCount[key],
-  }));
-
-  const chartColors = isDarkMode
-    ? {
-        bar: "#8884d8",
-        barGrid: "#303030",
-        pieFill: "#4A90E2",
-        text: "#FFFFFF",
-      }
-    : {
-        bar: "#8884d8",
-        barGrid: "#E0E0E0",
-        pieFill: "#82ca9d",
-        text: "#000000",
-      };
-
   return (
     <div className="container h-full w-[100%] bg-gray-100 bg-transparent p-8">
       <Header name="Project Management Dashboard" />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="rounded-lg bg-white p-4 shadow dark:bg-dark-secondary">
-          <h3 className="mb-4 text-lg font-semibold dark:text-white">
-            Task Priority Distribution
-          </h3>
+        <div className="rounded-lg bg-white p-4 shadow">
+          <h3 className="mb-4 text-lg font-semibold">Task Priority Distribution</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={taskDistribution}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke={chartColors.barGrid}
-              />
-              <XAxis dataKey="name" stroke={chartColors.text} />
-              <YAxis stroke={chartColors.text} />
-              <Tooltip
-                contentStyle={{
-                  width: "min-content",
-                  height: "min-content",
-                }}
-              />
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
               <Legend />
-              <Bar dataKey="count" fill={chartColors.bar} />
+              <Bar dataKey="count" fill="#8884d8" />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="rounded-lg bg-white p-4 shadow dark:bg-dark-secondary">
-          <h3 className="mb-4 text-lg font-semibold dark:text-white">
-            Project Status
-          </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie dataKey="count" data={projectStatus} fill="#82ca9d" label>
-                {projectStatus.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="rounded-lg bg-white p-4 shadow dark:bg-dark-secondary md:col-span-2">
-          <h3 className="mb-4 text-lg font-semibold dark:text-white">
-            Your Tasks
-          </h3>
+
+        <div className="rounded-lg bg-white p-4 shadow md:col-span-2">
+          <h3 className="mb-4 text-lg font-semibold">Your Tasks</h3>
           <div style={{ height: 400, width: "100%" }}>
             <DataGrid
               rows={tasks}
               columns={taskColumns}
               checkboxSelection
-              loading={tasksLoading}
-              getRowClassName={() => "data-grid-row"}
-              getCellClassName={() => "data-grid-cell"}
+              loading={isLoading}
               className={dataGridClassName}
-              sx={dataGridSxStyles(isDarkMode)}
+              sx={dataGridSxStyles(false)}
             />
           </div>
         </div>

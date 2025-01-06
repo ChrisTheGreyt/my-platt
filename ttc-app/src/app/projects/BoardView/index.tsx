@@ -266,14 +266,28 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
   const moveTask = async (taskId: number, toStatus: string) => {
     if (!userId) return; // Ensure userId exists before proceeding
     try {
-      console.log(`Updating task ${taskId} to status: ${toStatus}`);
-      // Call the mutation function
-      await updateUserTaskStatus({ userId, taskId, status: toStatus }).unwrap();
-      refetch(); // Refresh tasks after updating
+      console.log("Moving Task:", taskId, "to Status:", toStatus);
+  
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  
+      // Update the endpoint to pass taskId in the URL
+      const response = await fetch(`${backendUrl}/tasks/${taskId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: toStatus }), // Only send the updated status
+      });
+  
+      if (!response.ok) throw new Error("Failed to update task status");
+  
+      console.log("Task moved successfully!");
+      refetch(); // Refresh tasks after update
     } catch (error) {
       console.error("Error moving task:", error);
     }
   };
+  
+  
+  
 
   const ensureUserTaskExists = async (taskId: number) => {
     if (!userId) return;
