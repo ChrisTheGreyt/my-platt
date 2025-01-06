@@ -30,6 +30,54 @@ type BoardProps = {
     projects: any[]; // Replace `any[]` with the appropriate type for projects
   };
 
+  
+  type Task = {
+    id: number;
+    title: string;
+    description: string;
+    tags: string;
+    startDate?: string; // Changed from string | null
+    dueDate?: string; // Changed from string | null
+    points: number;
+    projectId: number;
+    authorUserId?: number | null;
+    assignedUserId?: number | null;
+    attachments?: any[];
+    status: Status;
+    priority: Priority;
+  };
+  
+  type NestedUserTask = {
+    id: number;
+    task: Task; // For 2025 track with nested task object
+    status: Status;
+    priority: Priority;
+  };
+  
+  type FlatUserTask = Task & {
+    // For 2026 track with flat structure
+    status: Status;
+    priority: Priority;
+  };
+  
+  type CombinedTask = {
+    id: number;
+    title: string;
+    description: string;
+    tags: string;
+    startDate?: string; // Use undefined instead of null
+    dueDate?: string;   // Use undefined instead of null
+    points: number;
+    projectId: number;
+    authorUserId?: number; // Allow undefined but not null
+    assignedUserId?: number; // Allow undefined but not null
+    attachments?: any[];
+    status: Status;
+    priority: Priority;
+  };
+  
+  
+  
 const taskStatus = ["To Do", "Work In Progress", "Under Review", "Completed"];
 const linkDecorator = (href, text) => (
   <a
@@ -171,6 +219,7 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
       }
     };
     
+    
     const tasks = (userTasks || []).map((userTask) => {
       if (!userTask.task) {
         console.warn(`Missing task data for userTask with ID: ${userTask.id}`);
@@ -244,25 +293,48 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
       <TaskColumn
         key={status}
         status={status}
-        tasks={(userTasks || []).map((userTask) => {
-          const task = userTask.task || {}; // Fallback to empty object if task is missing
-          
+        tasks={(userTasks || []).map((userTask): CombinedTask => {
+          // Handle nested structure (2025)
+          if (userTask.task) {
+            const nestedTask = userTask.task!;
+            return {
+              id: nestedTask.id,
+              title: nestedTask.title || "Untitled Task",
+              description: nestedTask.description || "No description available.",
+              tags: nestedTask.tags || "",
+              startDate: nestedTask.startDate || undefined,
+              dueDate: nestedTask.dueDate || undefined,
+              points: nestedTask.points || 0,
+              projectId: nestedTask.projectId || 0,
+              authorUserId: nestedTask.authorUserId ?? undefined,
+              assignedUserId: nestedTask.assignedUserId ?? undefined,
+              attachments: nestedTask.attachments || [],
+              status: nestedTask.status as Status, // Cast string to Status enum
+              priority: nestedTask.priority as Priority, // Cast string to Priority enum
+            };
+          }
+        
+          // Handle flat structure (2026)
+          const flatTask = userTask as unknown as FlatUserTask;
           return {
-            id: userTask.task?.id || userTask.id || -1,
-            title: userTask.task?.title || "Untitled Task", // Fallback for title
-            description: userTask.task?.description || "", // Fallback for description
-            tags: userTask.task?.tags || "",
-            startDate: userTask.task?.startDate || "",
-            dueDate: userTask.task?.dueDate || "",
-            points: userTask.task?.points || 0,
-            projectId: userTask.task?.projectId || -1,
-            authorUserId: userTask.task?.authorUserId || -1,
-            assignedUserId: userTask.task?.assignedUserId || -1,
-            attachments: userTask.task?.attachments || [],
-            status: userTask.status as Status, // Use user-specific status
-            priority: userTask.priority as Priority, // Use user-specific priority
+            id: flatTask.id,
+            title: flatTask.title || "Untitled Task",
+            description: flatTask.description || "No description available.",
+            tags: flatTask.tags || "",
+            startDate: flatTask.startDate || undefined,
+            dueDate: flatTask.dueDate || undefined,
+            points: flatTask.points || 0,
+            projectId: flatTask.projectId || 0,
+            authorUserId: flatTask.authorUserId ?? undefined,
+            assignedUserId: flatTask.assignedUserId ?? undefined,
+            attachments: flatTask.attachments || [],
+            status: flatTask.status as Status, // Cast string to Status enum
+            priority: flatTask.priority as Priority, // Cast string to Priority enum
           };
         })}
+        
+        
+        
         moveTask={moveTask}
         setIsModalNewTaskOpen={setIsModalNewTaskOpen}
         handleEditTask={handleEditTask}
@@ -270,13 +342,16 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
       />
     ))}
   </div>
-    <EditTaskModal
-      isOpen={isEditModalOpen}
-      onClose={() => setIsEditModalOpen(false)}
-      task={selectedTask}
-      onUpdateTask={handleUpdateTask} 
-    />
+  <EditTaskModal
+    isOpen={isEditModalOpen}
+    onClose={() => setIsEditModalOpen(false)}
+    task={selectedTask}
+    onUpdateTask={handleUpdateTask}
+  />
 </DndProvider>
+
+
+
 
   );
 };

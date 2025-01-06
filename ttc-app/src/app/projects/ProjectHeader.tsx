@@ -16,7 +16,7 @@ type Props = {
   
 };
 const ADMIN_COGNITO_IDS = [
-  "b4d80438-b081-7025-1adc-d6f95479680f", // Replace with actual admin IDs
+  "b4d80438-b081-7025-1adc-d6f95479680f", 
   "74488448-c071-70b0-28db-644fc67f3f11",
 ];
 
