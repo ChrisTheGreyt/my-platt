@@ -111,28 +111,29 @@ const Sidebar = () => {
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!userId) return;
+  
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/time-gated?userId=${userId}`
         );
   
         if (!response.ok) {
-          throw new Error("Failed to fetch projects");
+          throw new Error(`Failed to fetch projects: ${response.statusText}`);
         }
   
         const data = await response.json();
-        console.log("Fetched Projects:", data); // Debugging line
-        console.log("!!!Fetched", authData?.userDetails?.userId);
-        setProjects(data); // Ensure projects are saved in state
+        console.log("Fetched Projects for Sidebar:", data);
+        setProjects(data); // Save projects in state
       } catch (error) {
         console.error("Error fetching projects:", error);
       }
     };
   
-    if (userId) {
-      fetchProjects();
-    }
-  }, [authData]);
+    fetchProjects();
+  }, [userId]);
+  
+  
   
   console.log("!!!Fetched", userId);
 
