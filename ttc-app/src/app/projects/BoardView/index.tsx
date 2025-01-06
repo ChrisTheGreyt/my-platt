@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState} from "react";
+import { Auth } from 'aws-amplify'; // Import Auth for Cognito
 import {
   useUpdateUserTaskStatusMutation,
   useCreateUserTaskMutation,
@@ -17,6 +18,10 @@ import Image from "next/image";
 import { format } from "date-fns";
 import Linkify from 'react-linkify';
 import ReactMarkdown from "react-markdown";
+import EditTaskModal from "@/components/ModalEditTask";
+
+
+
 
 type BoardProps = {
     id: string;
@@ -38,10 +43,31 @@ const linkDecorator = (href, text) => (
 );
 const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps) => {
     const userId = authData?.userDetails?.userId || null;
+    const [isAdmin, setIsAdmin] = useState(false); 
+    const ADMIN_COGNITO_IDS = [
+      "b4d80438-b081-7025-1adc-d6f95479680f", 
+      "74488448-c071-70b0-28db-644fc67f3f11",
+    ];
+    
+    
+    useEffect(() => {
+      const checkAdminStatus = async () => {
+        try {
+          const currentUser = await Auth.currentAuthenticatedUser();
+          const cognitoSub = currentUser.attributes.sub;
+          const isAdminUser = ADMIN_COGNITO_IDS.includes(cognitoSub);
+          setIsAdmin(isAdminUser);
+          console.log("You Are The Captin Now", cognitoSub);
+        } catch (error) {
+          console.error("Failed to fetch authenticated user:", error);
+        }
+      };
+      checkAdminStatus();
+    }, []);
+    
     useEffect(() => {
         console.log('authData!!!!:', authData);
       }, [authData]);
-
     const selectedTrack = authData?.userDetails?.selectedTrack || null;
     const projectId = id ? Number(id) : null;
     // const userId = authData?.userDetails?.userId || null;
@@ -56,6 +82,9 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
 
     const [updateUserTaskStatus] = useUpdateUserTaskStatusMutation();
     const [createUserTask] = useCreateUserTaskMutation();
+
+    const [selectedTask, setSelectedTask] = React.useState<TaskType | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
     useEffect(() => {
         console.log("authData received in BoardView:", authData);
@@ -108,21 +137,78 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
     // if (!userTasks || userTasks.length === 0) {
     //     return <div>No tasks available for this project.</div>;
     // }
+
+    // Task Udate modal 
+    const handleEditTask = (task: TaskType) => {
+      console.log('Task ID:', task.id); // Should log the correct task ID
+  console.log('Task Data:', task); // Logs the full task object
+      setSelectedTask(task);
+      setIsEditModalOpen(true);
+    };
     
-    const tasks = (userTasks || []).map((userTask) => ({
-        id: userTask.task?.id ?? -1,
-        title: userTask.task?.title || "",
-        description: userTask.task?.description || "",
-        tags: userTask.task?.tags || "",
-        startDate: userTask.task?.startDate || "",
-        dueDate: userTask.task?.dueDate || "",
-        points: userTask.task?.points || 0,
-        projectId: userTask.task?.projectId || 0,
-        authorUserId: userTask.task?.authorUserId || null,
-        assignedUserId: userTask.task?.assignedUserId || null,
-        status: userTask.status || "To Do",
-        priority: userTask.priority || "Medium",
-      }));
+    const handleUpdateTask = async (taskId: number, updatedData: any) => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updatedData),
+          }
+        );
+    
+        if (!response.ok) {
+          throw new Error("Failed to update task");
+        }
+    
+        const updatedTask = await response.json();
+        console.log("Updated Task:", updatedTask);
+    
+        setIsEditModalOpen(false);
+        refetch(); // Refresh tasks after update
+      } catch (error) {
+        console.error("Error updating task:", error);
+      }
+    };
+    
+    const tasks = (userTasks || []).map((userTask) => {
+      if (!userTask.task) {
+        console.warn(`Missing task data for userTask with ID: ${userTask.id}`);
+        return {
+          id: -1,
+          title: "Untitled Task",
+          description: "No description available.",
+          tags: "",
+          startDate: "",
+          dueDate: "",
+          points: 0,
+          projectId: -1,
+          authorUserId: -1,
+          assignedUserId: -1,
+          attachments: [],
+          status: "To Do",
+          priority: "Medium",
+        };
+      }
+    
+      // Map valid tasks
+      return {
+        id: userTask.task.id,
+        title: userTask.task.title || "Untitled Task",
+        description: userTask.task.description || "No description available.",
+        tags: userTask.task.tags || "",
+        startDate: userTask.task.startDate || "",
+        dueDate: userTask.task.dueDate || "",
+        points: userTask.task.points || 0,
+        projectId: userTask.task.projectId || 0,
+        authorUserId: userTask.task.authorUserId || null,
+        assignedUserId: userTask.task.assignedUserId || null,
+        attachments: userTask.task.attachments || [],
+        status: userTask.status as Status,
+        priority: userTask.priority as Priority,
+      };
+    });
+    
       
 
   
@@ -151,58 +237,47 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
   };
 
   return (
-    // <DndProvider backend={HTML5Backend}>
-    //   <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
-    //     {taskStatus.map((status) => (
-    //       <TaskColumn
-    //         key={status}
-    //         status={status}
-    //         tasks={tasks || []}
-    //         moveTask={moveTask}
-    //         setIsModalNewTaskOpen={setIsModalNewTaskOpen}
-    //       />
-    //     ))}
-    //   </div>
-    // </DndProvider>
 
     <DndProvider backend={HTML5Backend}>
-        <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
-            {taskStatus.map((status) => (
-            <TaskColumn
-                key={status}
-                status={status}
-                tasks={(userTasks || []).map((userTask) => {
-                if (!userTask.task) {
-                    console.warn(`Task data is missing for userTask with ID ${userTask.id}`);
-                    return {
-                    id: -1,
-                    title: "Untitled Task",
-                    description: "",
-                    tags: "",
-                    startDate: "",
-                    dueDate: "",
-                    points: 0,
-                    projectId: -1,
-                    authorUserId: -1,
-                    assignedUserId: -1,
-                    attachments: [],
-                    status: userTask.status as Status, // Cast to Status enum
-                    priority: userTask.priority as Priority, // Cast to Priority enum if needed
-                    };
-                }
+  <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
+    {taskStatus.map((status) => (
+      <TaskColumn
+        key={status}
+        status={status}
+        tasks={(userTasks || []).map((userTask) => {
+          const task = userTask.task || {}; // Fallback to empty object if task is missing
+          
+          return {
+            id: userTask.task?.id || userTask.id || -1,
+            title: userTask.task?.title || "Untitled Task", // Fallback for title
+            description: userTask.task?.description || "", // Fallback for description
+            tags: userTask.task?.tags || "",
+            startDate: userTask.task?.startDate || "",
+            dueDate: userTask.task?.dueDate || "",
+            points: userTask.task?.points || 0,
+            projectId: userTask.task?.projectId || -1,
+            authorUserId: userTask.task?.authorUserId || -1,
+            assignedUserId: userTask.task?.assignedUserId || -1,
+            attachments: userTask.task?.attachments || [],
+            status: userTask.status as Status, // Use user-specific status
+            priority: userTask.priority as Priority, // Use user-specific priority
+          };
+        })}
+        moveTask={moveTask}
+        setIsModalNewTaskOpen={setIsModalNewTaskOpen}
+        handleEditTask={handleEditTask}
+        isAdmin={isAdmin}
+      />
+    ))}
+  </div>
+    <EditTaskModal
+      isOpen={isEditModalOpen}
+      onClose={() => setIsEditModalOpen(false)}
+      task={selectedTask}
+      onUpdateTask={handleUpdateTask} 
+    />
+</DndProvider>
 
-                return {
-                    ...userTask.task,
-                    status: userTask.status as Status, // Override with user-specific value
-                    priority: userTask.priority as Priority, // Override with user-specific value
-                };
-                })}
-                moveTask={moveTask}
-                setIsModalNewTaskOpen={setIsModalNewTaskOpen}
-            />
-            ))}
-        </div>
-    </DndProvider>
   );
 };
 
@@ -211,9 +286,11 @@ type TaskColumnProps = {
   tasks: TaskType[];
   moveTask: (taskId: number, toStatus: string) => void;
   setIsModalNewTaskOpen: (isOpen: boolean) => void;
+  handleEditTask: (task: TaskType) => void;
+  isAdmin: boolean;
 };
 
-const TaskColumn = ({ status, tasks, moveTask, setIsModalNewTaskOpen }: TaskColumnProps) => {
+const TaskColumn = ({ status, tasks, moveTask, setIsModalNewTaskOpen, handleEditTask, isAdmin }: TaskColumnProps) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "task",
     drop: (item: { id: number }) => moveTask(item.id, status),
@@ -270,7 +347,7 @@ const TaskColumn = ({ status, tasks, moveTask, setIsModalNewTaskOpen }: TaskColu
       {tasks
         .filter((task) => task.status === status)
         .map((task) => (
-          <Task key={task.id} task={task} />
+          <Task key={task.id} task={task} handleEditTask={handleEditTask} isAdmin={isAdmin} />
         ))}
     </div>
   );
@@ -278,9 +355,11 @@ const TaskColumn = ({ status, tasks, moveTask, setIsModalNewTaskOpen }: TaskColu
 
 type TaskProps = {
   task: TaskType;
+  handleEditTask: (task: TaskType) => void;
+  isAdmin: boolean;
 };
 
-const Task = ({ task }: TaskProps) => {
+const Task = ({ task, handleEditTask, isAdmin}: TaskProps) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
     item: { id: task.id },
@@ -353,10 +432,16 @@ const Task = ({ task }: TaskProps) => {
               ))}
             </div>
           </div>
-          <button className="flex h-6 w-4 flex-shrink-0 items-center justify-center dark:text-neutral-500">
-            <EllipsisVertical size={26} />
-          </button>
+          {/* Conditionally Render Ellipsis for Admins */}
+          {isAdmin && (
+            <button className="flex h-6 w-4 flex-shrink-0 items-center justify-center dark:text-neutral-500"
+                    onClick={() => handleEditTask(task)} 
+            >
+              <EllipsisVertical size={26} />
+            </button>
+          )}
         </div>
+          
 
         <div className="my-3 flex justify-between">
           <h4 className="text-md font-bold dark:text-white">{task.title}</h4>

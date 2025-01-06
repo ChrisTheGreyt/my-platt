@@ -2,6 +2,7 @@ import Modal from "@/components/Modal";
 import { Priority, Status, useCreateTaskMutation } from "@/state/api";
 import React, { useState } from "react";
 import { formatISO } from "date-fns";
+import { User } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
@@ -18,9 +19,17 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
   const [tags, setTags] = useState("");
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [authorUserId, setAuthorUserId] = useState("");
+  // const [authorUserId, setAuthorUserId] = useState("");
+  const [authorUserId, setAuthorUserId] = useState(() => {
+    // Default the authorUserId to the currently logged-in user
+    return window.localStorage.getItem("userId") || "";   
+  });
+  console.log("userID: ", authorUserId);
   const [assignedUserId, setAssginedUserId] = useState("");
   const [projectId, setProjectId] = useState("");
+  
+  const [track, setTrack] = useState("2025");
+  const [users, setUsers] = useState([]);
   
 
   const handleSubmit = async () => {
@@ -43,8 +52,21 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
       dueDate: formattedDueDate,
       authorUserId: parseInt(authorUserId),
       assignedUserId: parseInt(assignedUserId),
-      projectId: id !== null ?  Number(id) : Number(projectId),
+      projectId: Number(id) ,
     });
+    console.log("Task Payload:", {
+      title,
+      description,
+      status,
+      priority,
+      tags,
+      startDate: formattedStartDate,
+      dueDate: formattedDueDate,
+      authorUserId: parseInt(authorUserId),
+      assignedUserId: parseInt(assignedUserId),
+      projectId: Number(id),
+    });
+    
   };
 
   const isFormValid = () => {
@@ -58,7 +80,7 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} name="Create New Task">
-      <form
+      <form 
         className="mt-4 space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
@@ -126,16 +148,18 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
           <input
             type="text"
             className={inputStyles}
-            placeholder="Author User Id"
+            placeholder="Assigned byMyPLATT"
             value={authorUserId}
             onChange={(e) => setAuthorUserId(e.target.value)}
+            
           />
           <input
             type="text"
             className={inputStyles}
-            placeholder="Assigned User Id"
+            placeholder="Assigned to Track"
             value={assignedUserId}
             onChange={(e) => setAssginedUserId(e.target.value)}
+            
           />
         </div>
         { id === null && (

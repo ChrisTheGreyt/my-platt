@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { differenceInMonths } from "date-fns";
+import { CognitoIdentityProviderClient, AdminGetUserCommand } from "@aws-sdk/client-cognito-identity-provider";
 import Stripe from "stripe";
 import dotenv from 'dotenv';
 
@@ -359,6 +361,7 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const checkUserStatus = async (req: Request, res: Response) => {
   const { email } = req.body;
+  console.log('Received request for /check-status with email:', email);
 
   try {
     const user = await prisma.user.findUnique({
@@ -367,15 +370,49 @@ export const checkUserStatus = async (req: Request, res: Response) => {
     });
 
     if (user) {
+      console.log('User found:', user);
       return res.status(200).json({ subscriptionStatus: user.subscriptionStatus });
     } else {
+      console.log('User not found for email:', email);
       return res.status(404).json({ error: 'User not found' });
     }
   } catch (error) {
-    console.error('Error checking subscription status:', error);
+    console.error('Error checking subscription status:', email, error);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+export const checkUserStatusByCognitoId = async (req: Request, res: Response) => {
+  console.log('Body received:', req.body); // Log received body
+
+  const { cognitoId } = req.body;
+
+  if (!cognitoId) {
+    console.error('Missing cognitoId in request body.');
+    return res.status(400).json({ error: 'Missing cognitoId' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { cognitoId },
+      select: { subscriptionStatus: true },
+    });
+
+    if (user) {
+      console.log('User found:', user);
+      return res.status(200).json({ subscriptionStatus: user.subscriptionStatus });
+    } else {
+      console.error('User not found for cognitoId:', cognitoId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error checking subscription status by cognitoId:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+
 
 export const createFreshUser = async (req: Request, res: Response) => {
   try {
@@ -420,18 +457,48 @@ export const resolve = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { cognitoId: String(cognitoSub) },
+      select: {
+        userId: true,
+        selectedTrack: true,
+        subscriptionStatus: true,
+        username: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        profilePictureUrl: true,
+        cognitoId: true,
+        teamId: true,
+      },
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ userId: user.userId });
+    if (user.subscriptionStatus !== 'active') {
+      return res.status(403).json({ error: 'Subscription inactive' });
+    }
+
+    res.json({
+      userId: user.userId,
+      selectedTrack: user.selectedTrack,
+      subscriptionStatus: user.subscriptionStatus,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profilePictureUrl: user.profilePictureUrl,
+      cognitoId: user.cognitoId,
+      teamId: user.teamId,
+    });
   } catch (error) {
     console.error('Error resolving userId:', error);
     res.status(500).json({ error: 'Failed to resolve userId' });
   }
 };
+
+
+
 
 export const getUserTrack = async (req: Request, res: Response) => {
   const { userId } = req.query;
@@ -563,3 +630,49 @@ export const getProjects = async (req:Request, res:Response) => {
     res.status(500).json({ error: "Failed to fetch projects" });
   }
 };
+
+
+// Initialize Cognito client
+const cognitoClient = new CognitoIdentityProviderClient({
+  region: process.env.MP_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.MP_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.MP_SECRET_ACCESS_KEY!,
+  },
+});
+
+export const getUserCreatedTime = async (req: Request, res: Response) => {
+  try {
+    // Extract the username from query parameters
+    const username = req.query.username as string;
+    console.log("Username received:", username);
+
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+
+    // Query AWS Cognito directly using the username
+    const command = new AdminGetUserCommand({
+      UserPoolId: process.env.COGNITO_USER_POOL_ID!,
+      Username: username,
+    });
+
+    const response = await cognitoClient.send(command);
+    console.log("Cognito Response:", JSON.stringify(response, null, 2));
+
+    // Fetch the creation time (UserCreateDate) directly from Cognito
+    const createdTime = response.UserCreateDate; // Default Cognito created time
+    console.log("Extracted Created Time:", createdTime);
+
+    if (!createdTime) {
+      return res.status(404).json({ error: "Created time not found in Cognito" });
+    }
+
+    // Return the creation time in ISO format
+    res.json({ createdTime });
+  } catch (error: any) {
+    console.error("Error fetching created time:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+

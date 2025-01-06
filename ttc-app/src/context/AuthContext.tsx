@@ -10,6 +10,7 @@ import { getCurrentUser } from '../utils/cognito';
 interface SerializableUser {
   username: string;
   attributes: { [key: string]: string };
+  isAdmin: boolean;
 }
 
 interface AuthContextType {
@@ -44,7 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Extract serializable data from the CognitoUser object
           const serializableUser: SerializableUser = {
             username: currentUser.getUsername(),
-            attributes: {}
+            attributes: {},
+            isAdmin: false
           };
   
           // Populate attributes if they are available

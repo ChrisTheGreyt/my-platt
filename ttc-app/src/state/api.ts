@@ -1,7 +1,6 @@
 // src/state/api.ts
 
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { CognitoUser } from 'amazon-cognito-identity-js';
 import { Auth } from 'aws-amplify'; // Ensure Amplify is configured
 
 
@@ -94,8 +93,8 @@ export interface User {
     cognitoId?: string;
     teamId?: number;
     subscriptionStatus?: string;
-    firstName?: string; // Added
-    lastName?: string;  // Added
+    firstName?: string; 
+    lastName?: string;  
     selectedTrack?: string; 
 }
 
@@ -108,16 +107,34 @@ export interface UserTasks {
     user?: User; // Optional reference to the User
     task?: Task; // Optional reference to the Task
   }
+  // export interface AuthData {
+  //   user: {
+  //     attributes: {
+  //       email: string;
+  //       sub: string;
+  //     };
+  //     username: string;
+  //   };
+  //   userSub: string;
+  //   userDetails: User; // Add userDetails here
+  // }
   export interface AuthData {
-    user: {
-      attributes: {
-        email: string;
-        sub: string;
-      };
-      username: string;
-    };
+    user: { username: string; attributes: Record<string, string> };
     userSub: string;
-    userDetails: User; // Add userDetails here
+    userDetails: ResolveUserResponse;
+  }
+
+  export interface ResolveUserResponse {
+    userId: number;
+    selectedTrack?: string;
+    subscriptionStatus?: string;
+    username: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    profilePictureUrl: string;
+    cognitoId: string;
+    teamId: number;
   }
   
 export const api = createApi({
@@ -141,33 +158,30 @@ export const api = createApi({
     reducerPath: 'api',
     tagTypes: [ "Projects", "Tasks", "Users", "Teams", "Payment", "UserTasks"],
     endpoints: (build) => ({
-
-        
-        
-    getAuthUser: build.query<{
-        user: { username: string; attributes: Record<string, string> };
-        userSub: string;
-        userDetails: User;
-      }, void>({
+      getAuthUser: build.query<AuthData, void>({
         queryFn: async (_, _queryApi, _extraOptions, fetchWithBQ) => {
           try {
             const cognitoUser = await Auth.currentAuthenticatedUser();
             if (!cognitoUser) throw new Error("No user found");
-      
+  
             const user = {
               username: cognitoUser.getUsername(),
               attributes: cognitoUser.attributes || {},
             };
-      
+  
             const userSub = user.attributes.sub;
             const userDetailsResponse = await fetchWithBQ(`users/resolve?cognitoSub=${userSub}`);
+            
             if (userDetailsResponse.error) {
               const errorMessage = (userDetailsResponse.error.data as { message?: string })?.message || "Failed to fetch user details";
               throw new Error(errorMessage);
             }
-            const userDetails = userDetailsResponse.data as User;
-      
-            return { data: { user, userSub, userDetails } };
+  
+            const resolvedData = userDetailsResponse.data as ResolveUserResponse;
+  
+            console.log("Resolved data from /users/resolve:", resolvedData);
+  
+            return { data: { user, userSub, userDetails: resolvedData } };
           } catch (error: any) {
             return { error: error?.message || "Could not fetch user data" };
           }

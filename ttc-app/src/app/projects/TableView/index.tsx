@@ -1,4 +1,5 @@
-import { useAppSelector } from '@/app/redux';
+import { useAppSelector } from '@/state/hooks';
+
 import Header from '@/components/Header';
 import { dataGridClassName, dataGridSxStyles } from '@/lib/utils';
 import { useGetTasksQuery } from '@/state/api';

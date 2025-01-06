@@ -1,6 +1,6 @@
 "use client"
 
-import { useAppSelector } from '@/app/redux'
+import { useAppSelector } from '@/state/hooks'
 import Header from '@/components/Header'
 import ModalNewTask from '@/components/ModalNewTask'
 import TaskCard from '@/components/TaskCard'
@@ -72,7 +72,9 @@ const columns: GridColDef[] = [
     const [isModalNewTaskOpen, setIsModalNewTaskOpen] = useState(false);
   
     const { data: currentUser } = useGetAuthUserQuery();
-    const userId = currentUser?.userDetails?.userId ?? null;
+    const userId = useAppSelector((state) => state.auth.userDetails?.userId ?? null);
+    const isAdmin = userId !== null && [1, 2, 3].includes(userId); // Example admin IDs
+
   
     const { data: tasks, isLoading, isError: isTasksError } = useGetTasksByUserQuery(
       { userId: userId || 0, projectId: 0 }, // Pass both userId and projectId
@@ -127,12 +129,14 @@ const columns: GridColDef[] = [
         <Header
           name="Priority Page"
           buttonComponent={
-            <button
-              className="mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 opacity-0"
-              // onClick={() => setIsModalNewTaskOpen(true)}
-            >
-              Add Task
-            </button>
+            isAdmin && (
+                <button
+                    className="mr-3 rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700 opacity-0"
+                    onClick={() => setIsModalNewTaskOpen(true)}
+                  >
+                  Add Task
+              </button>
+            )
           }
         />
         <div className="mb-4 flex justify-start">

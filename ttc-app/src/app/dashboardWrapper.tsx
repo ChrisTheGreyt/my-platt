@@ -3,10 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import StoreProvider, { useAppSelector } from './redux';
+import StoreProvider from './redux';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
+import { useAppSelector } from '@/state/hooks';
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);

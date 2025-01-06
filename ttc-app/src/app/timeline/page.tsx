@@ -1,116 +1,63 @@
+// Timeline.tsx
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { useAppSelector } from "@/app/redux";
+import { useGetTasksQuery, useGetAuthUserQuery } from '@/state/api';
+import { useAppSelector, useAppDispatch } from '@/state/hooks';
+import { setUser } from '@/state/authSlice';
 import "gantt-task-react/dist/index.css";
 import { DisplayOption, Gantt, ViewMode } from "gantt-task-react";
 import Header from "@/components/Header";
-import { Auth } from "aws-amplify";
+
+type Props = {
+  id: string;
+  setIsModalNewTaskOpen: (isOpen: boolean) => void;
+};
 
 type TaskTypeItems = "task" | "milestone" | "project";
 
-const Timeline = () => {
+const Timeline = ({ id, setIsModalNewTaskOpen }: Props) => {
+  const dispatch = useAppDispatch();
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
-  const [userSub, setUserSub] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch authenticated user data, which should include userDetails with userId
+  const { data: currentUserData, error: userError, isLoading: userLoading } = useGetAuthUserQuery();
+
+  // Dispatch setUser to store userDetails in Redux
+  useEffect(() => {
+    if (currentUserData) {
+      dispatch(setUser(currentUserData));
+    }
+  }, [currentUserData, dispatch]);
+
+  // Access userId and determine if user is an admin
+  const userId = useAppSelector((state) => state.auth.userDetails?.userId ?? null);
+  const isAdmin = userId !== null && [109].includes(userId);
+
+  console.log("Resolved userId:", userId);
+  console.log("isAdmin:", isAdmin);
+
+  // Fetch tasks for the specified project
+  const { data: tasks, error: tasksError, isLoading: tasksLoading } = useGetTasksQuery({ projectId: Number(id) });
 
   const [displayOptions, setDisplayOptions] = useState<DisplayOption>({
     viewMode: ViewMode.Month,
     locale: "en-us",
   });
 
-  // Step 1: Fetch userSub (Cognito ID)
-  useEffect(() => {
-    const fetchUserSub = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const cognitoId = user.attributes.sub; // Cognito userSub
-        setUserSub(cognitoId);
-      } catch (error) {
-        console.error("Failed to fetch userSub:", error);
-        setIsLoading(false); // Stop loading if userSub fetch fails
-      }
-    };
-
-    fetchUserSub();
-  }, []);
-
-  // Step 2: Resolve userId using userSub
-  useEffect(() => {
-    const fetchUserId = async () => {
-      if (!userSub) return;
-
-      try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const response = await fetch(
-          `${backendUrl}/api/users/resolve?cognitoSub=${userSub}`
-        );
-
-        if (!response.ok) {
-          console.error("Failed to fetch userId:", response.statusText);
-          setIsLoading(false); // Stop loading if userId fetch fails
-          return;
-        }
-
-        const data = await response.json();
-        setUserId(data.userId);
-      } catch (error) {
-        console.error("Error fetching userId:", error);
-        setIsLoading(false); // Stop loading if userId fetch fails
-      }
-    };
-
-    fetchUserId();
-  }, [userSub]);
-
-  // Step 3: Fetch projects using userId
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!userId) return;
-
-      try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const response = await fetch(
-          `${backendUrl}/api/users/${userId}/projects`
-        );
-
-        if (!response.ok) {
-          console.error("Failed to fetch projects:", response.statusText);
-          setIsLoading(false); // Stop loading if projects fetch fails
-          return;
-        }
-
-        const data = await response.json();
-        setProjects(data);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProjects();
-  }, [userId]);
-
-  // Prepare tasks for the Gantt chart
   const ganttTasks = useMemo(() => {
-    return projects.map((project) => ({
-      start: new Date(project.startDate || Date.now()),
-      end: new Date(
-        project.endDate ||
-          Date.now() + 7 * 24 * 60 * 60 * 1000
-      ), // Default 1-week range
-      name: project.name || "Unnamed Project",
-      id: `Project-${project.id}`,
-      type: "project" as TaskTypeItems,
-      progress: project.progress || 0,
+    if (!tasks) return [];
+    return tasks.map((task) => ({
+      start: new Date(task.startDate as string),
+      end: new Date(task.dueDate as string),
+      name: task.title,
+      id: `Task-${task.id}`,
+      type: "task" as TaskTypeItems,
+      progress: task.points ? (task.points / 10) * 100 : 0,
       isDisabled: false,
     }));
-  }, [projects]);
+  }, [tasks]);
 
   const handleViewModeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -121,9 +68,10 @@ const Timeline = () => {
     }));
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (!projects.length)
-    return <div>No projects available for your selected track.</div>;
+  if (userLoading || tasksLoading) return <div>Loading...</div>;
+  if (userError) return <div>An error occurred while fetching user data</div>;
+  if (tasksError) return <div>An error occurred while fetching tasks</div>;
+  if (!tasks?.length) return <div>No tasks available for your selected track.</div>;
 
   return (
     <div className="max-w-full p-8">
@@ -147,14 +95,21 @@ const Timeline = () => {
           <Gantt
             tasks={ganttTasks}
             {...displayOptions}
-            columnWidth={
-              displayOptions.viewMode === ViewMode.Month ? 150 : 100
-            }
+            columnWidth={displayOptions.viewMode === ViewMode.Month ? 150 : 100}
             listCellWidth="100px"
-            projectBackgroundColor={isDarkMode ? "#101214" : "#1f2937"}
-            projectProgressColor={isDarkMode ? "#1f2937" : "#aeb8c2"}
-            projectProgressSelectedColor={isDarkMode ? "#000" : "#9ba1a6"}
+            barBackgroundColor={isDarkMode ? "#101214" : "#aeb8c2"}
+            barBackgroundSelectedColor={isDarkMode ? "#000" : "#9ba1a6"}
           />
+        </div>
+        <div className="px-4 pb-5 pt-1">
+          {isAdmin && (
+            <button
+              className="flex item-center rounded bg-blue-primary px-3 py-2 text-white hover:bg-blue-600 opacity-1"
+              onClick={() => setIsModalNewTaskOpen(true)}
+            >
+              Add Task
+            </button>
+          )}
         </div>
       </div>
     </div>

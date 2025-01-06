@@ -10,7 +10,7 @@ import {
   useGetAuthUserQuery,
   useUpdateUserMutation,
 } from "@/state/api";
-import { useAppSelector } from "../redux";
+import { useAppSelector } from "@/state/hooks";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import Header from "@/components/Header";
 import {

@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { setAuthData } from "../state/authSlice";
 import { setUser, setSelectedProjectId } from '../state';
 import { Auth } from 'aws-amplify';
-import { AuthData } from '@/state/api';
 import { store } from '@/state/store';
 
 const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -12,31 +10,35 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Get the current authenticated user
         const currentUser = await Auth.currentAuthenticatedUser();
-        console.log("<AuthInitializer>Cognito Current User:", currentUser);
-        const cognitoSub = currentUser.attributes.sub; // Extract Cognito sub
-        const email = currentUser.attributes.email; // Extract email (optional for debugging)
-  
-        // Fetch user details from the backend
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'; // Fallback to localhost
+        if (!currentUser) {
+          console.warn("<AppInitializer> No authenticated user found.");
+          return;
+        }
+
+        console.log("<AppInitializer> Cognito Current User:", currentUser);
+
+        const cognitoSub = currentUser.attributes.sub;
+        const email = currentUser.attributes.email;
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+
         const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
         
         if (!response.ok) {
-          console.error('Failed to fetch user details from the backend');
+          console.error('Failed to fetch user details from the backend. Status:', response.status);
           return;
         }
         
-        console.log("AppInitializer useEffect executed");
-
-
-        // Parse the response
         const userData = await response.json();
-  
-        // Extract user details
-        const userId = userData.userId; // Database User ID
-        const selectedTrack = userData.selectedTrack; // Track info
-  
+        // userData should contain { userId, selectedTrack, subscriptionStatus, ... }
+
+        const userId = userData.userId;
+        const selectedTrack = userData.selectedTrack;
+        const subscriptionStatus = userData.subscriptionStatus || '';
+        const firstName = userData.firstName || '';
+        const lastName = userData.lastName || '';
+        const profilePictureUrl = userData.profilePictureUrl || '';
+
         // Dispatch the user data to Redux
         dispatch(
           setUser({
@@ -46,8 +48,8 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
             },
             userSub: cognitoSub,
             userDetails: {
-              userId,
-              selectedTrack,
+              userId: userData.userId,
+              selectedTrack: userData.selectedTrack,
               email,
               firstName: userData.firstName || "",
               lastName: userData.lastName || "",
@@ -57,16 +59,13 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
           })
         );
         
-        // Check Redux state immediately after dispatch
+
+        // Log Redux state after a short delay
         setTimeout(() => {
           console.log("Redux state after dispatch:", store.getState());
-        }, 1000); // Delay to ensure state is updated
-      
+        }, 1000); 
 
-      
-      console.log("Dispatched setUser action. Check Redux state:");
-      
-        
+        console.log("Dispatched setUser action. Check Redux state:");
         console.log("Dispatching setUser with:", {
           user: {
             attributes: { sub: cognitoSub, email },
@@ -77,21 +76,20 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
             userId,
             selectedTrack,
             email,
-            firstName: userData.firstName || '',
-            lastName: userData.lastName || '',
-            subscriptionStatus: userData.subscriptionStatus || '',
-            profilePictureUrl: userData.profilePictureUrl || '',
+            firstName,
+            lastName,
+            subscriptionStatus,
+            profilePictureUrl,
           },
         });
+
         console.log("Auth Data after dispatch:", store.getState());
 
         // Determine the default project ID
-        const defaultProjectId = 1; // Replace this with dynamic logic if needed
-  
-        // Dispatch the project ID to Redux
+        const defaultProjectId = 1; 
         dispatch(setSelectedProjectId(defaultProjectId));
   
-        // Debugging logs
+        // Debug logs
         console.log('Cognito User ID:', cognitoSub);
         console.log('Database User ID:', userId);
         console.log('Selected Track:', selectedTrack);
@@ -104,8 +102,6 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
     fetchUserData();
   }, [dispatch]);
   
-  
-
   return <>{children}</>;
 };
 

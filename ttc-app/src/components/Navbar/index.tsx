@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, Moon, Search, Settings, Sun, User } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/app/redux';
+import { useAppDispatch, useAppSelector } from '@/state/hooks';
 import { setIsDarkMode, setIsSidebarCollapsed } from '@/state';
 import Link from 'next/link';
 import Image from 'next/image';

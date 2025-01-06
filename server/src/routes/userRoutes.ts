@@ -18,6 +18,8 @@ import {
   updateUser,
   getDetails,
   getProjects,
+  checkUserStatusByCognitoId,
+  getUserCreatedTime,
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
 
@@ -49,12 +51,18 @@ router.post('/update-user-status', updateUserStatus);
 router.post('/create-user', createUser);
 router.post('/check-status', checkUserStatus);
 router.patch('/update', updateUser); // Ensure this is defined in userRoutes.ts
+router.post('/check-status-by-cognito', (req, res, next) => {
+  console.log('Request received at /check-status-by-cognito:', req.body);
+  next();
+}, checkUserStatusByCognitoId);
+
 
 router.get('/resolve', resolve);
 router.get("/track", getUserTrack);
 router.patch("/track", updateUserTrack);
 router.get('/details', getDetails );
 router.get('/:cognitoId/projects', getProjects);
+router.get("/created-time", getUserCreatedTime);
 
 
 export default router;

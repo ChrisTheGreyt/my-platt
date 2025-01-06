@@ -20,17 +20,23 @@ router.get('/users/resolve', async (req, res) => {
           select: {
               userId: true,
               selectedTrack: true, // Include selectedTrack in the response
+              subscriptionStatus: true,
           },
       });
 
       if (!user) {
-          return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      if (user.subscriptionStatus !== 'active') {
+        return res.status(403).json({ error: 'Subscription inactive' });
       }
 
       // Send both userId and selectedTrack
       res.json({
           userId: user.userId,
           selectedTrack: user.selectedTrack,
+          subscriptionStatus: user.subscriptionStatus,
       });
   } catch (error) {
       console.error('Error resolving user:', error);

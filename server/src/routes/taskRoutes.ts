@@ -3,6 +3,7 @@ import {
   createTask,
   getTasks,
   getUserTasks,
+  updateTask,
   updateTaskStatus,
 } from "../controllers/taskController";
 
@@ -12,5 +13,7 @@ router.get("/", getTasks);
 router.post("/", createTask);
 router.patch("/:taskId/status", updateTaskStatus);
 router.get("/user/:userId", getUserTasks);
+router.patch('/:taskId', updateTask);
+
 
 export default router;

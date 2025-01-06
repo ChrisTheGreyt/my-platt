@@ -1,8 +1,7 @@
 // src/components/Sidebar/index.tsx
 
 "use client";
-
-import { useAppDispatch, useAppSelector } from '@/app/redux';
+import { useAppDispatch, useAppSelector } from '@/state/hooks';
 import { setIsSidebarCollapsed } from '@/state';
 import { useGetAuthUserQuery, useGetProjectsQuery } from '@/state/api';
 import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, ChevronUp, Home, Layers3, LockIcon, LucideIcon, Search, Settings, ShieldAlert, User, Users, X } from 'lucide-react';
@@ -14,11 +13,13 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 
+
 type Project = {
   id: number;
   name: string;
   description?: string;
 };
+
 
 const Sidebar = () => {
 
@@ -26,12 +27,15 @@ const Sidebar = () => {
   const [userSub, setUserSub] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  
 
   useEffect(() => {
     const fetchUserSub = async () => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         const cognitoId = user.attributes.sub; // Cognito userSub
+        
         setUserSub(cognitoId);
       } catch (error) {
         console.error("Failed to fetch userSub:", error);
@@ -66,31 +70,34 @@ const Sidebar = () => {
   }, [userSub]);
 
   // Step 3: Fetch projects using userId
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!userId) return;
+  // useEffect(() => {
+  //   const fetchProjects = async () => {
+  //     if (!userId) return;
 
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const response = await fetch(`${backendUrl}/api/users/${userId}/projects`);
+  //     try {
+  //       const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  //       const response = await fetch(`${backendUrl}/api/users/${userId}/projects`);
 
-        if (!response.ok) {
-          console.error("Failed to fetch projects:", response.statusText);
-          return;
-        }
+  //       if (!response.ok) {
+  //         console.error("Failed to fetch projects:", response.statusText);
+  //         return;
+  //       }
 
-        const data: Project[] = await response.json();
-        setProjects(data);
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  //       const data: Project[] = await response.json();
+  //       setProjects(data);
+  //     } catch (error) {
+  //       console.error("Error fetching projects:", error);
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
 
-    fetchProjects();
-  }, [userId]);
+  //   fetchProjects();
+  // }, [userId]);
+  
 
+ 
+  
   const router = useRouter();
   const { setUser, setSession } = useAuth();
   const [showProjects, setShowProjects] = useState(true);
@@ -101,6 +108,37 @@ const Sidebar = () => {
   // Fetching user data and projects
   const { data: authData, isLoading: authLoading } = useGetAuthUserQuery();
   // const { data: projects, isLoading: projectsLoading } = useGetProjectsQuery();
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/time-gated?userId=${userId}`
+        );
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch projects");
+        }
+  
+        const data = await response.json();
+        console.log("Fetched Projects:", data); // Debugging line
+        console.log("!!!Fetched", authData?.userDetails?.userId);
+        setProjects(data); // Ensure projects are saved in state
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+      }
+    };
+  
+    if (userId) {
+      fetchProjects();
+    }
+  }, [authData]);
+  
+  console.log("!!!Fetched", userId);
+
+  useEffect(() => {
+      console.log("Fetched Projects:", projects); // Debugging the projects state
+    }, [projects]); 
 
   // Debugging outputs
   useEffect(() => {
@@ -138,7 +176,7 @@ const Sidebar = () => {
             </button>
           )}
         </div>
-
+     
         {/* USER INFO */}
         {currentUserDetails ? (
           <div className='flex items-center gap-5 border-y-[1.5px] border-gray-200 px-7 py-4 dark:border-gray-700'>
@@ -163,22 +201,31 @@ const Sidebar = () => {
           <SidebarLink icon={Settings} label="Settings" href="/settings" />
           <SidebarLink icon={User} label="User" href="/users" />
           <SidebarLink icon={Users} label="Users" href="/teams" />
+          
         </nav>
-
         {/* PROJECTS SECTION */}
-        <button onClick={() => setShowProjects((prev) => !prev)} className='flex w-full items-center justify-between px-8 py-3 text-gray-500'>
-          <span className=''>Workspace</span>
+        <button
+          onClick={() => setShowProjects((prev) => !prev)}
+          className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
+        >
+          <span className=''>Projects</span>
           {showProjects ? <ChevronUp className='h-5 w-5' /> : <ChevronDown className='h-5 w-5' />}
         </button>
 
-        {showProjects && projects ? (
+        {showProjects && projects.length > 0 ? (
           projects.map((project) => (
-            <SidebarLink key={project.id} icon={Briefcase} label={project.name} href={`/projects/${project.id}`} />
+            <SidebarLink
+              key={project.id}
+              icon={Briefcase}
+              label={project.name}
+              href={`/projects/${project.id}`}
+            />
           ))
         ) : (
-          <div className='px-8 py-2 text-sm text-gray-500'>No Schools Available</div>
+          <div className='px-8 py-2 text-sm text-gray-500'>
+            No Projects Available
+          </div>
         )}
-
         {/* PRIORITY SECTION */}
         <button onClick={() => setShowPriority((prev) => !prev)} className='flex w-full items-center justify-between px-8 py-3 text-gray-500'>
           <span className=''>Priority</span>
@@ -224,6 +271,7 @@ const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
         <span className='font-medium text-gray-800 dark:text-gray-100'>{label}</span>
       </div>
     </Link>
+    
   );
 };
 
