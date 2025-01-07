@@ -150,12 +150,56 @@ export const getUserTasks = async (
   }
 };
 
+// export const getTimeGatedTasks = async (req: Request, res: Response) => {
+//   const { userId, track } = req.query;
+
+//   try {
+//     const user = await prisma.user.findUnique({
+//       where: { userId: Number(userId) },
+//       select: { createdAt: true },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Determine ID ranges based on track
+//     const is2025Track = track === "2025";
+//     const startId = is2025Track ? 1 : 101;
+//     const endId = is2025Track ? 100 : 200;
+
+//     // Calculate time-gated range
+//     const userJoinDate = new Date(user.createdAt);
+//     const now = new Date();
+//     const monthsSinceJoined =
+//       (now.getFullYear() - userJoinDate.getFullYear()) * 12 +
+//       now.getMonth() -
+//       userJoinDate.getMonth() +
+//       1; // Include the first month
+
+//     const tasks = await prisma.task.findMany({
+//       where: {
+//         projectId: {
+//           gte: startId,
+//           lte: Math.min(startId + monthsSinceJoined - 1, endId), // Limit tasks by time-gate
+//         },
+//       },
+//       orderBy: { dueDate: "asc" },
+//     });
+
+//     return res.status(200).json(tasks);
+//   } catch (error) {
+//     console.error("Error fetching time-gated tasks:", error);
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 export const getTimeGatedTasks = async (req: Request, res: Response) => {
   const { userId, track } = req.query;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { userId: Number(userId) },
+      where: { cognitoId: String(userId) }, // Ensure userId maps to cognitoId
       select: { createdAt: true },
     });
 
@@ -175,24 +219,25 @@ export const getTimeGatedTasks = async (req: Request, res: Response) => {
       (now.getFullYear() - userJoinDate.getFullYear()) * 12 +
       now.getMonth() -
       userJoinDate.getMonth() +
-      1; // Include the first month
+      1;
 
     const tasks = await prisma.task.findMany({
       where: {
         projectId: {
           gte: startId,
-          lte: Math.min(startId + monthsSinceJoined - 1, endId), // Limit tasks by time-gate
+          lte: Math.min(startId + monthsSinceJoined - 1, endId), // Time-gated filter
         },
       },
       orderBy: { dueDate: "asc" },
     });
 
-    return res.status(200).json(tasks);
+    res.status(200).json(tasks);
   } catch (error) {
     console.error("Error fetching time-gated tasks:", error);
-    return res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export const updateUserTaskStatus = async (
   req: Request,

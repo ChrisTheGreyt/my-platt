@@ -63,6 +63,8 @@ router.patch("/track", updateUserTrack);
 router.get('/details', getDetails );
 router.get('/:cognitoId/projects', getProjects);
 router.get("/created-time", getUserCreatedTime);
+router.patch("/users/update-track", updateUserTrack);
+router.patch("/update-track", updateUserTrack);
 
 
 export default router;

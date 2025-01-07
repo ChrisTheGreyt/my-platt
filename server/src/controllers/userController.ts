@@ -448,15 +448,17 @@ export const createFreshUser = async (req: Request, res: Response) => {
 };
 
 export const resolve = async (req: Request, res: Response) => {
-  const { cognitoSub } = req.query;
+  // FIX: Use cognitoId instead of cognitoSub
+  const { cognitoId } = req.query;
 
-  if (!cognitoSub) {
-    return res.status(400).json({ error: 'Missing cognitoSub' });
+  // Check for missing parameter
+  if (!cognitoId) {
+    return res.status(400).json({ error: 'Missing cognitoId' });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { cognitoId: String(cognitoSub) },
+      where: { cognitoId: String(cognitoId) }, // Match database field name
       select: {
         userId: true,
         selectedTrack: true,
@@ -471,14 +473,17 @@ export const resolve = async (req: Request, res: Response) => {
       },
     });
 
+    // User not found
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Subscription check
     if (user.subscriptionStatus !== 'active') {
       return res.status(403).json({ error: 'Subscription inactive' });
     }
 
+    // Return user details
     res.json({
       userId: user.userId,
       selectedTrack: user.selectedTrack,
@@ -496,6 +501,56 @@ export const resolve = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to resolve userId' });
   }
 };
+
+// export const resolve = async (req: Request, res: Response) => {
+//   const { cognitoSub } = req.query;
+
+//   if (!cognitoSub) {
+//     return res.status(400).json({ error: 'Missing cognitoSub' });
+//   }
+
+//   try {
+//     const user = await prisma.user.findUnique({
+//       where: { cognitoId: String(cognitoSub) },
+//       select: {
+//         userId: true,
+//         selectedTrack: true,
+//         subscriptionStatus: true,
+//         username: true,
+//         email: true,
+//         firstName: true,
+//         lastName: true,
+//         profilePictureUrl: true,
+//         cognitoId: true,
+//         teamId: true,
+//       },
+//     });
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     if (user.subscriptionStatus !== 'active') {
+//       return res.status(403).json({ error: 'Subscription inactive' });
+//     }
+
+//     res.json({
+//       userId: user.userId,
+//       selectedTrack: user.selectedTrack,
+//       subscriptionStatus: user.subscriptionStatus,
+//       username: user.username,
+//       email: user.email,
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       profilePictureUrl: user.profilePictureUrl,
+//       cognitoId: user.cognitoId,
+//       teamId: user.teamId,
+//     });
+//   } catch (error) {
+//     console.error('Error resolving userId:', error);
+//     res.status(500).json({ error: 'Failed to resolve userId' });
+//   }
+//};
 
 
 
@@ -526,15 +581,15 @@ export const getUserTrack = async (req: Request, res: Response) => {
 
 
 export const updateUserTrack = async (req: Request, res: Response) => {
-  const { userId, selectedTrack } = req.body;
+  const { userSub, selectedTrack } = req.body; // Use userSub instead of userId
 
-  if (!userId || !selectedTrack) {
-    return res.status(400).json({ error: "Missing userId or selectedTrack" });
+  if (!userSub || !selectedTrack) {
+    return res.status(400).json({ error: "Missing userSub or selectedTrack" });
   }
 
   try {
     const user = await prisma.user.update({
-      where: { userId: Number(userId) },
+      where: { cognitoId: userSub }, // Update based on userSub
       data: { selectedTrack },
     });
 
@@ -544,6 +599,28 @@ export const updateUserTrack = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update user track" });
   }
 };
+
+
+// export const updateUserTrack = async (req: Request, res: Response) => {
+//   const { cognitoId, selectedTrack } = req.body;
+
+//   if (!cognitoId || !selectedTrack) {
+//     return res.status(400).json({ error: "Missing cognitoId or selectedTrack" });
+//   }
+
+//   try {
+//     const user = await prisma.user.update({
+//       where: { cognitoId: cognitoId }, // Use cognitoId instead of cognitoSub
+//       data: { selectedTrack },
+//     });
+
+//     res.json({ selectedTrack: user.selectedTrack });
+//   } catch (error) {
+//     console.error("Error updating user track:", error);
+//     res.status(500).json({ error: "Failed to update user track" });
+//   }
+// };
+
 
 export const updateUser = async (req: Request, res: Response) => {
   const { userId, selectedTrack } = req.body;

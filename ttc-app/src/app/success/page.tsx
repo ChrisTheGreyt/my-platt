@@ -56,6 +56,7 @@ const SuccessPage: React.FC = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         profilePictureUrl: "pd1.jpg",
+        selectedTrack: "2026",
       };
 
       console.log("Payload to send:", payload);
