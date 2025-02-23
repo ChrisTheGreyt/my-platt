@@ -1,56 +1,82 @@
 import { PrismaClient } from "@prisma/client";
 import fs from "fs";
 import path from "path";
+
 const prisma = new PrismaClient();
 
-async function deleteAllData(orderedFileNames: string[]) {
-  const modelNames = orderedFileNames.map((fileName) => {
-    const modelName = path.basename(fileName, path.extname(fileName));
-    return modelName.charAt(0).toUpperCase() + modelName.slice(1);
-  });
-
-  for (const modelName of modelNames) {
-    const model: any = prisma[modelName as keyof typeof prisma];
-    try {
-      await model.deleteMany({});
-      console.log(`Cleared data from ${modelName}`);
-    } catch (error) {
-      console.error(`Error clearing data from ${modelName}:`, error);
+async function seedLawSchools() {
+  try {
+    // Check if law schools already exist
+    const existingSchools = await prisma.law_schools.findMany();
+    if (existingSchools.length > 0) {
+      console.log('Law schools already exist, skipping seed');
+      return;
     }
+
+    // Read and execute the SQL file only if no schools exist
+    const sqlPath = path.join(process.cwd(), 'prisma', 'seed_law_schools.sql');
+    const sql = fs.readFileSync(sqlPath, 'utf-8');
+    
+    // Split the SQL into individual statements
+    const statements = sql.split(');').filter(stmt => stmt.trim());
+    
+    for (let stmt of statements) {
+      stmt = stmt.trim() + ');';
+      try {
+        await prisma.$executeRawUnsafe(stmt);
+      } catch (error) {
+        console.error('Error executing SQL statement:', error);
+        throw error;
+      }
+    }
+    
+    console.log('Successfully seeded law schools');
+  } catch (error) {
+    console.error('Error seeding law schools:', error);
+    throw error;
+  }
+}
+
+async function seedSchoolTasks() {
+  try {
+    // Check if school tasks already exist
+    const existingTasks = await prisma.schoolTasks.findMany();
+    if (existingTasks.length > 0) {
+      console.log('School tasks already exist, skipping seed');
+      return;
+    }
+
+    // Read and execute the SQL file only if no tasks exist
+    const sqlPath = path.join(process.cwd(), 'prisma', 'seed_school_tasks.sql');
+    const sql = fs.readFileSync(sqlPath, 'utf-8');
+    
+    // Split the SQL into individual statements
+    const statements = sql.split(';').filter(stmt => stmt.trim());
+    
+    for (let stmt of statements) {
+      stmt = stmt.trim() + ';';
+      if (stmt === ';') continue;
+      try {
+        await prisma.$executeRawUnsafe(stmt);
+      } catch (error) {
+        console.error('Error executing SQL statement:', error);
+        throw error;
+      }
+    }
+    
+    console.log('Successfully seeded school tasks');
+  } catch (error) {
+    console.error('Error seeding school tasks:', error);
+    throw error;
   }
 }
 
 async function main() {
-  const dataDirectory = path.join(__dirname, "seedData");
-
-  const orderedFileNames = [
-    "team.json",
-    "project.json",
-    "projectTeam.json",
-    "user.json",
-    "task.json",
-    "attachment.json",
-    "comment.json",
-    "taskAssignment.json",
-  ];
-
-  await deleteAllData(orderedFileNames);
-
-  for (const fileName of orderedFileNames) {
-    const filePath = path.join(dataDirectory, fileName);
-    const jsonData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const modelName = path.basename(fileName, path.extname(fileName));
-    const model: any = prisma[modelName as keyof typeof prisma];
-
-    try {
-      for (const data of jsonData) {
-        await model.create({ data });
-      }
-      console.log(`Seeded ${modelName} with data from ${fileName}`);
-    } catch (error) {
-      console.error(`Error seeding data for ${modelName}:`, error);
-    }
-  }
+  console.log('Starting law schools seeding...');
+  await seedLawSchools();
+  console.log('Starting school tasks seeding...');
+  await seedSchoolTasks();
+  console.log('Seeding completed.');
 }
 
 main()

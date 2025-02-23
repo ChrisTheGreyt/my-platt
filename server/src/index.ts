@@ -14,6 +14,7 @@ import userRoutes from "./routes/userRoutes";
 import teamRoutes from "./routes/teamRoutes";
 import subscriptionRoutes from "./routes/subscriptionRoutes";
 import { createUser } from "./controllers/userController";
+import schoolRoutes from "./routes/schoolRoutes";
 import userTaskRoutes from './routes/userTaskRoutes';
 import path from "path";
 
@@ -28,8 +29,12 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  methods: ['GET', 'POST', 'PUT', 'PATCH',  'DELETE', 'OPTIONS'],
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_URL
+    : 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
 
 // Logging middleware to log all incoming requests
@@ -39,6 +44,14 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   if (Object.keys(req.body).length) {
     console.log('Request body:', req.body);
   }
+
+  // Add response logging
+  const oldSend = res.send;
+  res.send = function (data) {
+    console.log(`Response for ${req.method} ${req.url}:`, data);
+    return oldSend.call(this, data);
+  };
+
   next();
 });
 
@@ -56,6 +69,8 @@ app.use("/teams", teamRoutes);
 app.use('/subscriptions', subscriptionRoutes);
 app.post('/create-user', createUser);
 app.use('/api', userTaskRoutes);
+app.use('/api', schoolRoutes);
+ 
 
 
 app.post('/users/update-after-payment', (req, res) => {
@@ -73,12 +88,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ success: false, error: 'An unexpected error occurred.' });
 });
 
-app.use('/', userTaskRoutes);
 
 // Start the Server
 const port = Number(process.env.PORT) || 8000;
 app.listen(port, "0.0.0.0", () => {
     console.log(`Server running on port ${port}`);
 });
-
-

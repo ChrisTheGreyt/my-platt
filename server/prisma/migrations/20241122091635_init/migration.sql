@@ -1,0 +1,1 @@
+-- Placeholder migration to align Prisma's migration history

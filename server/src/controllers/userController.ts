@@ -105,6 +105,26 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const getUserId = async (req: Request, res: Response) => {
+  const { cognitoId } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { cognitoId },
+      select: { userId: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error("❌ Error fetching user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const postUser = async (req: Request, res: Response) =>{
 
   try{ 
@@ -115,7 +135,6 @@ export const postUser = async (req: Request, res: Response) =>{
       username,
       cognitoId,
       profilePictureUrl = "https://main.d249lhj5v2utjs.amplifyapp.com/pd1.jpg",
-      teamId = 1,
       subscriptionStatus,
     } = req.body;
     const newUser = await prisma.user.create({
@@ -126,7 +145,6 @@ export const postUser = async (req: Request, res: Response) =>{
         firstName, // Ensure this is included
         lastName, // Ensure this is included
         profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional
-        teamId: teamId || 1, // Optional
         subscriptionStatus: "inactive", // Optional
       },
     });
@@ -212,7 +230,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, teamId, subscriptionStatus } = req.body;
+  const { cognitoId, username, email, firstName, lastName, profilePictureUrl, subscriptionStatus } = req.body;
 
   try {
     console.log('Incoming Request Body:', req.body);
@@ -230,7 +248,6 @@ export const createUser = async (req: Request, res: Response) => {
       firstName,
       lastName,
       profilePictureUrl,
-      teamId,
       subscriptionStatus,
     });
 
@@ -243,7 +260,6 @@ export const createUser = async (req: Request, res: Response) => {
           firstName,
           lastName,
           profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg",
-          teamId: teamId || 1,
           subscriptionStatus: subscriptionStatus || "inactive",
       },
   });
@@ -265,7 +281,6 @@ export const createUser = async (req: Request, res: Response) => {
   if (error.code === "P2003") {
       console.log("Foreign key constraint error:", error.meta);
       return res.status(400).json({
-          message: "Invalid foreign key: teamId might not exist.",
       });
   }
 
@@ -383,7 +398,7 @@ export const checkUserStatus = async (req: Request, res: Response) => {
 };
 
 export const checkUserStatusByCognitoId = async (req: Request, res: Response) => {
-  console.log('Body received:', req.body); // Log received body
+  console.log('Body received:', req.body);
 
   const { cognitoId } = req.body;
 
@@ -395,12 +410,32 @@ export const checkUserStatusByCognitoId = async (req: Request, res: Response) =>
   try {
     const user = await prisma.user.findUnique({
       where: { cognitoId },
-      select: { subscriptionStatus: true },
+      select: {
+        subscriptionStatus: true,
+        userId: true,
+        selectedTrack: true,
+        username: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        profilePictureUrl: true,
+      },
     });
 
     if (user) {
       console.log('User found:', user);
-      return res.status(200).json({ subscriptionStatus: user.subscriptionStatus });
+      // Return full user data with subscription status
+      return res.status(200).json({
+        subscriptionStatus: user.subscriptionStatus,
+        userId: user.userId,
+        selectedTrack: user.selectedTrack,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profilePictureUrl: user.profilePictureUrl,
+        cognitoId: cognitoId,
+      });
     } else {
       console.error('User not found for cognitoId:', cognitoId);
       return res.status(404).json({ error: 'User not found' });
@@ -416,7 +451,7 @@ export const checkUserStatusByCognitoId = async (req: Request, res: Response) =>
 
 export const createFreshUser = async (req: Request, res: Response) => {
   try {
-    const { cognitoId, username, email, firstName, lastName, teamId, profilePictureUrl, subscriptionStatus } = req.body;
+    const { cognitoId, username, email, firstName, lastName, profilePictureUrl, subscriptionStatus } = req.body;
 
     // Validate required fields
     if (!cognitoId || !username || !email || !firstName || !lastName) {
@@ -429,7 +464,6 @@ export const createFreshUser = async (req: Request, res: Response) => {
         username,             // Ensure this is present in the request
         cognitoId,            // Ensure this is present in the request
         profilePictureUrl: profilePictureUrl || "https://default.url/picture.jpg", // Optional with default
-        teamId,               // Ensure this is present in the request
         email,                // Ensure this is present in the request
         firstName,            // Ensure this is present in the request
         lastName,             // Ensure this is present in the request
@@ -448,17 +482,16 @@ export const createFreshUser = async (req: Request, res: Response) => {
 };
 
 export const resolve = async (req: Request, res: Response) => {
-  // FIX: Use cognitoId instead of cognitoSub
-  const { cognitoId } = req.query;
+  const { cognitoSub } = req.query;
 
   // Check for missing parameter
-  if (!cognitoId) {
-    return res.status(400).json({ error: 'Missing cognitoId' });
+  if (!cognitoSub) {
+    return res.status(400).json({ error: 'Missing cognitoSub' });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { cognitoId: String(cognitoId) }, // Match database field name
+      where: { cognitoId: String(cognitoSub) },
       select: {
         userId: true,
         selectedTrack: true,
@@ -469,7 +502,6 @@ export const resolve = async (req: Request, res: Response) => {
         lastName: true,
         profilePictureUrl: true,
         cognitoId: true,
-        teamId: true,
       },
     });
 
@@ -478,12 +510,7 @@ export const resolve = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Subscription check
-    if (user.subscriptionStatus !== 'active') {
-      return res.status(403).json({ error: 'Subscription inactive' });
-    }
-
-    // Return user details
+    // Return user details with subscription status
     res.json({
       userId: user.userId,
       selectedTrack: user.selectedTrack,
@@ -494,7 +521,6 @@ export const resolve = async (req: Request, res: Response) => {
       lastName: user.lastName,
       profilePictureUrl: user.profilePictureUrl,
       cognitoId: user.cognitoId,
-      teamId: user.teamId,
     });
   } catch (error) {
     console.error('Error resolving userId:', error);
@@ -752,4 +778,3 @@ export const getUserCreatedTime = async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
-

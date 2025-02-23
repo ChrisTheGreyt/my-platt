@@ -1,5 +1,5 @@
 "use client";
-
+// /src/app/projects/[id]/pages.tsx
 import React, { useEffect, useState } from "react";
 import ProjectHeader from "@/app/projects/ProjectHeader";
 import Board from "../BoardView";

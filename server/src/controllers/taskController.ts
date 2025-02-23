@@ -18,8 +18,9 @@ export const getTasks = async (req: Request, res: Response): Promise<void> => {
       },
     });
     res.json(tasks);
-  } catch (error: any) {
-    res.status(500).json({ message: `Error retrieving tasks: ${error.message}` });
+  } catch (error) {
+    const err = error instanceof Error ? error : new Error("Unknown error");
+    res.status(500).json({ message: `Error retrieving tasks: ${err.message}` });
   }
 };
 
@@ -150,123 +151,153 @@ export const getUserTasks = async (
   }
 };
 
-// export const getTimeGatedTasks = async (req: Request, res: Response) => {
-//   const { userId, track } = req.query;
 
-//   try {
-//     const user = await prisma.user.findUnique({
-//       where: { userId: Number(userId) },
-//       select: { createdAt: true },
-//     });
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // Determine ID ranges based on track
-//     const is2025Track = track === "2025";
-//     const startId = is2025Track ? 1 : 101;
-//     const endId = is2025Track ? 100 : 200;
-
-//     // Calculate time-gated range
-//     const userJoinDate = new Date(user.createdAt);
-//     const now = new Date();
-//     const monthsSinceJoined =
-//       (now.getFullYear() - userJoinDate.getFullYear()) * 12 +
-//       now.getMonth() -
-//       userJoinDate.getMonth() +
-//       1; // Include the first month
-
-//     const tasks = await prisma.task.findMany({
-//       where: {
-//         projectId: {
-//           gte: startId,
-//           lte: Math.min(startId + monthsSinceJoined - 1, endId), // Limit tasks by time-gate
-//         },
-//       },
-//       orderBy: { dueDate: "asc" },
-//     });
-
-//     return res.status(200).json(tasks);
-//   } catch (error) {
-//     console.error("Error fetching time-gated tasks:", error);
-//     return res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
-export const getTimeGatedTasks = async (req: Request, res: Response) => {
+export const getTimeGatedTasks = async (req: Request, res: Response): Promise<void> => {
   const { userId, track } = req.query;
+
+  if (!userId || !track) {
+    res.status(400).json({ message: "Missing required query parameters" });
+    return;
+  }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { cognitoId: String(userId) }, // Ensure userId maps to cognitoId
+      where: { cognitoId: String(userId) },
       select: { createdAt: true },
     });
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found" });
+      return;
     }
 
-    // Determine ID ranges based on track
     const is2025Track = track === "2025";
     const startId = is2025Track ? 1 : 101;
     const endId = is2025Track ? 100 : 200;
 
-    // Calculate time-gated range
     const userJoinDate = new Date(user.createdAt);
     const now = new Date();
-    const monthsSinceJoined =
-      (now.getFullYear() - userJoinDate.getFullYear()) * 12 +
-      now.getMonth() -
-      userJoinDate.getMonth() +
-      1;
+
+    // Calculate months difference (January to February = 1 month difference)
+    const monthsDiff = (now.getFullYear() - userJoinDate.getFullYear()) * 12 
+      + (now.getMonth() - userJoinDate.getMonth());
+    
+    // Add 1 to include the current month (so 1 month diff + 1 = 2 months access)
+    const accessibleMonths = monthsDiff + 1;
+
+    console.log({
+      userCreatedAt: user.createdAt,
+      currentDate: now.toISOString(),
+      monthsDiff,
+      accessibleMonths
+    });
+
+    // Calculate project range
+    const projectEnd = Math.min(startId + accessibleMonths - 1, endId);
 
     const tasks = await prisma.task.findMany({
       where: {
         projectId: {
           gte: startId,
-          lte: Math.min(startId + monthsSinceJoined - 1, endId), // Time-gated filter
+          lte: projectEnd
         },
       },
       orderBy: { dueDate: "asc" },
     });
 
+    console.log('Access calculation:', {
+      joinDate: userJoinDate.toISOString(),
+      currentDate: now.toISOString(),
+      monthsAccess: accessibleMonths,
+      projectRange: {
+        start: startId,
+        end: projectEnd,
+        numberOfMonths: projectEnd - startId + 1
+      }
+    });
+
     res.status(200).json(tasks);
-  } catch (error) {
-    console.error("Error fetching time-gated tasks:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Error fetching time-gated tasks:", message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
 
 export const updateUserTaskStatus = async (
-  req: Request,
+  req: Request<{}, {}, { userId: string; taskId: string; status: string }>,
   res: Response
 ): Promise<void> => {
-  const { userId, taskId, status } = req.body; // Get userId and taskId from body
-
-  console.log("Update Request Body:", req.body); // Log incoming request for debugging
+  const { userId, taskId, status } = req.body;
 
   if (!userId || !taskId || !status) {
-    res.status(400).json({ message: "Missing required fields." });
+    res.status(400).json({ message: "Missing required fields" });
     return;
   }
 
   try {
     const updatedTask = await prisma.task.update({
-      where: {
-        id: Number(taskId),
-      },
+      where: { id: Number(taskId) },
+      data: { status },
+    });
+
+    res.json(updatedTask);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Error updating task status:", message);
+    res.status(500).json({ message: `Error updating task status: ${message}` });
+  }
+};
+
+export const createSchoolTasks = async (req: Request, res: Response): Promise<void> => {
+  const { userId, schoolTaskId, status, position } = req.body;
+
+  try {
+    const newTask = await prisma.userTasks.create({
       data: {
+        userId: Number(userId),
+        schoolTaskId: Number(schoolTaskId),
+        taskId: null,
         status,
+        position,
       },
     });
 
-    console.log("Task updated successfully:", updatedTask);
+    res.status(201).json({ message: "Task created successfully", task: newTask });
+  } catch (error) {
+    console.error("❌ Error creating task:", error);
+    res.status(500).json({ error: "Failed to create task" });
+  }
+};
+
+export const updateTaskStatusAndPosition = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { taskId } = req.params;
+  const { status, position, userId } = req.body;
+
+  try {
+    const updatedTask = await prisma.userTasks.update({
+      where: {
+        unique_user_task: {
+          userId: Number(userId),
+          taskId: Number(taskId)
+        }
+      },
+      data: {
+        status,
+        position
+      },
+      include: {
+        task: true
+      }
+    });
+
     res.json(updatedTask);
   } catch (error: any) {
-    console.error(`Error updating task status: ${error.message}`);
-    res.status(500).json({ message: `Error updating task status: ${error.message}` });
+    res.status(500).json({ message: `Error updating task: ${error.message}` });
   }
 };
 

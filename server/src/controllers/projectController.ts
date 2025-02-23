@@ -85,45 +85,41 @@ export const getTimeGatedProjects = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Calculate how many months have passed since the user joined
+    // Calculate months since joined without the +1 offset
     const userJoinDate = new Date(user.createdAt);
     const now = new Date();
     const monthsSinceJoined =
       (now.getFullYear() - userJoinDate.getFullYear()) * 12 +
       now.getMonth() -
-      userJoinDate.getMonth() +
-      1; // Add 1 to include the first month
+      userJoinDate.getMonth();
 
     console.log(`Months since joined: ${monthsSinceJoined}`);
 
-    type UserWithTrack = {
-      createdAt: Date;
-      selectedTrack: string | null; // Allow null values
-    };
-    
-    const userData: UserWithTrack | null = await prisma.user.findUnique({
+    // Get fresh user data with track selection
+    const userWithTrack = await prisma.user.findUnique({
       where: { userId: Number(userId) },
-      select: { createdAt: true, selectedTrack: true }, // Include both fields
+      select: { selectedTrack: true },
     });
     
-    if (!userData || !userData.selectedTrack) {
-      return res.status(404).json({ message: "User not found or track not set" });
+    if (!userWithTrack?.selectedTrack) {
+      return res.status(404).json({ message: "User track not set" });
     }
     
-    const is2025Track = userData.selectedTrack === "2025"; // Use 'selectedTrack'
+    // Use correct ID ranges based on createProject logic
+    const is2025Track = userWithTrack.selectedTrack === "2025";
     const startId = is2025Track ? 1 : 101;
-    const endId = is2025Track ? 100 : 200;
+    const endId = is2025Track ? 12 : 112; // Match ID ranges from createProject
 
     // Fetch projects within ID range and limit based on elapsed months
     const projects = await prisma.project.findMany({
       where: {
         id: {
           gte: startId,
-          lte: Math.min(startId + monthsSinceJoined - 1, endId), // Limit based on months
+          lte: Math.min(startId + monthsSinceJoined, endId), // Remove the -1 offset
         },
       },
       orderBy: {
-        id: "asc", // Order projects by ID
+        id: "asc",
       },
     });
 

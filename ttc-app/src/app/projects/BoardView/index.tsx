@@ -1,9 +1,9 @@
-import React, { useEffect, useState} from "react";
+import React, { useEffect, useState, useRef} from "react";
 import { Auth } from 'aws-amplify'; // Import Auth for Cognito
 import {
   useUpdateUserTaskStatusMutation,
   useCreateUserTaskMutation,
-  useGetUserTasksQuery,
+  useGetBoardViewTasksQuery,
   Task as TaskType,
   Status,
   Priority,
@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import Linkify from 'react-linkify';
 import ReactMarkdown from "react-markdown";
 import EditTaskModal from "@/components/ModalEditTask";
+import { toast } from "react-hot-toast";
 
 
 
@@ -40,8 +41,8 @@ type BoardProps = {
     dueDate?: string; // Changed from string | null
     points: number;
     projectId: number;
-    authorUserId?: number | null;
-    assignedUserId?: number | null;
+    authorUserId?: number; // Allow undefined but not null
+    assignedUserId?: number; // Allow undefined but not null
     attachments?: any[];
     status: Status;
     priority: Priority;
@@ -78,6 +79,13 @@ type BoardProps = {
   
   
   
+const STATUS_MAPPING = {
+  "To Do": "TO_DO",
+  "Work In Progress": "WORK_IN_PROGRESS",
+  "Under Review": "UNDER_REVIEW",
+  "Completed": "COMPLETED"
+} as const;
+
 const taskStatus = ["To Do", "Work In Progress", "Under Review", "Completed"];
 const linkDecorator = (href, text) => (
   <a
@@ -89,14 +97,25 @@ const linkDecorator = (href, text) => (
     {href.length > 130 ? "Click here" : text}
   </a>
 );
-const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps) => {
-    const userId = authData?.userDetails?.userId || null;
-    const [isAdmin, setIsAdmin] = useState(false); 
+
+const BoardView: React.FC<BoardProps> = ({ id, setIsModalNewTaskOpen, authData, projects }) => {
+  const userId = authData?.userDetails?.userId || null;
+  const selectedTrack = authData?.userDetails?.selectedTrack || null;
+  const projectId = id ? Number(id) : null;
+    const [isAdmin, setIsAdmin] = useState(false);
     const ADMIN_COGNITO_IDS = [
-      "b4d80438-b081-7025-1adc-d6f95479680f", 
+      "b4d80438-b081-7025-1adc-d6f95479680f",
       "74488448-c071-70b0-28db-644fc67f3f11",
     ];
-    
+    // Flag to ensure we only call setup once.
+    const [hasSetup, setHasSetup] = useState(false);
+
+    const { data: userTasks, refetch, isLoading, isFetching, error } = useGetBoardViewTasksQuery(
+      userId && projectId ? { userId, projectId } : skipToken
+    );
+
+    const hasSetupRef = useRef(false);
+    const hasInitializedRef = React.useRef(false);
     
     useEffect(() => {
       const checkAdminStatus = async () => {
@@ -116,17 +135,30 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
     useEffect(() => {
         console.log('authData!!!!:', authData);
       }, [authData]);
-    const selectedTrack = authData?.userDetails?.selectedTrack || null;
-    const projectId = id ? Number(id) : null;
+    // const selectedTrack = authData?.userDetails?.selectedTrack || null;
+    // const projectId = id ? Number(id) : null;
     // const userId = authData?.userDetails?.userId || null;
     // const selectedTrack = authData?.userDetails?.selectedTrack || null;
     console.log("userId:", userId);
     console.log("projectId:", projectId);
     console.log("selectedTrack:", selectedTrack);
 
-    const { data: userTasks, refetch, isFetching, isLoading, error } = useGetUserTasksQuery(
-        userId && projectId ? { userId, projectId } : skipToken
-      );
+    console.log("userId before query:", userId);
+    console.log("projectId before query:", projectId);
+    console.log("Executing useGetUserTasksQuery with parameters:", { userId, projectId });
+    // const { data: userTasks, refetch, isFetching, isLoading, error } = useGetBoardViewTasksQuery(
+    //     userId && projectId ? { userId: 28, projectId } : skipToken
+    // );
+
+    // Add debugging for query parameters and response
+    console.log("Query Parameters:", { userId, projectId });
+    console.log("UserTasks Response:", userTasks);
+    if (userTasks) {
+        userTasks.forEach((task, index) => {
+            console.log(`Task ${index}:`, task);
+        });
+    }
+    console.log("Query Status:", { isFetching, isLoading, error });
 
     const [updateUserTaskStatus] = useUpdateUserTaskStatusMutation();
     const [createUserTask] = useCreateUserTaskMutation();
@@ -147,37 +179,44 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
         console.log("userTasks:", userTasks);
       }, [userTasks]);
 
-    // Ensure user tasks are initialized if missing
-    useEffect(() => {
+      const hasRunSetup = useRef(false);
+
+      // Ensure user tasks are initialized if missing
+      // Setup tasks only if they are empty and we haven't set them up yet.
+      useEffect(() => {
         const setupUserTasks = async () => {
-        if (!userId || !selectedTrack) {
+          if (!userId || !selectedTrack) {
             console.error("Missing userId or selectedTrack");
             return;
-        }
-
-        try {
+          }
+      
+          try {
             const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-            const response = await fetch(`${backendUrl}/tasks/user-tasks/setup`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, selectedTrack }),
+            const response = await fetch(`${backendUrl}/api/tasks/user-tasks/setup`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId, selectedTrack }),
             });
-
+      
             if (!response.ok) {
-            throw new Error("Failed to set up user tasks");
+              throw new Error("Failed to set up user tasks");
             }
-
+      
             console.log("User tasks set up successfully.");
-            refetch(); // Refetch tasks after setup
-        } catch (error) {
+            refetch();
+            hasInitializedRef.current = true;
+          } catch (error) {
             console.error("Error in setupUserTasks:", error);
-        }
+          }
         };
-
-        if (userId && selectedTrack && (!userTasks || userTasks.length === 0)) {
-        setupUserTasks();
+      
+        // Only initialize if tasks are empty or less than expected and we haven't already initialized.
+        if (userId && selectedTrack && !hasInitializedRef.current) {
+          // Optionally, check if (userTasks?.length ?? 0) is less than expected count.
+          setupUserTasks();
         }
-    }, [userId, selectedTrack, userTasks, refetch]);
+      }, [userId, selectedTrack, userTasks, refetch]);
+    
 
     // Handle loading/error states
     if (isLoading || isFetching) return <div>Loading tasks...</div>;
@@ -220,69 +259,84 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
     };
     
     
-    const tasks = (userTasks || []).map((userTask) => {
-      if (!userTask.task) {
-        console.warn(`Missing task data for userTask with ID: ${userTask.id}`);
-        return {
-          id: -1,
-          title: "Untitled Task",
-          description: "No description available.",
-          tags: "",
-          startDate: "",
-          dueDate: "",
-          points: 0,
-          projectId: -1,
-          authorUserId: -1,
-          assignedUserId: -1,
-          attachments: [],
-          status: "To Do",
-          priority: "Medium",
-        };
-      }
+    console.log("userTasks before processing:", userTasks);
+    console.log("Raw userTasks data:", userTasks);
+    const tasks = (userTasks || [])
+      .filter((userTask) => {
+        console.log("Filtering userTask:", userTask);
+        return userTask.taskId !== null;
+      })
+      .map((userTask) => {
+        console.log("Mapping userTask:", userTask);
+        if (!userTask.task) {
+          console.warn(`Missing task data for userTask with ID: ${userTask.id}`);
+          return {
+            id: -1,
+            title: "Untitled Task",
+            description: "No description available.",
+            tags: "",
+            startDate: "",
+            dueDate: "",
+            points: 0,
+            projectId: -1,
+            authorUserId: undefined,
+            assignedUserId: undefined,
+            attachments: [],
+            status: "To Do" as Status,
+            priority: "Medium" as Priority,
+          };
+        }
     
-      // Map valid tasks
-      return {
-        id: userTask.task.id,
-        title: userTask.task.title || "Untitled Task",
-        description: userTask.task.description || "No description available.",
-        tags: userTask.task.tags || "",
-        startDate: userTask.task.startDate || "",
-        dueDate: userTask.task.dueDate || "",
-        points: userTask.task.points || 0,
-        projectId: userTask.task.projectId || 0,
-        authorUserId: userTask.task.authorUserId || null,
-        assignedUserId: userTask.task.assignedUserId || null,
-        attachments: userTask.task.attachments || [],
-        status: userTask.status as Status,
-        priority: userTask.priority as Priority,
-      };
-    });
+        const task = userTask.task;
+        // Convert the backend status to display status
+        const displayStatus = Object.entries(STATUS_MAPPING).find(
+          ([_, value]) => value === userTask.status
+        )?.[0] || "To Do";
+
+        return {
+          id: task.id,
+          title: task.title || "Untitled Task",
+          description: task.description || "No description available.",
+          tags: task.tags || "",
+          startDate: task.startDate || "",
+          dueDate: task.dueDate || "",
+          points: task.points || 0,
+          projectId: task.projectId || 0,
+          authorUserId: task.authorUserId ?? undefined,
+          assignedUserId: task.assignedUserId ?? undefined,
+          attachments: task.attachments || [],
+          status: displayStatus as Status,
+          priority: task.priority as Priority,
+        };
+      });
+
+    console.log("Processed tasks:", tasks);
+    console.log("Tasks to be rendered:", tasks);
     
       
 
   
    
   // Handle task updates
-  const moveTask = async (taskId: number, toStatus: string) => {
-    if (!userId) return; // Ensure userId exists before proceeding
+  const handleTaskUpdate = async (taskId: string, newStatus: string, position: number) => {
+    if (!userId) return;
+
     try {
-      console.log("Moving Task:", taskId, "to Status:", toStatus);
-  
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-  
-      // Update the endpoint to pass taskId in the URL
-      const response = await fetch(`${backendUrl}/tasks/${taskId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: toStatus }), // Only send the updated status
-      });
-  
-      if (!response.ok) throw new Error("Failed to update task status");
-  
-      console.log("Task moved successfully!");
-      refetch(); // Refresh tasks after update
-    } catch (error) {
-      console.error("Error moving task:", error);
+      const formattedStatus = STATUS_MAPPING[newStatus as keyof typeof STATUS_MAPPING];
+      
+      const result = await updateUserTaskStatus({
+        userId,
+        taskId: parseInt(taskId),
+        status: formattedStatus,
+        position
+      }).unwrap();
+
+      console.log('Update successful:', result);
+      refetch();
+      toast.success(`Task moved to ${newStatus}`);
+    } catch (error: any) { // Type error as any since RTK Query error types are complex
+      console.error('Error updating task:', error);
+      toast.error(error?.data?.message || 'Failed to update task status');
     }
   };
   
@@ -307,49 +361,8 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
       <TaskColumn
         key={status}
         status={status}
-        tasks={(userTasks || []).map((userTask): CombinedTask => {
-          // Handle nested structure (2025)
-          if (userTask.task) {
-            const nestedTask = userTask.task!;
-            return {
-              id: nestedTask.id,
-              title: nestedTask.title || "Untitled Task",
-              description: nestedTask.description || "No description available.",
-              tags: nestedTask.tags || "",
-              startDate: nestedTask.startDate || undefined,
-              dueDate: nestedTask.dueDate || undefined,
-              points: nestedTask.points || 0,
-              projectId: nestedTask.projectId || 0,
-              authorUserId: nestedTask.authorUserId ?? undefined,
-              assignedUserId: nestedTask.assignedUserId ?? undefined,
-              attachments: nestedTask.attachments || [],
-              status: nestedTask.status as Status, // Cast string to Status enum
-              priority: nestedTask.priority as Priority, // Cast string to Priority enum
-            };
-          }
-        
-          // Handle flat structure (2026)
-          const flatTask = userTask as unknown as FlatUserTask;
-          return {
-            id: flatTask.id,
-            title: flatTask.title || "Untitled Task",
-            description: flatTask.description || "No description available.",
-            tags: flatTask.tags || "",
-            startDate: flatTask.startDate || undefined,
-            dueDate: flatTask.dueDate || undefined,
-            points: flatTask.points || 0,
-            projectId: flatTask.projectId || 0,
-            authorUserId: flatTask.authorUserId ?? undefined,
-            assignedUserId: flatTask.assignedUserId ?? undefined,
-            attachments: flatTask.attachments || [],
-            status: flatTask.status as Status, // Cast string to Status enum
-            priority: flatTask.priority as Priority, // Cast string to Priority enum
-          };
-        })}
-        
-        
-        
-        moveTask={moveTask}
+        tasks={tasks.filter((task) => task.status === status)}
+        moveTask={handleTaskUpdate}
         setIsModalNewTaskOpen={setIsModalNewTaskOpen}
         handleEditTask={handleEditTask}
         isAdmin={isAdmin}
@@ -371,9 +384,9 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
 };
 
 type TaskColumnProps = {
-  status: string;
+  status: string;     
   tasks: TaskType[];
-  moveTask: (taskId: number, toStatus: string) => void;
+  moveTask: (taskId: string, newStatus: string, position: number) => void;
   setIsModalNewTaskOpen: (isOpen: boolean) => void;
   handleEditTask: (task: TaskType) => void;
   isAdmin: boolean;
@@ -382,7 +395,16 @@ type TaskColumnProps = {
 const TaskColumn = ({ status, tasks, moveTask, setIsModalNewTaskOpen, handleEditTask, isAdmin }: TaskColumnProps) => {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "task",
-    drop: (item: { id: number }) => moveTask(item.id, status),
+    drop: (item: { id: number; currentStatus: string }, monitor) => {
+      if (monitor.didDrop()) {
+        return;
+      }
+      // Don't update if the status hasn't changed
+      if (item.currentStatus === status) {
+        return;
+      }
+      moveTask(item.id.toString(), status, tasks.length);
+    },
     collect: monitor => ({
       isOver: !!monitor.isOver(),
     }),
@@ -451,8 +473,12 @@ type TaskProps = {
 const Task = ({ task, handleEditTask, isAdmin}: TaskProps) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "task",
-    item: { id: task.id },
-    collect: (monitor: any) => ({
+    item: { 
+      id: task.id,
+      status: task.status,
+      currentStatus: task.status 
+    },
+    collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
   }));

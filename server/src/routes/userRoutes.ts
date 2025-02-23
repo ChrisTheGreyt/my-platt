@@ -18,6 +18,7 @@ import {
   updateUser,
   getDetails,
   getProjects,
+  getUserId,
   checkUserStatusByCognitoId,
   getUserCreatedTime,
 } from "../controllers/userController";
@@ -65,6 +66,9 @@ router.get('/:cognitoId/projects', getProjects);
 router.get("/created-time", getUserCreatedTime);
 router.patch("/users/update-track", updateUserTrack);
 router.patch("/update-track", updateUserTrack);
+
+router.get('/by-cognito/:cognitoId', getUserId);
+
 
 
 export default router;

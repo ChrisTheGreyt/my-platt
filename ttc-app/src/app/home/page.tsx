@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useGetAuthUserQuery } from "@/state/api";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
@@ -26,77 +25,90 @@ const taskColumns: GridColDef[] = [
 const HomePage = () => {
   // Get auth data from RTK Query
   const { data: authData, isLoading: isAuthLoading } = useGetAuthUserQuery();
-
+  
   // State
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
+  const firstName = authData?.user?.attributes?.given_name || authData?.user?.username || "there";
+  
+  
   // Fetch user details and tasks
   useEffect(() => {
     const fetchUserDetails = async () => {
       setIsLoading(true);
+      console.log("✅ Auth Data:", authData);
 
       try {
-        // **Step 1**: Get user info from Redux store (authData)
-        const userSub = authData?.user?.attributes?.sub;
-        const storedTrack = authData?.userDetails?.selectedTrack; // From store
+        // Ensure authData is populated
+        if (!authData?.user?.attributes?.sub) {
+          console.error("Missing userSub from authData");
+          setIsLoading(false);
+          return;
+        }
+        
+        const userSub = authData.user.attributes.sub;
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
-        console.log("Auth data from store:", authData);
-
-        if (!userSub) {
-          console.error("Missing userSub in authData");
+        console.log(`Fetching user details for cognitoId: ${userSub}`);
+        const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${userSub}`);
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch user details: ${response.statusText}`);
           setIsLoading(false);
           return;
         }
 
-        // **Step 2**: Use selectedTrack from store if available
-        const track = storedTrack || "2026"; // Default to 2026 if not set
-        setSelectedTrack(track);
+        const userDetails = await response.json();
+        console.log("✅ Fetched user details:", userDetails);
 
-        // **Step 3**: Fetch tasks using the stored track
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const taskResponse = await fetch(
-          `${backendUrl}/tasks/time-gated?userId=${userSub}&track=${track}`
-        );
-        const taskData = await taskResponse.json();
-        console.log("Fetched tasks:", taskData);
+        if (!userDetails || !userDetails.userId) {
+          console.error("⚠️ userDetails is null or missing required fields");
+          setIsLoading(false);
+          return;
+        }
 
-        // **Step 4**: Format tasks for DataGrid
-        setTasks(
-          Array.isArray(taskData)
-            ? taskData.map((task: any) => ({
-                id: task.id,
-                title: task.title || "Untitled Task",
-                status: task.status || "Not Started",
-                priority: task.priority || "Low",
-                dueDate: task.dueDate || "No Due Date",
-              }))
-            : []
+        // Set track selection
+        setSelectedTrack(userDetails.selectedTrack || null);
+
+        // Fetch tasks for the user
+        const tasksResponse = await fetch(
+          `${backendUrl}/api/tasks/time-gated?userId=${userDetails.userId}&track=${userDetails.selectedTrack}`
         );
+        
+        if (!tasksResponse.ok) {
+          console.error("Failed to fetch tasks:", tasksResponse.statusText);
+          setIsLoading(false);
+          return;
+        }
+
+        const tasksData = await tasksResponse.json();
+        console.log("✅ Fetched tasks:", tasksData);
+        setTasks(tasksData || []);
+
       } catch (error) {
-        console.error("Error fetching user details or tasks:", error);
+        console.error("🔥 Error fetching user details or tasks:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Trigger fetch
     fetchUserDetails();
   }, [authData]);
 
-  // Prepare data for charts
-  const priorityCount = tasks.reduce(
+  // Prepare data for charts (Handle empty data cases)
+  const priorityCount = tasks?.reduce(
     (acc: Record<string, number>, task: any) => {
-      const { priority } = task;
+      // Replace null or undefined priority with "Other"
+      const priority = task.priority || "Other";
       acc[priority] = (acc[priority] || 0) + 1;
       return acc;
     },
     {}
   );
 
-  const taskDistribution = Object.keys(priorityCount).map((key) => ({
-    name: key,
+  const taskDistribution = Object.keys(priorityCount || {}).map((key) => ({
+    name: key === "null" ? "Other" : key, // Replace "null" with "Other" in display
     count: priorityCount[key],
   }));
 
@@ -105,15 +117,52 @@ const HomePage = () => {
     return <div>Loading...</div>;
   }
 
-  // Render the main dashboard
   return (
     <div className="container h-full w-full bg-gray-100 bg-transparent p-8">
       <Header name="Project Management Dashboard" />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <section className="relative h-auto text-white py-16 px-4 sm:px-6 lg:px-8 shadow-2xl rounded-xl overflow-hidden">
+      {/* Background image layer */}
+      <div className="absolute inset-0">
+        <img 
+          src="/ttc_hero.webp" 
+          alt="Background" 
+          className="w-full h-full object-cover opacity-50" 
+        />
+      </div>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-75"></div>
+      
+      {/* Content layer */}
+      <div className="relative max-w-4xl mx-auto text-left">
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
+          Hello {firstName},
+        </h1>
+        <p className="text-lg sm:text-xl font-bold mb-6">
+          Welcome to MyPLATT! Here is a brief overview of how everything works. A full tutorial will be coming once we move out of BETA. As a reminder, this pricing is for the BETA version. You keep access to this pricing as long as you do not leave MyPLATT. Also bear in mind that if you leave MyPLATT, you start all over from month 1. You cannot "pick up where you left off."
+        </p>
+        <div className="text-left max-w-3xl mx-auto">
+          <ol className="list-decimal space-y-3 pl-5">
+            <li className="text-base sm:text-lg">
+              You can view your tasks by month under the "projects" section. You can view it as a list, board, timeline, or table. I prefer the board.
+            </li>
+            <li className="text-base sm:text-lg">
+              Drag and drop tasks from the "to do" section to the "in progress," "under review," or "completed" section. This will then update accordingly on your home page under "your tasks."
+            </li>
+            <li className="text-base sm:text-lg">
+              You should be able to click all of the links within a task to see the resource.
+            </li>
+            <li className="text-base sm:text-lg">
+              Each month, a new set of tasks will release for you to take action.
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 mt-8">
         <div className="rounded-lg bg-white p-4 shadow">
           <h3 className="mb-4 text-lg font-semibold">Task Priority Distribution</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={taskDistribution}>
+            <BarChart data={taskDistribution.length ? taskDistribution : [{ name: "No Data", count: 0 }]}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -127,10 +176,11 @@ const HomePage = () => {
           <h3 className="mb-4 text-lg font-semibold">Your Tasks</h3>
           <div style={{ height: 400, width: "100%" }}>
             <DataGrid
-              rows={tasks}
+              rows={tasks.length ? tasks : []}
               columns={taskColumns}
               checkboxSelection
               loading={isLoading}
+              getRowId={(row) => row.id || `task-${row.position}`}
               className={dataGridClassName}
               sx={dataGridSxStyles(false)}
             />

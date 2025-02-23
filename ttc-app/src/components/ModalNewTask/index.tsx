@@ -107,7 +107,7 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
                 onChange = {(e) => setStatus(Status[e.target.value as keyof typeof Status])}
             >
                 <option value="">Select Status</option>
-                <option value={Status.ToDo}>To Do</option>
+                <option value={Status.ToDo}>To Do List</option>
                 <option value={Status.WorkInProgress}>Work In Progress</option>
                 <option value={Status.UnderReview}>Under Review</option>
                 <option value={Status.Completed}>Completed</option>

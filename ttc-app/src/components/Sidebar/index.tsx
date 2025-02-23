@@ -2,13 +2,15 @@
 
 "use client";
 import { useAppDispatch, useAppSelector } from '@/state/hooks';
+import Button from '@/components/Button';
 import { setIsSidebarCollapsed } from '@/state';
-import { useGetAuthUserQuery, useGetProjectsQuery } from '@/state/api';
-import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, ChevronUp, Home, Layers3, LockIcon, LucideIcon, Search, Settings, ShieldAlert, User, Users, X } from 'lucide-react';
+import { useGetAuthUserQuery, useGetProjectsQuery, useGetUserSchoolsQuery, useCreateSchoolMutation, useAddUserSchoolMutation } from '@/state/api';
+import { AlertCircle, AlertOctagon, AlertTriangle, Briefcase, ChevronDown, ChevronUp, Home, Layers3, LockIcon, LucideIcon, School, Search, Settings, ShieldAlert, User, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Auth } from 'aws-amplify';
 import { useRouter } from 'next/navigation';
+import NewSchoolModal from '@/components/ModalNewSchool';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -22,148 +24,144 @@ type Project = {
 
 
 const Sidebar = () => {
-
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userSub, setUserSub] = useState<string | null>(null);
+  // State declarations
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  
-
-  useEffect(() => {
-    const fetchUserSub = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser();
-        const cognitoId = user.attributes.sub; // Cognito userSub
-        
-        setUserSub(cognitoId);
-      } catch (error) {
-        console.error("Failed to fetch userSub:", error);
-      }
-    };
-
-    fetchUserSub();
-  }, []);
-
-  // Step 2: Fetch userId from the backend using userSub
-  useEffect(() => {
-    const fetchUserId = async () => {
-      if (!userSub) return;
-
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-        const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${userSub}`);
-
-        if (!response.ok) {
-          console.error("Failed to fetch userId:", response.statusText);
-          return;
-        }
-
-        const data = await response.json();
-        setUserId(data.userId);
-      } catch (error) {
-        console.error("Error fetching userId:", error);
-      }
-    };
-
-    fetchUserId();
-  }, [userSub]);
-
-  // Step 3: Fetch projects using userId
-  // useEffect(() => {
-  //   const fetchProjects = async () => {
-  //     if (!userId) return;
-
-  //     try {
-  //       const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-  //       const response = await fetch(`${backendUrl}/api/users/${userId}/projects`);
-
-  //       if (!response.ok) {
-  //         console.error("Failed to fetch projects:", response.statusText);
-  //         return;
-  //       }
-
-  //       const data: Project[] = await response.json();
-  //       setProjects(data);
-  //     } catch (error) {
-  //       console.error("Error fetching projects:", error);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   fetchProjects();
-  // }, [userId]);
-  
-
- 
-  
-  const router = useRouter();
-  const { setUser, setSession } = useAuth();
+  const [internalUserId, setInternalUserId] = useState<string | null>(null);
   const [showProjects, setShowProjects] = useState(true);
-  const [showPriority, setShowPriority] = useState(true);
+  const [showPriority, setShowPriority] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  // Hooks
+  const { user, setUser, setSession } = useAuth();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector((state) => state.global.isSidebarCollapsed);
+  const { 
+    data: userSchools, 
+    isLoading: isLoadingSchools, 
+    error: schoolsError, 
+    refetch: refetchSchools 
+  } = useGetUserSchoolsQuery(
+    internalUserId ? Number(internalUserId) : 0, 
+    { 
+      skip: !internalUserId,
+      refetchOnMountOrArgChange: true, // Refetch when component mounts or userId changes
+      pollingInterval: 5000 // Poll every 5 seconds for updates
+    }
+  );
+  
+  const [createSchool] = useCreateSchoolMutation();
+  const [addUserSchool] = useAddUserSchoolMutation();
 
-  // Fetching user data and projects
-  const { data: authData, isLoading: authLoading } = useGetAuthUserQuery();
-  // const { data: projects, isLoading: projectsLoading } = useGetProjectsQuery();
-
+  // Fetch projects when user auth state changes
   useEffect(() => {
     const fetchProjects = async () => {
+      console.log("Starting project fetch with user:", user);
+      if (!user) {
+        console.log("No authenticated user found");
+        setIsLoading(false);
+        return;
+      }
+    
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/time-gated?userId=${userId}`
+        setIsLoading(true);
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    
+        const authUser = await Auth.currentAuthenticatedUser();
+        const cognitoSub = authUser.attributes.sub;
+    
+        console.log("Resolving userId using cognitoSub:", cognitoSub);
+        if (!cognitoSub) throw new Error('No cognito id available');
+    
+        // First get user details including createdAt
+        const userResponse = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
+        const userData = await userResponse.json();
+    
+        if (!userData.userId) throw new Error("Invalid user data: Missing userId");
+        setInternalUserId(userData.userId);
+    
+        // Get projects with time-gating applied
+        const projectsResponse = await fetch(
+          `${backendUrl}/api/users/${userData.userId}/time-gated-projects`
         );
-        const data = await response.json();
-        console.log("Fetched Projects:", data);
-        setProjects(data); // Set the projects in state
+    
+        if (!projectsResponse.ok) {
+          throw new Error(`HTTP error! status: ${projectsResponse.status}`);
+        }
+    
+        const projectsData = await projectsResponse.json();
+        console.log("✅ Received projects data:", projectsData);
+        setProjects(projectsData);
       } catch (error) {
-        console.error("Error fetching projects:", error);
+        console.error("🔥 Error in projects fetch chain:", error);
+        setProjects([]);
+      } finally {
+        setIsLoading(false);
       }
     };
-  
-    if (userId) {
-      fetchProjects();
-    }
-  }, [userId]); // Depend on userId change
-  
-  
+    
+    fetchProjects();
+  }, [user]);
 
-  
-  
-  console.log("!!!Fetched", userId);
+  // Debug logging
+  useEffect(() => {
+    console.log("Fetched Projects:", projects);
+    console.log("!!!Final projects loaded in Sidebar:", projects);
+  }, [projects]);
 
   useEffect(() => {
-      console.log("Fetched Projects:", projects); // Debugging the projects state
-    }, [projects]); 
-
-  // Debugging outputs
-  useEffect(() => {
-    console.log("authData:", authData);
+    console.log("user:", user);
     console.log("projects:", projects);
-  }, [authData, projects]);
+  }, [user, projects]);
 
-  const currentUserDetails = authData?.userDetails || null;
+  useEffect(() => {
+    console.log("🔍 Sidebar Fetch Projects: Internal User ID:", internalUserId);
+  }, [internalUserId]);
+  
+  useEffect(() => {
+    console.log("🔍 Sidebar Projects:", projects);
+  }, [projects]);
+  
+
+  // Add effect to refetch when schools change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refetchSchools();
+      }
+    };
+
+    // Refetch when tab becomes visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetchSchools]);
 
   const handleSignOut = async () => {
     try {
       await Auth.signOut();
       setUser(null);
       setSession(null);
-      router.push('/'); // Redirect to login page
+      dispatch(setIsSidebarCollapsed(true)); // Collapse sidebar on sign out
+      router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
+  const currentUserDetails = user || null;
 
   const sidebarClassNames = `fixed flex flex-col h-[100%] justify-between shadow-xl transition-all duration-300 h-full z-40 dark:bg-black overflow-y-auto bg-white ${
     isSidebarCollapsed ? 'w-0 hidden' : 'w-64'
   }`;
 
+  if (!currentUserDetails) return null;
+
   return (
-    <div className={sidebarClassNames}>
+    <div className={sidebarClassNames} key={currentUserDetails.username}>
       <div className='flex h-[100%] w-full flex-col justify-start'>
         {/* TOP LOGO */}
         <div className='z-50 flex min-h-[56px] w-64 items-center justify-between bg-white px-6 pt-3 dark:bg-black'>
@@ -173,12 +171,36 @@ const Sidebar = () => {
               <X className='h-6 w-6 text-gray-800 hover:text-gray-500 dark:text-white' />
             </button>
           )}
-        </div>
+          {showModal && (
+            <NewSchoolModal
+              isOpen={showModal}
+              onClose={() => setShowModal(false)}
+              onSchoolSelect={async (schoolId) => {
+                if (!internalUserId) {
+                  console.error('No user ID available');
+                  return;
+                }
+                try {
+                  await addUserSchool({ userId: Number(internalUserId), schoolId: Number(schoolId) }).unwrap();
+                  
+                  setTimeout(() => {
+                    console.log("Refetching user schools...");
+                    refetchSchools();
+                  }, 500);
+              
+                  setShowModal(false);
+                } catch (error) {
+                  console.error('Error adding user school:', error);
+                }
+              }}
+              
+            />
+          )}
+    </div> 
      
         {/* USER INFO */}
         {currentUserDetails ? (
           <div className='flex items-center gap-5 border-y-[1.5px] border-gray-200 px-7 py-4 dark:border-gray-700'>
-            <Image src="https://mp-s3-images.s3.us-east-1.amazonaws.com/logo.png" alt="Logo" width={40} height={50} />
             <div>
               <h3 className='text-md font-bold tracking-wide dark:text-gray-200'>{currentUserDetails.username}</h3>
               <div className='mt-1 flex items-start gap-2'>
@@ -193,15 +215,54 @@ const Sidebar = () => {
 
         {/* NAVIGATION LINKS */}
         <nav className='z-10 w-full'>
-          <SidebarLink icon={Home} label="Home" href="/" />
+          <SidebarLink icon={Home} label="Home" href="/home" />
           {/* <SidebarLink icon={Briefcase} label="Timeline" href="/timeline" /> */}
           <SidebarLink icon={Search} label="Search" href="/search" />
           <SidebarLink icon={Settings} label="Settings" href="/settings" />
           <SidebarLink icon={User} label="User" href="/users" />
-          <SidebarLink icon={Users} label="Users" href="/teams" />
+                    <SidebarLink icon={Briefcase} label="Schools" href="/schools" />
           
         </nav>
-        {/* PROJECTS SECTION */}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-8 py-3">
+            <h4 className="text-gray-700 dark:text-gray-300 font-medium">Schools</h4>
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-white hover:bg-gray-50 shadow-sm hover:shadow px-3 py-1 rounded-md text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm transition-all duration-200"
+            >
+              + Add
+            </button>
+          </div>
+          
+          {isLoadingSchools ? (
+            <div className="px-8 py-4 text-sm">
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/5"></div>
+              </div>
+            </div>
+          ) : schoolsError || !userSchools || userSchools.length === 0 ? (
+            <div className="px-8 py-4 text-sm text-gray-500 italic">
+              No Schools Selected
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {userSchools && userSchools.map((school) => (
+                <SidebarLink
+                  key={school.id}
+                  icon={School}
+                  label={school.school}
+                  href={`/schools/${encodeURIComponent(school.school)}`}
+                  isHighlighted={school.isSelected}
+                />
+              ))}
+            </div>
+          )}
+
+        </div>
+
         <button
           onClick={() => setShowProjects((prev) => !prev)}
           className="flex w-full items-center justify-between px-8 py-3 text-gray-500"
@@ -219,9 +280,16 @@ const Sidebar = () => {
               href={`/projects/${project.id}`}
             />
           ))
+        ) : isLoading ? (
+          <div className="px-8 py-4 text-sm">
+            <div className="animate-pulse space-y-3">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+            </div>
+          </div>
         ) : (
-          <div className='px-8 py-2 text-sm text-gray-500'>
-            No Projects Available
+          <div className='px-8 py-2 text-sm text-red-500 dark:text-red-400'>
+           
           </div>
         )}
         {/* PRIORITY SECTION */}
@@ -255,21 +323,38 @@ interface SidebarLinkProps {
   href: string;
   icon: LucideIcon;
   label: string;
+  isHighlighted?: boolean;
 }
 
-const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
-  const pathname = usePathname(); // Get current pathname
+const SidebarLink = ({ href, icon: Icon, label, isHighlighted }: SidebarLinkProps) => {
+  const pathname = usePathname();
   const isActive = pathname === href || (pathname === "/" && href === "/dashboard");
 
   return (
     <Link href={href} className='w-full'>
-      <div className={`relative flex cursor-pointer items-center gap-3 transition-color hover:bg-gray-100 dark:bg-black dark:hover:bg-gray-700 ${isActive ? 'bg-gray-100 text-white dark:bg-gray-600' : ''} justify-start px-8 py-3`}>
-        {isActive && <div className='absolute left-0 top-0 h-full w-[5px] bg-blue-200' />}
-        <Icon className='h-6 w-6 text-gray-800 dark:text-gray-100' />
-        <span className='font-medium text-gray-800 dark:text-gray-100'>{label}</span>
+      <div
+        className={`
+          relative flex cursor-pointer items-center gap-3 transition-all duration-200
+          justify-start px-8 py-3
+          ${isActive ? 'bg-gray-100 dark:bg-gray-600' : ''}
+          ${isHighlighted ? 'bg-blue-50 dark:bg-blue-900/20' : ''}
+          hover:bg-gray-100 dark:hover:bg-gray-700
+        `}
+      >
+        {isActive && <div className='absolute left-0 top-0 h-full w-[5px] bg-blue-500' />}
+        {isHighlighted && !isActive && (
+          <div className='absolute left-0 top-0 h-full w-[5px] bg-blue-300' />
+        )}
+        <Icon className={`h-6 w-6 ${
+          isHighlighted ? 'text-blue-500 dark:text-blue-400' : 'text-gray-800 dark:text-gray-100'
+        }`} />
+        <span className={`font-medium ${
+          isHighlighted ? 'text-blue-600 dark:text-blue-400' : 'text-gray-800 dark:text-gray-100'
+        }`}>
+          {label}
+        </span>
       </div>
     </Link>
-    
   );
 };
 

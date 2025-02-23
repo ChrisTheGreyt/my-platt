@@ -39,7 +39,7 @@ interface AuthState {
   userDetails: UserDetails | null;
   userId: number | null;
   selectedTrack: string | null;
-  authData: any;
+  authData: AuthData | null;
 }
 
 const initialState: AuthState = {

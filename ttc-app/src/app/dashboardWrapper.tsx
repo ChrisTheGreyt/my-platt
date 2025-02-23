@@ -28,9 +28,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Only render Sidebar if user is authenticated */}
       {isAuthenticated && <Sidebar />}
       <main
-        className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${
-          isAuthenticated ? 'md:pl-64' : ''
-        }`}
+  className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${
+    isAuthenticated && !isSidebarCollapsed ? 'md:pl-64' : ''
+  }`}
       >
         {/* Only render Navbar if user is authenticated */}
         {isAuthenticated && <Navbar />}

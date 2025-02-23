@@ -29,37 +29,42 @@ const SignIn: React.FC = () => {
       const result = await Auth.signIn(formData.username, formData.password);
       console.log('Cognito Auth result:', result);
   
-      const cognitoId = result.attributes.sub;
-      console.log('Extracted Cognito ID:', cognitoId);
-  
+      // Get the cognitoSub from the user attributes
+      const cognitoSub = result.attributes.sub;
+      console.log('Extracted cognitoSub:', cognitoSub);
+
       // Resolve endpoint
-      const resolveResponse = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoId}`);
+      const resolveResponse = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
       console.log('Resolve API Response:', resolveResponse);
-  
+
       if (resolveResponse.status === 404) {
         console.warn('User not found in database. Redirecting to subscriptions.');
-        router.replace('/subscriptions');
+        const email = result.attributes.email;
+        router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
         return;
-      } else if (resolveResponse.status === 403) {
-        console.warn('User subscription inactive. Redirecting to subscriptions.');
-        router.replace('/subscriptions');
-        return;
-      } else if (!resolveResponse.ok) {
+      }
+
+      if (!resolveResponse.ok) {
         console.error('Unexpected error resolving user:', resolveResponse.statusText);
         throw new Error('Failed to resolve user');
       }
-  
+
       const data = await resolveResponse.json();
       console.log('Resolved User Data:', data);
-  
-      if (data.subscriptionStatus === 'active') {
-        console.log('User subscription status is active.');
-        setUser(data.user); // Save user state
-        setSession(result.signInUserSession); // Save session data
-        router.replace('/'); // Redirect
-        window.location.reload(); // Force refresh
+
+      // Save user state and session
+      setUser(data);
+      setSession(result.signInUserSession);
+
+      // Critical Subscription Status Check - DO NOT MODIFY
+      // Verifies active subscription before granting access
+      const status = (data.subscriptionStatus || '').toLowerCase();
+      if (status === 'active') {
+        console.log('VALID: Active subscription detected');
+        router.replace('/');
+        window.location.reload();
       } else {
-        console.warn('User subscription status is not active. Redirecting to subscriptions.');
+        console.warn('INVALID: Missing active subscription');
         router.replace('/subscriptions');
       }
     } catch (err) {

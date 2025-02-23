@@ -1,57 +1,25 @@
 import Modal from "@/components/Modal";
-import { useCreateProjectMutation } from "@/state/api";
 import React, { useState } from "react";
-import { formatISO } from "date-fns";
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  id:number;
+  onSchoolSelect: (school: string) => void;
 };
 
-const ModalNewProject = ({ isOpen, onClose }: Props) => {
-  const [createProject, { isLoading }] = useCreateProjectMutation();
-  const [projectName, setProjectName] = useState("");
-  const [description, setDescription] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+const ModalNewSchool = ({ isOpen, onClose, onSchoolSelect }: Props) => {
   const [school, setSchool] = useState("");
 
-  const handleSubmit = async () => {
-    if (!projectName || !description || !startDate || !endDate || !school) return;
-
-    const formattedStartDate = formatISO(new Date(startDate), {
-      representation: "complete",
-    });
-    const formattedEndDate = formatISO(new Date(endDate), {
-      representation: "complete",
-    });
-
-    await createProject({
-      name: projectName,
-      description,
-      startDate: formattedStartDate,
-      endDate: formattedEndDate,
-      school,
-    });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!school) return;
+    onSchoolSelect(school);
+    onClose();
   };
-
-  const isFormValid = () => {
-    return projectName && description && startDate && endDate && school;
-  };
-
-  const inputStyles =
-    "w-full rounded border border-gray-300 p-2 shadow-sm dark:border-dark-tertiary dark:bg-dark-tertiary dark:text-white dark:focus:outline-none";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} name="Create New School Timeline">
-      <form
-        className="mt-4 space-y-6"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
+    <Modal isOpen={isOpen} onClose={onClose} name="Select a School">
+      <form className="mt-4" onSubmit={handleSubmit}>
         <div className="w-80">
           <label htmlFor="school" className="block text-sm font-medium text-gray-700">
             Select a School
@@ -62,6 +30,7 @@ const ModalNewProject = ({ isOpen, onClose }: Props) => {
             className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             value={school}
             onChange={(e) => setSchool(e.target.value)}
+            required
           >
             <option value="" disabled>
               Select your school
@@ -168,45 +137,15 @@ const ModalNewProject = ({ isOpen, onClose }: Props) => {
             <option>Stetson University</option>
           </select>
         </div>
-        <input
-          type="text"
-          className={inputStyles}
-          placeholder="Project Name"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-        />
-        <textarea
-          className={inputStyles}
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-2">
-          <input
-            type="date"
-            className={inputStyles}
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <input
-            type="date"
-            className={inputStyles}
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
         <button
           type="submit"
-          className={`focus-offset-2 mt-4 flex w-full justify-center rounded-md border border-transparent bg-blue-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
-            !isFormValid() || isLoading ? "cursor-not-allowed opacity-50" : ""
-          }`}
-          disabled={!isFormValid() || isLoading}
+          className="mt-4 flex w-full justify-center rounded-md border border-transparent bg-blue-primary px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
-          {isLoading ? "Creating..." : "Create Project"}
+          Select School
         </button>
       </form>
     </Modal>
   );
 };
 
-export default ModalNewProject;
+export default ModalNewSchool;

@@ -14,7 +14,21 @@ const nextConfig = {
       ignoreDuringBuilds: true,
     },
     reactStrictMode: true,
+    webpack: (config) => {
+      config.module.rules.push({
+        test: /\.json$/,
+        type: 'json',
+      });
+      return config;
+    },
   };
   
+  // Add rewrites for API proxy
+  nextConfig.rewrites = async () => [
+    {
+      source: '/api/:path*',
+      destination: 'http://localhost:8000/api/:path*' // Keep the /api prefix
+    }
+  ];
+
   export default nextConfig;
-  

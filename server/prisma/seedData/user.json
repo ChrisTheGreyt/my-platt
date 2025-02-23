@@ -198,5 +198,15 @@
     "lastName": "Hugo",
     "email": "victor.hugo@example.com",
     "subscriptionStatus": "inactive"
+  },
+  {
+    "username": "NewUser",
+    "teamId": 1,
+    "profilePictureUrl": "p1.jpeg",
+    "cognitoId": "f4780418-d091-7050-e582-528846a54c3c",
+    "firstName": "New",
+    "lastName": "User",
+    "email": "new.user@example.com",
+    "subscriptionStatus": "active"
   }
 ]

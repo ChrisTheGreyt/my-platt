@@ -8,25 +8,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model UserSchool {
+  id         Int     @id @default(autoincrement())
+  userId     Int
+  school     String
+  isSelected Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, school])
+}
+
 model User {
-  userId             Int              @id @default(autoincrement())
-  cognitoId          String?          @unique
-  username           String           @unique
+  userId             Int               @id @default(autoincrement())
+  cognitoId          String?           @unique
+  username           String            @unique
   profilePictureUrl  String?
   teamId             Int?
-  email              String           @unique
-  selectedTrack      String?
+  email              String            @unique
   firstName          String
   lastName           String
   subscriptionStatus String?
+  selectedTrack      String?
+  createdAt          DateTime          @default(now())
   attachments        Attachment[]
   comments           Comment[]
-  userTasks          UserTasks[]
-  assignedTasks      Task[]           @relation("TaskAssignee")
-  authoredTasks      Task[]           @relation("TaskAuthor")
+  assignedTasks      Task[]            @relation("TaskAssignee")
+  authoredTasks      Task[]            @relation("TaskAuthor")
   taskAssignments    TaskAssignment[]
-  team               Team?            @relation(fields: [teamId], references: [id])
-  createdAt          DateTime @default(now())
+  userSchools        UserSchool[]
+  userSchoolTasks    UserSchoolTasks[]
+  userTasks          UserTasks[]
 }
 
 model Team {
@@ -35,7 +46,6 @@ model Team {
   productOwnerUserId   Int?
   projectManagerUserId Int?
   projectTeams         ProjectTeam[]
-  user                 User[]
 }
 
 model Project {
@@ -79,15 +89,20 @@ model Task {
 }
 
 model UserTasks {
-  id       Int    @id @default(autoincrement())
-  userId   Int
-  taskId   Int
-  status   String @default("To Do") // Default status for new users
-  priority String @default("Medium") // Default priority for new users
-  user     User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  task     Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id           Int          @id @default(autoincrement())
+  userId       Int
+  taskId       Int?
+  status       String       @default("To Do")
+  priority     String       @default("Medium")
+  position     Int          @default(0)
+  schoolTaskId Int?
+  schoolTask   SchoolTasks? @relation(fields: [schoolTaskId], references: [id])
+  task         Task?        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@unique([userId, taskId]) // Ensure a unique relationship between user and task
+  @@unique([userId, taskId], name: "unique_user_task")
+  @@index([userId, status, position])
+  @@index([userId, taskId])
 }
 
 model TaskAssignment {
@@ -115,4 +130,46 @@ model Comment {
   userId Int
   task   Task   @relation(fields: [taskId], references: [id])
   user   User   @relation(fields: [userId], references: [userId])
+}
+
+model law_schools {
+  id                        Int           @id @default(autoincrement())
+  school                    String?       @unique
+  personal_statement        String?
+  diversity_statement       String?
+  optional_statement_prompt String?
+  letters_of_recommendation String?
+  resume                    String?
+  extras_addenda            String?
+  application_fee           String?
+  interviews                String?
+  note                      String?
+  schoolTasks               SchoolTasks[]
+}
+
+model SchoolTasks {
+  id              Int               @id @default(autoincrement())
+  schoolId        Int
+  taskType        String
+  isRequired      Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  lawSchool       law_schools       @relation(fields: [schoolId], references: [id])
+  userSchoolTasks UserSchoolTasks[]
+  userTasks       UserTasks[]
+}
+
+model UserSchoolTasks {
+  id           Int         @id @default(autoincrement())
+  userId       Int
+  schoolTaskId Int
+  status       String      @default("To Do")
+  priority     String      @default("Medium")
+  position     Int         @default(0)
+  schoolTask   SchoolTasks @relation(fields: [schoolTaskId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, schoolTaskId], name: "unique_user_school_task")
+  @@index([userId, status, position])
+  @@index([userId, schoolTaskId])
 }

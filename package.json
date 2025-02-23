@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "framer-motion": "^12.4.7",
+    "prisma": "^6.3.0"
+  }
+}
