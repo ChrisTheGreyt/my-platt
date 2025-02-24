@@ -58,14 +58,17 @@ const SignIn: React.FC = () => {
           console.warn('INVALID: Missing active subscription');
           router.replace('/subscriptions');
         }
-      } catch (apiError) {
-        console.error('API Error:', apiError);
-        if (apiError.response?.status === 404) {
+      } catch (error: unknown) {
+        console.error('API Error:', error);
+        // Type guard for the API error response
+        if (typeof error === 'object' && error !== null && 'response' in error && 
+            typeof error.response === 'object' && error.response !== null && 
+            'status' in error.response && error.response.status === 404) {
           const email = auth.attributes.email;
           router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
           return;
         }
-        throw apiError;
+        throw error;
       }
     } catch (error) {
       console.error('Error during sign in:', error);
