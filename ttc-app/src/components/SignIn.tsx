@@ -39,9 +39,51 @@ const SignIn: React.FC = () => {
         return;
       }
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod';
+      
       try {
-        const data = await API.get('MyAPI', `/api/users/resolve?cognitoSub=${cognitoSub}`, {});
-        console.log('Resolve response:', data);
+        console.log('Making API request to:', apiUrl);
+        const response = await fetch(
+          `${apiUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.getIdToken().getJwtToken()}`,
+              'X-Requested-With': 'XMLHttpRequest',
+              'Origin': window.location.origin
+            }
+          }
+        );
+
+        // Log the response headers for debugging
+        console.log('Response headers:', {
+          cors: response.headers.get('access-control-allow-origin'),
+          contentType: response.headers.get('content-type'),
+          status: response.status
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText
+          });
+          
+          if (response.status === 404) {
+            const email = auth.attributes.email;
+            router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
+            return;
+          }
+          throw new Error(`API call failed: ${response.status} ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('API Response data:', data);
 
         // Save user state and session
         setUser(data);
@@ -57,16 +99,8 @@ const SignIn: React.FC = () => {
           console.warn('INVALID: Missing active subscription');
           router.replace('/subscriptions');
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('API Error:', error);
-        // Type guard for the API error response
-        if (typeof error === 'object' && error !== null && 'response' in error && 
-            typeof error.response === 'object' && error.response !== null && 
-            'status' in error.response && error.response.status === 404) {
-          const email = auth.attributes.email;
-          router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
-          return;
-        }
         throw error;
       }
     } catch (error) {

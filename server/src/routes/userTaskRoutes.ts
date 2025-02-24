@@ -13,22 +13,36 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
     'http://localhost:3000'
   ];
 
-  console.log('Incoming request origin:', origin);
-  console.log('Request method:', req.method);
+  // Always log the incoming request details
+  console.log('Incoming request:', {
+    origin,
+    method: req.method,
+    path: req.path,
+    headers: req.headers
+  });
+
+  // Always send Vary header
+  res.header('Vary', 'Origin');
 
   if (origin && allowedOrigins.includes(origin)) {
-    console.log('Setting CORS headers for origin:', origin);
+    // Send specific origin instead of wildcard
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', [
+      'Content-Type',
+      'Authorization',
+      'X-Api-Key',
+      'X-Amz-Date',
+      'X-Amz-Security-Token',
+      'X-Requested-With',
+      'Origin'
+    ].join(','));
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token');
-  } else {
-    console.log('Origin not allowed:', origin);
-  }
-
-  if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request');
-    return res.sendStatus(200);
+    
+    if (req.method === 'OPTIONS') {
+      res.status(204).end();
+      return;
+    }
   }
 
   next();
