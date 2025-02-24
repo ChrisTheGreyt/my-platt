@@ -8,29 +8,14 @@ const prisma = new PrismaClient();
 // Add this at the top of the file, after imports
 const corsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const origin = req.headers.origin;
-  const productionDomain = 'https://main.d249lhj5v2utjs.amplifyapp.com';
   
   // Always send Vary header
   res.header('Vary', 'Origin');
 
-  // If it's the production domain, always allow it
-  if (origin === productionDomain) {
-    res.header('Access-Control-Allow-Origin', productionDomain);
-    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', [
-      'Content-Type',
-      'Authorization'
-    ].join(','));
-  } 
-  // For local development
-  else if (origin === 'http://localhost:3000') {
-    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', [
-      'Content-Type',
-      'Authorization'
-    ].join(','));
-  }
+  // Allow any origin in production
+  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   
   if (req.method === 'OPTIONS') {
     res.status(204).end();
