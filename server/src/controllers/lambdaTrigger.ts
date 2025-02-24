@@ -3,9 +3,7 @@ const https = require('https');
 
 // CORS headers for all Lambda responses
 const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3000'
-    : 'https://main.d249lhj5v2utjs.amplifyapp.com',
+  'Access-Control-Allow-Origin': 'https://main.d249lhj5v2utjs.amplifyapp.com',
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
   'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
   'Access-Control-Allow-Credentials': 'true'
@@ -20,6 +18,9 @@ const createResponse = (statusCode: number, body: any) => ({
 
 exports.handler = async (event: any) => {
   console.log("Lambda Triggered:", JSON.stringify(event, null, 2));
+  console.log("Environment:", process.env.NODE_ENV);
+  console.log("Frontend URL:", process.env.FRONTEND_URL);
+  
   try {
     // Extract user attributes
     const username = event.request.userAttributes['preferred_username'] || event.userName;
