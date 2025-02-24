@@ -49,28 +49,45 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
 // Apply the middleware to all routes
 router.use(corsMiddleware);
 
+// Add at the top of the file
+type UserWithSubscription = {
+  userId: number;
+  selectedTrack: string;
+  subscriptionStatus: string | null;
+};
+
 // Define your routes below
 router.get('/users/resolve', async (req, res) => {
   try {
     const { cognitoSub } = req.query;
+    console.log('Resolving user for cognitoSub:', cognitoSub);
 
     if (!cognitoSub) {
-        return res.status(400).json({ error: 'Missing cognitoSub' });
+      console.log('Missing cognitoSub parameter');
+      return res.status(400).json({ error: 'Missing cognitoSub' });
     }
 
-    // Query the user by cognitoSub (cognitoId in your schema)
-    const user = await prisma.user.findUnique({
+    // Modify the Promise.race call
+    const user = (await Promise.race([
+      prisma.user.findUnique({
         where: { cognitoId: String(cognitoSub) },
         select: {
-            userId: true,
-            selectedTrack: true, // Include selectedTrack in the response
-            subscriptionStatus: true,
+          userId: true,
+          selectedTrack: true,
+          subscriptionStatus: true,
         },
-    });
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database timeout')), 5000)
+      )
+    ])) as UserWithSubscription | null;
 
     if (!user) {
+      console.log('User not found for cognitoSub:', cognitoSub);
       return res.status(404).json({ error: 'User not found' });
     }
+
+    console.log('User found:', user);
 
     // Skip subscription check if status is 'active' or 'Active'
     const status = user.subscriptionStatus?.toLowerCase() || '';
@@ -85,13 +102,19 @@ router.get('/users/resolve', async (req, res) => {
 
     // Send both userId and selectedTrack
     res.json({
-        userId: user.userId,
-        selectedTrack: user.selectedTrack,
-        subscriptionStatus: user.subscriptionStatus,
+      userId: user.userId,
+      selectedTrack: user.selectedTrack,
+      subscriptionStatus: user.subscriptionStatus,
     });
   } catch (error) {
-      console.error('Error resolving user:', error);
-      res.status(500).json({ error: 'Failed to resolve user details' });
+    console.error('Error resolving user:', error);
+    
+    // Send a more detailed error response
+    res.status(500).json({ 
+      error: 'Failed to resolve user details',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 

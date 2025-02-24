@@ -17,6 +17,26 @@ const SignIn: React.FC = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const fetchWithRetry = async (url: string, options: RequestInit, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok) {
+          return response;
+        }
+        if (response.status === 404) {
+          return response; // Don't retry 404s
+        }
+        console.log(`Attempt ${i + 1} failed with status ${response.status}`);
+      } catch (error) {
+        console.error(`Attempt ${i + 1} failed:`, error);
+      }
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
+    throw new Error(`Failed after ${retries} retries`);
+  };
+
   const handleSignIn = async (event: React.FormEvent) => {
     event.preventDefault();
     
@@ -43,7 +63,7 @@ const SignIn: React.FC = () => {
       
       try {
         console.log('Making API request to:', apiUrl);
-        const response = await fetch(
+        const response = await fetchWithRetry(
           `${apiUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
           {
             method: 'GET',
