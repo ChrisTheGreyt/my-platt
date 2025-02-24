@@ -7,6 +7,21 @@ const prisma = new PrismaClient();
 
 // Define your routes below
 router.get('/users/resolve', async (req, res) => {
+  // Get the origin from the request
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://main.d249lhj5v2utjs.amplifyapp.com',
+    'http://localhost:3000'
+  ];
+
+  // Set CORS headers based on origin
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token');
+  }
+
   try {
       const { cognitoSub } = req.query;
 
@@ -49,6 +64,24 @@ router.get('/users/resolve', async (req, res) => {
       console.error('Error resolving user:', error);
       res.status(500).json({ error: 'Failed to resolve user details' });
   }
+});
+
+// Add this before your other routes
+router.options('/users/resolve', (req, res) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    'https://main.d249lhj5v2utjs.amplifyapp.com',
+    'http://localhost:3000'
+  ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token');
+  }
+  
+  res.sendStatus(200);
 });
 
   
