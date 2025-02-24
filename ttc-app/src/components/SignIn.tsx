@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Auth } from 'aws-amplify';
+import { Auth, API } from 'aws-amplify';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -17,70 +17,59 @@ const SignIn: React.FC = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSignIn = async () => {
-    setError(null);
-    setShowConfirmOption(false);
-    setLoading(true);
-  
+  const handleSignIn = async (event: React.FormEvent) => {
+    event.preventDefault();
+    
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-  
-      // Cognito Sign-in
-      const result = await Auth.signIn(formData.username, formData.password);
-      console.log('Cognito Auth result:', result);
-  
-      // Get the cognitoSub from the user attributes
-      const cognitoSub = result.attributes.sub;
-      console.log('Extracted cognitoSub:', cognitoSub);
+      console.log('Attempting sign in...');
+      const auth = await Auth.signIn(formData.username, formData.password);
+      console.log('Sign in successful:', auth);
 
-      // Resolve endpoint
-      const resolveResponse = await fetch(
-        `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      console.log('Resolve API Response:', resolveResponse);
-
-      if (resolveResponse.status === 404) {
-        console.warn('User not found in database. Redirecting to subscriptions.');
-        const email = result.attributes.email;
-        router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
+      const session = auth.signInUserSession;
+      if (!session) {
+        console.error('No session after sign in');
         return;
       }
 
-      if (!resolveResponse.ok) {
-        console.error('Unexpected error resolving user:', resolveResponse.statusText);
-        throw new Error('Failed to resolve user');
+      const cognitoSub = auth.attributes?.sub;
+      console.log('CognitoSub from attributes:', cognitoSub);
+
+      if (!cognitoSub) {
+        console.error('No cognitoSub found in user attributes');
+        return;
       }
 
-      const data = await resolveResponse.json();
-      console.log('Resolved User Data:', data);
+      // Use the API client instead of fetch
+      try {
+        const data = await API.get('api', `/api/users/resolve?cognitoSub=${cognitoSub}`, {});
+        console.log('Resolve response:', data);
 
-      // Save user state and session
-      setUser(data);
-      setSession(result.signInUserSession);
+        // Save user state and session
+        setUser(data);
+        setSession(session);
 
-      // Critical Subscription Status Check - DO NOT MODIFY
-      // Verifies active subscription before granting access
-      const status = (data.subscriptionStatus || '').toLowerCase();
-      if (status === 'active') {
-        console.log('VALID: Active subscription detected');
-        router.replace('/');
-        window.location.reload();
-      } else {
-        console.warn('INVALID: Missing active subscription');
-        router.replace('/subscriptions');
+        // Critical Subscription Status Check
+        const status = (data.subscriptionStatus || '').toLowerCase();
+        if (status === 'active') {
+          console.log('VALID: Active subscription detected');
+          router.replace('/');
+          window.location.reload();
+        } else {
+          console.warn('INVALID: Missing active subscription');
+          router.replace('/subscriptions');
+        }
+      } catch (apiError) {
+        console.error('API Error:', apiError);
+        if (apiError.response?.status === 404) {
+          const email = auth.attributes.email;
+          router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
+          return;
+        }
+        throw apiError;
       }
-    } catch (err) {
-      console.error('Error during sign in or resolve process:', err);
+    } catch (error) {
+      console.error('Error during sign in:', error);
       setError('There was a problem with your account. Please contact support or try again.');
-    } finally {
-      setLoading(false);
     }
   };
   
