@@ -99,10 +99,12 @@ const SchoolPage = ({ params }: PageProps) => {
           .join(' ') + (schoolTask.isRequired ? ' *' : ' (Optional)'),
         status: (schoolTask.userSchoolTasks?.[0]?.status || 'To Do').toLowerCase().replace(/\s+/g, '_') as TaskStatus,
         description: getDescriptionForTaskType(schoolTask.taskType, schoolDetails),
+        schoolTaskId: schoolTask.id,
+        userId: Number(internalUserId)
       }));
       setKanbanTasks(tasks);
     }
-  }, [schoolDetails]);
+  }, [schoolDetails, internalUserId]);
 
   const handleTaskUpdate = async (taskId: string, newStatus: TaskStatus, position: number) => {
     if (!internalUserId) {
@@ -158,6 +160,8 @@ const SchoolPage = ({ params }: PageProps) => {
             .join(' ') + (schoolTask.isRequired ? ' *' : ' (Optional)'),
           status: (schoolTask.userSchoolTasks?.[0]?.status || 'To Do').toLowerCase().replace(/\s+/g, '_') as TaskStatus,
           description: getDescriptionForTaskType(schoolTask.taskType, schoolDetails),
+          schoolTaskId: schoolTask.id,
+          userId: Number(internalUserId)
         }));
         setKanbanTasks(revertedTasks);
       }
