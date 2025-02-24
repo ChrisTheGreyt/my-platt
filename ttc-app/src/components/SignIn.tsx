@@ -39,9 +39,8 @@ const SignIn: React.FC = () => {
         return;
       }
 
-      // Use the API client instead of fetch
       try {
-        const data = await API.get('api', `/api/users/resolve?cognitoSub=${cognitoSub}`, {});
+        const data = await API.get('MyAPI', `/api/users/resolve?cognitoSub=${cognitoSub}`, {});
         console.log('Resolve response:', data);
 
         // Save user state and session
