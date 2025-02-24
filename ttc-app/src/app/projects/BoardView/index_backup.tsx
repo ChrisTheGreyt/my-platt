@@ -122,7 +122,7 @@ const BoardView = ({ id, setIsModalNewTaskOpen, authData, projects }: BoardProps
     try {
       console.log(`Updating task ${taskId} to status: ${toStatus}`);
       // Call the mutation function
-      await updateUserTaskStatus({ userId, taskId, status: toStatus }).unwrap();
+      // await updateUserTaskStatus({ userId, taskId, status: toStatus }).unwrap();
       refetch(); // Refresh tasks after updating
     } catch (error) {
       console.error("Error moving task:", error);
