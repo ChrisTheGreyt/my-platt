@@ -38,12 +38,10 @@ const SignIn: React.FC = () => {
         `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
         {
           method: 'GET',
-          credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          },
-          mode: 'cors'
+          }
         }
       );
       console.log('Resolve API Response:', resolveResponse);

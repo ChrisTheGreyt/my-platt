@@ -79,12 +79,10 @@ const Sidebar = () => {
           `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
           {
             method: 'GET',
-            credentials: 'include',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
-            },
-            mode: 'cors'
+            }
           }
         );
         const userData = await userResponse.json();

@@ -26,12 +26,10 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
           `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
           {
             method: 'GET',
-            credentials: 'include',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
-            },
-            mode: 'cors'
+            }
           }
         );
         
