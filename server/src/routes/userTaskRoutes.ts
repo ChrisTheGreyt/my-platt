@@ -13,15 +13,21 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
     'http://localhost:3000'
   ];
 
+  console.log('Incoming request origin:', origin);
+  console.log('Request method:', req.method);
+
   if (origin && allowedOrigins.includes(origin)) {
+    console.log('Setting CORS headers for origin:', origin);
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS,PATCH');
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token');
+  } else {
+    console.log('Origin not allowed:', origin);
   }
 
-  // Handle preflight
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return res.sendStatus(200);
   }
 
@@ -286,7 +292,7 @@ router.get('/users/:userId/projects', async (req, res) => {
     } as const;
 
     const selectedTrack = user.selectedTrack as keyof typeof trackProjectRanges;
-    console.log(`�� Selected track: ${selectedTrack}`);
+    console.log(` Selected track: ${selectedTrack}`);
 
     if (!trackProjectRanges[selectedTrack]) {
       console.error("❌ Invalid selectedTrack");
