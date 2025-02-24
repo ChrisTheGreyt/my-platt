@@ -106,14 +106,13 @@ const SchoolPage = ({ params }: PageProps) => {
     }
   }, [schoolDetails, internalUserId]);
 
-  const handleTaskUpdate = async (taskId: string, newStatus: TaskStatus, position: number) => {
+  const handleTaskUpdate = async (taskId: string, newStatus: TaskStatus, position?: number) => {
     if (!internalUserId) {
       toast.error('User ID not found');
       return;
     }
 
     try {
-      // Update local state immediately with normalized status
       const normalizedStatus = newStatus.toLowerCase().replace(/\s+/g, '_') as TaskStatus;
       
       setKanbanTasks(prevTasks => 
@@ -131,7 +130,7 @@ const SchoolPage = ({ params }: PageProps) => {
         },
         body: JSON.stringify({
           status: newStatus,
-          position,
+          position: position || 0,
           userId: internalUserId
         }),
       });
