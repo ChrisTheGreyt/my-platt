@@ -8,39 +8,33 @@ const prisma = new PrismaClient();
 // Add this at the top of the file, after imports
 const corsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    'https://main.d249lhj5v2utjs.amplifyapp.com',
-    'http://localhost:3000'
-  ];
-
-  // Always log the incoming request details
-  console.log('Incoming request:', {
-    origin,
-    method: req.method,
-    path: req.path,
-    headers: req.headers
-  });
-
+  const productionDomain = 'https://main.d249lhj5v2utjs.amplifyapp.com';
+  
   // Always send Vary header
   res.header('Vary', 'Origin');
 
-  // Check if origin is in our allowed list
-  if (origin && allowedOrigins.includes(origin)) {
-    // Send back the specific origin that made the request
-    res.header('Access-Control-Allow-Origin', origin);
+  // If it's the production domain, always allow it
+  if (origin === productionDomain) {
+    res.header('Access-Control-Allow-Origin', productionDomain);
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', [
       'Content-Type',
-      'Authorization',
-      'X-Api-Key',
-      'X-Amz-Date',
-      'X-Amz-Security-Token'
+      'Authorization'
     ].join(','));
-    
-    if (req.method === 'OPTIONS') {
-      res.status(204).end();
-      return;
-    }
+  } 
+  // For local development
+  else if (origin === 'http://localhost:3000') {
+    res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', [
+      'Content-Type',
+      'Authorization'
+    ].join(','));
+  }
+  
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
   }
 
   next();
