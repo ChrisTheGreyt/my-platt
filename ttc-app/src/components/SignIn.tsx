@@ -12,6 +12,8 @@ const SignIn: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [showConfirmOption, setShowConfirmOption] = useState<boolean>(false);
+  const [maintenanceMode] = useState(true); // Set to false to disable maintenance message
+  const maintenanceMessage = "We are currently performing system maintenance. Login will be available shortly.";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -146,43 +148,54 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+      {/* Add maintenance message banner */}
+      {maintenanceMode && (
+        <div className="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+          <p className="font-medium">System Maintenance</p>
+          <p className="text-sm">{maintenanceMessage}</p>
+        </div>
+      )}
+
       {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      <div className="mb-4">
-        <label htmlFor="username" className="block text-gray-700 font-medium mb-2">
-          Username
-        </label>
-        <input
-          name="username"
-          type="text"
-          value={formData.username}
-          onChange={handleChange}
-          placeholder="Enter your username"
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      {/* Disable form when in maintenance mode */}
+      <fieldset disabled={maintenanceMode}>
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-gray-700 font-medium mb-2">
+            Username
+          </label>
+          <input
+            name="username"
+            type="text"
+            value={formData.username}
+            onChange={handleChange}
+            placeholder="Enter your username"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </div>
 
-      <div className="mb-6">
-        <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
-          Password
-        </label>
-        <input
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Enter your password"
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+        <div className="mb-6">
+          <label htmlFor="password" className="block text-gray-700 font-medium mb-2">
+            Password
+          </label>
+          <input
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          />
+        </div>
 
-      <button
-        onClick={handleSignIn}
-        disabled={loading}
-        className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition duration-200"
-      >
-        {loading ? 'Signing In...' : 'Sign In'}
-      </button>
+        <button
+          onClick={handleSignIn}
+          disabled={loading || maintenanceMode}
+          className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition duration-200 disabled:bg-gray-400"
+        >
+          {loading ? 'Signing In...' : 'Sign In'}
+        </button>
+      </fieldset>
 
       {showConfirmOption && (
         <div className="mt-4 text-center">

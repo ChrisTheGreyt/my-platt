@@ -3,7 +3,9 @@ const https = require('https');
 
 // CORS headers for all Lambda responses
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:3000'
+    : 'https://main.d249lhj5v2utjs.amplifyapp.com',
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
   'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
   'Access-Control-Allow-Credentials': 'true'
