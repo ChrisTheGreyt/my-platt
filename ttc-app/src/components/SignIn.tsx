@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Auth, API } from 'aws-amplify';
+import { Auth } from 'aws-amplify';
 import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -47,14 +47,11 @@ const SignIn: React.FC = () => {
           `${apiUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
           {
             method: 'GET',
-            credentials: 'include',
             mode: 'cors',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.getIdToken().getJwtToken()}`,
-              'X-Requested-With': 'XMLHttpRequest',
-              'Origin': window.location.origin
+              'Authorization': `Bearer ${session.getIdToken().getJwtToken()}`
             }
           }
         );
