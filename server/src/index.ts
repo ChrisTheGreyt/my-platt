@@ -29,7 +29,7 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://main.d249lhj5v2utjs.amplifyapp.com'],
+  origin: ['http://localhost:3002', 'https://main.d249lhj5v2utjs.amplifyapp.com'],
   credentials: true
 }));
 
