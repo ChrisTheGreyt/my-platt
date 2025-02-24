@@ -75,7 +75,18 @@ const Sidebar = () => {
         if (!cognitoSub) throw new Error('No cognito id available');
     
         // First get user details including createdAt
-        const userResponse = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
+        const userResponse = await fetch(
+          `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            mode: 'cors'
+          }
+        );
         const userData = await userResponse.json();
     
         if (!userData.userId) throw new Error("Invalid user data: Missing userId");

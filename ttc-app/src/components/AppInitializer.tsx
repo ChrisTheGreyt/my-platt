@@ -22,7 +22,18 @@ const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) =
         const email = currentUser.attributes.email;
         const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-        const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
+        const response = await fetch(
+          `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            mode: 'cors'
+          }
+        );
         
         if (!response.ok) {
           console.error('Failed to fetch user details from the backend. Status:', response.status);

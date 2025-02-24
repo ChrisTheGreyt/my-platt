@@ -34,7 +34,18 @@ const SignIn: React.FC = () => {
       console.log('Extracted cognitoSub:', cognitoSub);
 
       // Resolve endpoint
-      const resolveResponse = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`);
+      const resolveResponse = await fetch(
+        `${backendUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          mode: 'cors'
+        }
+      );
       console.log('Resolve API Response:', resolveResponse);
 
       if (resolveResponse.status === 404) {
