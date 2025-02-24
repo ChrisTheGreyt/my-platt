@@ -9,13 +9,11 @@ const prisma = new PrismaClient();
 const corsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const origin = req.headers.origin;
   
-  // Always send Vary header
   res.header('Vary', 'Origin');
-
-  // Allow any origin in production
-  res.header('Access-Control-Allow-Origin', origin || '*');
+  res.header('Access-Control-Allow-Origin', '*'); // Allow all origins
   res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
   
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -507,13 +505,6 @@ router.get('/users/:userId/time-gated-projects', async (req, res) => {
     console.error('Error fetching time-gated projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
-});
-
-router.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  next();
 });
 
 export default router;

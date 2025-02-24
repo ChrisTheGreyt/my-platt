@@ -1,5 +1,35 @@
 // const https = require('https');
 
+// CORS headers for all Lambda responses
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
+  'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
+  'Access-Control-Allow-Credentials': 'true'
+};
+
+// Helper function to create Lambda response
+const createResponse = (statusCode: number, body: any) => {
+  return {
+    statusCode,
+    headers: corsHeaders,
+    body: JSON.stringify(body)
+  };
+};
+
+// Use in your Lambda handlers
+export const handler = async (event: any) => {
+  try {
+    // Your existing logic here
+    const result = { /* your response data */ };
+    
+    return createResponse(200, result);
+  } catch (error) {
+    console.error('Error:', error);
+    return createResponse(500, { error: 'Internal server error' });
+  }
+};
+
 // exports.handler = async (event) => {
 //   console.log("Lambda Triggered:", JSON.stringify(event, null, 2));
 //   try {
