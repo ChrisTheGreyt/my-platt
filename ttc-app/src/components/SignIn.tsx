@@ -47,7 +47,6 @@ const SignIn: React.FC = () => {
           `${apiUrl}/api/users/resolve?cognitoSub=${cognitoSub}`,
           {
             method: 'GET',
-            mode: 'cors',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json',

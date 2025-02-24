@@ -24,8 +24,9 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
   // Always send Vary header
   res.header('Vary', 'Origin');
 
+  // Check if origin is in our allowed list
   if (origin && allowedOrigins.includes(origin)) {
-    // Send specific origin instead of wildcard
+    // Send back the specific origin that made the request
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', [
@@ -33,11 +34,8 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
       'Authorization',
       'X-Api-Key',
       'X-Amz-Date',
-      'X-Amz-Security-Token',
-      'X-Requested-With',
-      'Origin'
+      'X-Amz-Security-Token'
     ].join(','));
-    res.header('Access-Control-Allow-Credentials', 'true');
     
     if (req.method === 'OPTIONS') {
       res.status(204).end();
