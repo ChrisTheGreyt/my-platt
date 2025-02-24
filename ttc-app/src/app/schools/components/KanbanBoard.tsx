@@ -22,6 +22,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
 import { debounce } from 'lodash';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useGetBoardViewTasksQuery } from "@/state/api";
 
 export type TaskStatus = 'todo' | 'in_progress' | 'review' | 'completed';
 
@@ -264,6 +265,13 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ tasks: initialTasks, onTaskUp
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [dragOverInfo, setDragOverInfo] = useState<{ taskId: string; position: 'top' | 'bottom' } | null>(null);
+
+  const { refetch } = useGetBoardViewTasksQuery({ 
+    userId: internalUserId ? parseInt(internalUserId) : 0,
+    projectId: 1 // Use appropriate project ID
+  }, {
+    skip: !internalUserId // Skip query if no userId
+  });
 
   // Update tasks whenever initialTasks changes
   useEffect(() => {

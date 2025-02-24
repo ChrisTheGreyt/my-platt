@@ -23,7 +23,7 @@ const BoardView = ({ id, setIsModalNewTaskOpen }: BoardProps) => {
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
 
   const moveTask = (taskId: number, toStatus: string) => {
-    updateTaskStatus({ taskId, status: toStatus });
+    // updateTaskStatus({ taskId, status: toStatus });
   };
 
   if (isLoading) return <div>Loading...</div>;
