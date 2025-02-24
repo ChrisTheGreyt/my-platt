@@ -29,11 +29,7 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL
-    : 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: ['http://localhost:3000', 'https://main.d249lhj5v2utjs.amplifyapp.com'],
   credentials: true
 }));
 
@@ -90,7 +86,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 
 // Start the Server
-const port = Number(process.env.PORT) || 8000;
-app.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

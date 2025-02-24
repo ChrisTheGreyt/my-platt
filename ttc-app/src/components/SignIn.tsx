@@ -59,8 +59,14 @@ const SignIn: React.FC = () => {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod';
+      // Use environment-specific API URL
+      const apiUrl = process.env.NODE_ENV === 'development' 
+        ? 'http://localhost:8000'  // Local development API
+        : process.env.NEXT_PUBLIC_API_URL;
       
+      console.log('Environment:', process.env.NODE_ENV);
+      console.log('API URL:', apiUrl);
+
       try {
         console.log('Making API request to:', apiUrl);
         const response = await fetchWithRetry(
@@ -115,13 +121,17 @@ const SignIn: React.FC = () => {
           console.warn('INVALID: Missing active subscription');
           router.replace('/subscriptions');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('API Error:', error);
-        throw error;
+        if (error instanceof Error && error.message.includes('ERR_CONNECTION_REFUSED')) {
+          setError('Unable to connect to local server. Please ensure the server is running on port 8000.');
+        } else {
+          throw error;
+        }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error during sign in:', error);
-      setError('There was a problem with your account. Please contact support or try again.');
+      setError(error instanceof Error ? error.message : 'An error occurred during sign in');
     }
   };
   
