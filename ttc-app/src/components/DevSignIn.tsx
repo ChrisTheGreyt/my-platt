@@ -60,7 +60,7 @@ const DevSignIn: React.FC = () => {
       }
 
       // Get the current origin
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3006';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       
       // Use origin to determine environment
       const apiUrl = origin === 'https://main.d249lhj5v2utjs.amplifyapp.com'

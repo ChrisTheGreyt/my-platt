@@ -17,10 +17,20 @@ const createResponse = (statusCode: number, body: any) => ({
 });
 
 exports.handler = async (event: any) => {
-  console.log("Lambda Triggered:", JSON.stringify(event, null, 2));
-  console.log("Environment:", process.env.NODE_ENV);
-  console.log("Frontend URL:", process.env.FRONTEND_URL);
+  console.log("=== START LAMBDA EXECUTION ===");
+  console.log("Event:", JSON.stringify(event, null, 2));
+  console.log("Context:", JSON.stringify(event.context, null, 2));
+  console.log("Headers:", JSON.stringify(event.headers, null, 2));
+  console.log("CORS Headers to be sent:", JSON.stringify(corsHeaders, null, 2));
+  console.log("Request Path:", event.path);
+  console.log("HTTP Method:", event.httpMethod);
   
+  if (event.headers?.origin) {
+    console.log("Origin header found:", event.headers.origin);
+  } else {
+    console.log("No origin header found in request");
+  }
+
   try {
     // Extract user attributes
     const username = event.request.userAttributes['preferred_username'] || event.userName;
@@ -67,9 +77,12 @@ exports.handler = async (event: any) => {
     });
 
     console.log("Response from /create-user:", responseBody);
+    console.log("=== END LAMBDA EXECUTION ===");
     return createResponse(200, { message: "Success", data: responseBody });
   } catch (error) {
-    console.error("PreSignUp Handler Error:", error);
+    console.error("=== LAMBDA ERROR ===");
+    console.error("Error details:", error);
+    console.error("Stack trace:", error.stack);
     return createResponse(500, { error: "Internal server error" });
   }
 }; 

@@ -48,6 +48,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     return oldSend.call(this, data);
   };
 
+  const oldHeader = res.getHeader('Access-Control-Allow-Origin');
+  console.log('Initial CORS header:', oldHeader);
+  
+  // Store original setHeader function
+  const originalSetHeader = res.setHeader;
+  res.setHeader = function(name: string, value: any) {
+    console.log(`Header being set: ${name} = ${value}`);
+    return originalSetHeader.call(this, name, value);
+  };
+
   next();
 });
 
