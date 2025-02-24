@@ -6,13 +6,24 @@ const app = express();
 
 // Configure CORS
 const corsOptions = {
-  origin: [
-    'https://main.d249lhj5v2utjs.amplifyapp.com',
-    'http://localhost:3000' // Keep local development working
-  ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://main.d249lhj5v2utjs.amplifyapp.com',
+      'http://localhost:3000'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Amz-Date', 'X-Api-Key', 'X-Amz-Security-Token'],
-  credentials: true // Enable credentials
+  credentials: true
 };
 
 app.use(cors(corsOptions));
