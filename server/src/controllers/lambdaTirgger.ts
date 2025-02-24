@@ -2,10 +2,11 @@
 
 // CORS headers for all Lambda responses
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://main.d249lhj5v2utjs.amplifyapp.com',  // Your Amplify app URL
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
   'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
-  'Access-Control-Allow-Credentials': 'true'
+  'Access-Control-Allow-Credentials': 'true',
+  'Vary': 'Origin'
 };
 
 // Helper function to create Lambda response
@@ -19,6 +20,15 @@ const createResponse = (statusCode: number, body: any) => {
 
 // Use in your Lambda handlers
 export const handler = async (event: any) => {
+  // Handle OPTIONS requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: corsHeaders,
+      body: ''
+    };
+  }
+
   try {
     // Your existing logic here
     const result = { /* your response data */ };
