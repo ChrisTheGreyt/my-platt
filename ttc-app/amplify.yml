@@ -6,7 +6,52 @@ applications:
         preBuild:
           commands:
             - npm install
-            - npm install --save-dev tailwindcss@latest postcss@latest autoprefixer@latest
+            - npm install tailwindcss postcss autoprefixer
+            - |
+              cat << EOF > next.config.js
+              /** @type {import('next').NextConfig} */
+              const nextConfig = {
+                webpack: (config) => {
+                  config.resolve.alias = {
+                    ...config.resolve.alias,
+                    '@': './src'
+                  };
+                  return config;
+                }
+              };
+              module.exports = nextConfig;
+              EOF
+            - |
+              cat << EOF > tsconfig.json
+              {
+                "compilerOptions": {
+                  "target": "es5",
+                  "lib": ["dom", "dom.iterable", "esnext"],
+                  "allowJs": true,
+                  "skipLibCheck": true,
+                  "strict": true,
+                  "noEmit": true,
+                  "esModuleInterop": true,
+                  "module": "esnext",
+                  "moduleResolution": "bundler",
+                  "resolveJsonModule": true,
+                  "isolatedModules": true,
+                  "jsx": "preserve",
+                  "incremental": true,
+                  "plugins": [
+                    {
+                      "name": "next"
+                    }
+                  ],
+                  "baseUrl": ".",
+                  "paths": {
+                    "@/*": ["./src/*"]
+                  }
+                },
+                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+                "exclude": ["node_modules"]
+              }
+              EOF
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
@@ -23,8 +68,8 @@ applications:
               cat << EOF > postcss.config.js
               module.exports = {
                 plugins: {
-                  'tailwindcss': {},
-                  'autoprefixer': {}
+                  tailwindcss: {},
+                  autoprefixer: {}
                 }
               };
               EOF
