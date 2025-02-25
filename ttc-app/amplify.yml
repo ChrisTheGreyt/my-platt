@@ -7,9 +7,38 @@ applications:
           commands:
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
+            - npm install -g tailwindcss postcss autoprefixer
             - npm install
-            - npm install tailwindcss postcss autoprefixer --save
-            - npm install -D typescript @types/node @types/react @types/react-dom
+            - npm install tailwindcss postcss autoprefixer
+            - npm install -D tailwindcss postcss autoprefixer
+            - npm install -D @types/react@18.0.0 @types/react-dom@18.0.0 @types/node typescript
+            - which tailwindcss
+            - tailwindcss --help
+            - |
+              cat << EOF > tailwind.config.js
+              /** @type {import('tailwindcss').Config} */
+              module.exports = {
+                content: [
+                  './src/app/**/*.{js,ts,jsx,tsx}',
+                  './src/pages/**/*.{js,ts,jsx,tsx}',
+                  './src/components/**/*.{js,ts,jsx,tsx}',
+                  './src/**/*.{js,ts,jsx,tsx}'
+                ],
+                theme: {
+                  extend: {},
+                },
+                plugins: [],
+              }
+              EOF
+            - |
+              cat << EOF > postcss.config.js
+              module.exports = {
+                plugins: [
+                  require('tailwindcss'),
+                  require('autoprefixer'),
+                ]
+              }
+              EOF
             - |
               cat << EOF > next.config.js
               /** @type {import('next').NextConfig} */
@@ -52,33 +81,13 @@ applications:
               }
               EOF
             - |
-              cat << EOF > postcss.config.js
-              module.exports = {
-                plugins: {
-                  tailwindcss: {},
-                  autoprefixer: {}
-                }
-              }
-              EOF
-            - |
-              cat << EOF > tailwind.config.js
-              /** @type {import('tailwindcss').Config} */
-              module.exports = {
-                content: [
-                  './src/**/*.{js,ts,jsx,tsx,mdx}'
-                ],
-                theme: {
-                  extend: {}
-                },
-                plugins: []
-              }
-              EOF
-            - |
               cat << EOF > src/app/globals.css
               @tailwind base;
               @tailwind components;
               @tailwind utilities;
               EOF
+            - npm list tailwindcss postcss autoprefixer
+            - npm list @types/react @types/react-dom
         build:
           commands:
             - NODE_ENV=production npm run build
