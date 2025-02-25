@@ -5,7 +5,6 @@ applications:
       phases:
         preBuild:
           commands:
-            - cd ttc-app
             - npm install
             - npm install tailwindcss postcss autoprefixer
             - |
@@ -29,45 +28,15 @@ applications:
                 }
               };
               EOF
-            - |
-              cat << EOF > tsconfig.json
-              {
-                "compilerOptions": {
-                  "baseUrl": ".",
-                  "paths": {
-                    "@/*": ["./src/*"]
-                  },
-                  "lib": ["dom", "dom.iterable", "esnext"],
-                  "allowJs": true,
-                  "skipLibCheck": true,
-                  "strict": true,
-                  "noEmit": true,
-                  "esModuleInterop": true,
-                  "module": "esnext",
-                  "moduleResolution": "node",
-                  "resolveJsonModule": true,
-                  "isolatedModules": true,
-                  "jsx": "preserve",
-                  "incremental": true,
-                  "plugins": [
-                    {
-                      "name": "next"
-                    }
-                  ]
-                },
-                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-                "exclude": ["node_modules"]
-              }
-              EOF
-            - ls -la src/components
-            - ls -la src/context
+            - pwd
+            - ls -la
         build:
           commands:
             - npm run build
       artifacts:
-        baseDirectory: ttc-app/.next
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - ttc-app/node_modules/**/* 
+          - node_modules/**/* 
