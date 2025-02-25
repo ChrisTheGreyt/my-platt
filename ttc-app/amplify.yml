@@ -5,21 +5,27 @@ applications:
       phases:
         preBuild:
           commands:
+            - npm cache clean --force
+            - rm -rf node_modules
             - npm install
-            - npm install tailwindcss postcss autoprefixer
+            - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
+            - npx tailwindcss init -p
             - |
-              cat << EOF > next.config.js
+              cat << EOF > next.config.mjs
               /** @type {import('next').NextConfig} */
-              const nextConfig = {
+              const config = {
                 webpack: (config) => {
-                  config.resolve.alias = {
-                    ...config.resolve.alias,
-                    '@': './src'
+                  config.resolve = {
+                    ...config.resolve,
+                    alias: {
+                      ...config.resolve.alias,
+                      '@': './src'
+                    }
                   };
                   return config;
                 }
               };
-              module.exports = nextConfig;
+              export default config;
               EOF
             - |
               cat << EOF > tsconfig.json
@@ -33,7 +39,7 @@ applications:
                   "noEmit": true,
                   "esModuleInterop": true,
                   "module": "esnext",
-                  "moduleResolution": "bundler",
+                  "moduleResolution": "node",
                   "resolveJsonModule": true,
                   "isolatedModules": true,
                   "jsx": "preserve",
@@ -43,10 +49,10 @@ applications:
                       "name": "next"
                     }
                   ],
-                  "baseUrl": ".",
                   "paths": {
                     "@/*": ["./src/*"]
-                  }
+                  },
+                  "baseUrl": "."
                 },
                 "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
                 "exclude": ["node_modules"]
@@ -58,22 +64,19 @@ applications:
               module.exports = {
                 content: [
                   './src/**/*.{js,ts,jsx,tsx,mdx}',
+                  './pages/**/*.{js,ts,jsx,tsx,mdx}',
+                  './components/**/*.{js,ts,jsx,tsx,mdx}',
                   './app/**/*.{js,ts,jsx,tsx,mdx}'
                 ],
-                theme: { extend: {} },
+                theme: {
+                  extend: {}
+                },
                 plugins: []
               };
               EOF
-            - |
-              cat << EOF > postcss.config.js
-              module.exports = {
-                plugins: {
-                  tailwindcss: {},
-                  autoprefixer: {}
-                }
-              };
-              EOF
-            - npm list tailwindcss postcss autoprefixer
+            - ls -la src/components/Navbar
+            - ls -la src/components/Sidebar
+            - ls -la src/context
         build:
           commands:
             - npm run build
