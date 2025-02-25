@@ -5,13 +5,17 @@ applications:
       phases:
         preBuild:
           commands:
+            - cd ttc-app
             - npm install
             - npm install tailwindcss postcss autoprefixer
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
               module.exports = {
-                content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+                content: [
+                  './src/**/*.{js,ts,jsx,tsx,mdx}',
+                  './app/**/*.{js,ts,jsx,tsx,mdx}'
+                ],
                 theme: { extend: {} },
                 plugins: []
               };
@@ -25,13 +29,45 @@ applications:
                 }
               };
               EOF
+            - |
+              cat << EOF > tsconfig.json
+              {
+                "compilerOptions": {
+                  "baseUrl": ".",
+                  "paths": {
+                    "@/*": ["./src/*"]
+                  },
+                  "lib": ["dom", "dom.iterable", "esnext"],
+                  "allowJs": true,
+                  "skipLibCheck": true,
+                  "strict": true,
+                  "noEmit": true,
+                  "esModuleInterop": true,
+                  "module": "esnext",
+                  "moduleResolution": "node",
+                  "resolveJsonModule": true,
+                  "isolatedModules": true,
+                  "jsx": "preserve",
+                  "incremental": true,
+                  "plugins": [
+                    {
+                      "name": "next"
+                    }
+                  ]
+                },
+                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+                "exclude": ["node_modules"]
+              }
+              EOF
+            - ls -la src/components
+            - ls -la src/context
         build:
           commands:
             - npm run build
       artifacts:
-        baseDirectory: .next
+        baseDirectory: ttc-app/.next
         files:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/* 
+          - ttc-app/node_modules/**/* 
