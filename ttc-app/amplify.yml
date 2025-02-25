@@ -8,16 +8,18 @@ applications:
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
             - npm install
-            # Install TailwindCSS locally only
-            - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
-            # Install compatible type versions
+            # Install TailwindCSS and its peer dependencies first
+            - npm install tailwindcss postcss autoprefixer
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
+            # Verify TailwindCSS installation
+            - npm list tailwindcss
             # Create config files directly without using tailwindcss init
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
               module.exports = {
                 content: [
+                  './src/components/Navbar/**/*.{js,ts,jsx,tsx}',  // Explicitly include Navbar
                   './src/app/**/*.{js,ts,jsx,tsx}',
                   './src/pages/**/*.{js,ts,jsx,tsx}',
                   './src/components/**/*.{js,ts,jsx,tsx}',
@@ -32,10 +34,10 @@ applications:
             - |
               cat << EOF > postcss.config.js
               module.exports = {
-                plugins: [
-                  require('tailwindcss'),
-                  require('autoprefixer'),
-                ]
+                plugins: {
+                  'tailwindcss': {},
+                  'autoprefixer': {}
+                }
               }
               EOF
             - |
