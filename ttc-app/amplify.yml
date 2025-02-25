@@ -7,8 +7,24 @@ applications:
           commands:
             - npm install
             - npm install tailwindcss postcss autoprefixer
-            - echo '/** @type {import("tailwindcss").Config} */ module.exports = {content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"], theme: {extend: {}}, plugins: []};' > tailwind.config.js
-            - echo 'module.exports = {plugins: {tailwindcss: {}, autoprefixer: {}}}' > postcss.config.js
+            - |
+              cat << EOF > tailwind.config.js
+              /** @type {import('tailwindcss').Config} */
+              module.exports = {
+                content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+                theme: { extend: {} },
+                plugins: []
+              };
+              EOF
+            - |
+              cat << EOF > postcss.config.js
+              module.exports = {
+                plugins: {
+                  tailwindcss: {},
+                  autoprefixer: {}
+                }
+              };
+              EOF
         build:
           commands:
             - npm run build
