@@ -7,9 +7,34 @@ applications:
           commands:
             - npm cache clean --force
             - rm -rf node_modules
+            - npm install -g tailwindcss postcss autoprefixer
             - npm install
             - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
-            - npx tailwindcss init -p
+            - |
+              cat << EOF > postcss.config.js
+              module.exports = {
+                plugins: {
+                  tailwindcss: {},
+                  autoprefixer: {}
+                }
+              }
+              EOF
+            - |
+              cat << EOF > tailwind.config.js
+              /** @type {import('tailwindcss').Config} */
+              module.exports = {
+                content: [
+                  './src/**/*.{js,ts,jsx,tsx,mdx}',
+                  './pages/**/*.{js,ts,jsx,tsx,mdx}',
+                  './components/**/*.{js,ts,jsx,tsx,mdx}',
+                  './app/**/*.{js,ts,jsx,tsx,mdx}'
+                ],
+                theme: {
+                  extend: {}
+                },
+                plugins: []
+              }
+              EOF
             - |
               cat << EOF > next.config.mjs
               /** @type {import('next').NextConfig} */
@@ -57,22 +82,6 @@ applications:
                 "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
                 "exclude": ["node_modules"]
               }
-              EOF
-            - |
-              cat << EOF > tailwind.config.js
-              /** @type {import('tailwindcss').Config} */
-              module.exports = {
-                content: [
-                  './src/**/*.{js,ts,jsx,tsx,mdx}',
-                  './pages/**/*.{js,ts,jsx,tsx,mdx}',
-                  './components/**/*.{js,ts,jsx,tsx,mdx}',
-                  './app/**/*.{js,ts,jsx,tsx,mdx}'
-                ],
-                theme: {
-                  extend: {}
-                },
-                plugins: []
-              };
               EOF
             - ls -la src/components/Navbar
             - ls -la src/components/Sidebar
