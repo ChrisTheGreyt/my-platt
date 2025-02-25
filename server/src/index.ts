@@ -62,21 +62,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     return originalSetHeader.call(this, name, value);
   };
 
-  // Add before your routes
-  console.log('Incoming request:', {
-    method: req.method,
-    url: req.url,
-    origin: req.headers.origin,
-    host: req.headers.host
-  });
-
-  // Capture the response headers
-  const oldSetHeader = res.setHeader;
-  res.setHeader = function(name, value) {
-    console.log(`Setting header: ${name} = ${value}`);
-    return oldSetHeader.call(this, name, value);
-  };
-
   next();
 });
 
