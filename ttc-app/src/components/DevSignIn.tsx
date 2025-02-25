@@ -59,13 +59,10 @@ const DevSignIn: React.FC = () => {
         return;
       }
 
-      // Get the current origin
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-      
-      // Use origin to determine environment
-      const apiUrl = origin === 'https://main.d249lhj5v2utjs.amplifyapp.com'
-        ? 'https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod'
-        : 'http://localhost:8000';
+      // Updated API URL configuration with fallback
+      const apiUrl = process.env.NODE_ENV === 'development'
+        ? 'http://localhost:8000'
+        : process.env.NEXT_PUBLIC_API_URL || 'https://7b5we67gn6.execute-api.us-east-1.amazonaws.com/prod';
       
       try {
         console.log('Making API request to:', apiUrl);

@@ -29,11 +29,7 @@ app.use(morgan("common"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors({
-  origin: [
-    'http://localhost:3000',  // Your frontend dev server
-    'http://localhost:3002',  // Alternative dev port
-    'https://main.d249lhj5v2utjs.amplifyapp.com'  // Production URL
-  ],
+  origin: ['http://localhost:3000', 'https://main.d249lhj5v2utjs.amplifyapp.com'],
   credentials: true
 }));
 
@@ -50,16 +46,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.send = function (data) {
     console.log(`Response for ${req.method} ${req.url}:`, data);
     return oldSend.call(this, data);
-  };
-
-  const oldHeader = res.getHeader('Access-Control-Allow-Origin');
-  console.log('Initial CORS header:', oldHeader);
-  
-  // Store original setHeader function
-  const originalSetHeader = res.setHeader;
-  res.setHeader = function(name: string, value: any) {
-    console.log(`Header being set: ${name} = ${value}`);
-    return originalSetHeader.call(this, name, value);
   };
 
   next();

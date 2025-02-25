@@ -7,13 +7,12 @@ const prisma = new PrismaClient();
 
 // Add this at the top of the file, after imports
 const corsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const origin = req.headers.origin;
   const allowedOrigins = [
-    'http://localhost:3000',  // Your frontend dev server
-    'http://localhost:3002',  // Alternative dev port
-    'https://main.d249lhj5v2utjs.amplifyapp.com'  // Production URL
+    'http://localhost:3000',
+    'https://main.d249lhj5v2utjs.amplifyapp.com'
   ];
   
-  const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
@@ -26,6 +25,7 @@ const corsMiddleware = (req: express.Request, res: express.Response, next: expre
     res.status(204).end();
     return;
   }
+
   next();
 };
 

@@ -9,7 +9,7 @@ const corsOptions = {
   origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
     const allowedOrigins = [
       'https://main.d249lhj5v2utjs.amplifyapp.com',
-      'http://1localhost:3000'
+      'http://localhost:3001'
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)
