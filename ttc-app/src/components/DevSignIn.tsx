@@ -42,16 +42,16 @@ const DevSignIn: React.FC = () => {
     
     try {
       console.log('Attempting dev sign in...');
-      const auth = await Auth.signIn(formData.username, formData.password);
-      console.log('Dev sign in successful:', auth);
+      const user = await Auth.signIn(formData.username, formData.password);
+      console.log('Dev sign in successful:', user);
 
-      const session = auth.signInUserSession;
+      const session = user.signInUserSession;
       if (!session) {
         console.error('No session after sign in');
         return;
       }
 
-      const cognitoSub = auth.attributes?.sub;
+      const cognitoSub = user.attributes?.sub;
       console.log('CognitoSub from attributes:', cognitoSub);
 
       if (!cognitoSub) {
@@ -60,7 +60,7 @@ const DevSignIn: React.FC = () => {
       }
 
       // Get the current origin
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+      const origin = window.location.origin;
       
       // Use origin to determine environment
       const apiUrl = origin === 'https://main.d249lhj5v2utjs.amplifyapp.com'
@@ -90,7 +90,7 @@ const DevSignIn: React.FC = () => {
           });
           
           if (response.status === 404) {
-            const email = auth.attributes.email;
+            const email = user.attributes.email;
             router.replace(`/subscriptions?username=${formData.username}&email=${encodeURIComponent(email)}`);
             return;
           }
