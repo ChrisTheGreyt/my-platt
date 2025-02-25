@@ -3,7 +3,7 @@ const https = require('https');
 
 // CORS headers for all Lambda responses
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://main.d249lhj5v2utjs.amplifyapp.com',  // Hardcode production URL
+  'Access-Control-Allow-Origin': process.env.FRONTEND_URL || 'https://main.d249lhj5v2utjs.amplifyapp.com',
   'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With',
   'Access-Control-Allow-Methods': 'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT',
   'Access-Control-Allow-Credentials': 'true'
@@ -24,6 +24,8 @@ exports.handler = async (event: any) => {
   console.log("CORS Headers to be sent:", JSON.stringify(corsHeaders, null, 2));
   console.log("Request Path:", event.path);
   console.log("HTTP Method:", event.httpMethod);
+  console.log("Origin header:", event.headers?.origin);
+  console.log("CORS Headers being sent:", JSON.stringify(corsHeaders, null, 2));
   
   if (event.headers?.origin) {
     console.log("Origin header found:", event.headers.origin);
@@ -79,10 +81,17 @@ exports.handler = async (event: any) => {
     console.log("Response from /create-user:", responseBody);
     console.log("=== END LAMBDA EXECUTION ===");
     return createResponse(200, { message: "Success", data: responseBody });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("=== LAMBDA ERROR ===");
     console.error("Error details:", error);
-    console.error("Stack trace:", error.stack);
+    
+    // Safely handle the error stack
+    if (error instanceof Error) {
+      console.error("Stack trace:", error.stack);
+    } else {
+      console.error("Non-Error object thrown:", error);
+    }
+    
     return createResponse(500, { error: "Internal server error" });
   }
 }; 
