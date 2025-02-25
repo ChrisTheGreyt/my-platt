@@ -6,7 +6,8 @@ applications:
         preBuild:
           commands:
             - npm install
-            - npm install tailwindcss postcss autoprefixer
+            - npm install -g pnpm
+            - pnpm install tailwindcss postcss autoprefixer
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
@@ -23,13 +24,14 @@ applications:
               cat << EOF > postcss.config.js
               module.exports = {
                 plugins: {
-                  tailwindcss: {},
-                  autoprefixer: {}
+                  'tailwindcss': require('tailwindcss'),
+                  'autoprefixer': require('autoprefixer')
                 }
               };
               EOF
-            - pwd
-            - ls -la
+            - npm list tailwindcss
+            - npm list postcss
+            - npm list autoprefixer
         build:
           commands:
             - npm run build
