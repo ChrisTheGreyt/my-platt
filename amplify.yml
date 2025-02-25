@@ -1,17 +1,18 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd ttc-app
-        - npm ci
-    build:
-      commands:
-        - npm run build
-  artifacts:
-    baseDirectory: ttc-app/.next
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - ttc-app/node_modules/**/* 
+applications:
+  - appRoot: ttc-app
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/* 
