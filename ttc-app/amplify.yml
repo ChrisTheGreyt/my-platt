@@ -5,16 +5,15 @@ applications:
       phases:
         preBuild:
           commands:
-            - cd ttc-app
             - npm install
             - npm install -D tailwindcss postcss autoprefixer
         build:
           commands:
             - npm run build
       artifacts:
-        baseDirectory: ttc-app/.next
+        baseDirectory: .next
         files:
           - '**/*'
       cache:
         paths:
-          - ttc-app/node_modules/**/* 
+          - node_modules/**/* 
