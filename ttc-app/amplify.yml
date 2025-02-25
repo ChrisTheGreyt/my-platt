@@ -34,8 +34,8 @@ applications:
               cat << EOF > postcss.config.js
               module.exports = {
                 plugins: {
-                  'tailwindcss': {},
-                  'autoprefixer': {}
+                  tailwindcss: require('tailwindcss'),
+                  autoprefixer: require('autoprefixer')
                 }
               }
               EOF
@@ -90,6 +90,7 @@ applications:
             - npm list @types/react @types/react-dom
         build:
           commands:
+            - npm install --save-exact tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
