@@ -11,8 +11,7 @@ applications:
             # Install TailwindCSS locally only
             - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
             - npm install -D @types/react@18.0.0 @types/react-dom@18.0.0 @types/node typescript
-            # Use npx to run tailwindcss
-            - npx tailwindcss init -p
+            # Create config files directly without using tailwindcss init
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
