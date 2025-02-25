@@ -7,13 +7,12 @@ applications:
           commands:
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            - npm install -g tailwindcss postcss autoprefixer
             - npm install
-            - npm install tailwindcss postcss autoprefixer
-            - npm install -D tailwindcss postcss autoprefixer
+            # Install TailwindCSS locally only
+            - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
             - npm install -D @types/react@18.0.0 @types/react-dom@18.0.0 @types/node typescript
-            - which tailwindcss
-            - tailwindcss --help
+            # Initialize TailwindCSS using local installation
+            - ./node_modules/.bin/tailwindcss init -p
             - |
               cat << EOF > tailwind.config.js
               /** @type {import('tailwindcss').Config} */
