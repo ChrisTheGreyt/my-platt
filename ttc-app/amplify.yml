@@ -7,8 +7,8 @@ applications:
           commands:
             - npm install
             - npm install tailwindcss postcss autoprefixer
-            - npm install -g postcss-cli
-            - npx tailwindcss init -p
+            - echo '/** @type {import("tailwindcss").Config} */ module.exports = {content: ["./src/**/*.{js,ts,jsx,tsx,mdx}"], theme: {extend: {}}, plugins: []};' > tailwind.config.js
+            - echo 'module.exports = {plugins: {tailwindcss: {}, autoprefixer: {}}}' > postcss.config.js
         build:
           commands:
             - npm run build
