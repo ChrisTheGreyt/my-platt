@@ -9,9 +9,8 @@ applications:
             - rm -rf node_modules package-lock.json
             # Install dependencies
             - npm install
-            # Install TailwindCSS globally and locally
-            - npm install -g tailwindcss postcss autoprefixer
-            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 --save
+            # Install TailwindCSS and its dependencies
+            - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 @tailwindcss/postcss-8
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
             # Create config files
             - |
@@ -33,8 +32,8 @@ applications:
               cat << EOF > postcss.config.js
               module.exports = {
                 plugins: {
-                  tailwindcss: {},
-                  autoprefixer: {}
+                  'tailwindcss/postcss7-compat': {},
+                  'autoprefixer': {}
                 }
               }
               EOF
