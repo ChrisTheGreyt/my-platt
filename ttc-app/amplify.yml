@@ -10,7 +10,7 @@ applications:
             # Install dependencies in correct order
             - npm install
             # Install TailwindCSS with exact version
-            - npm install --save-exact tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            - npm install --save tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
             # Create config files directly without using tailwindcss init
             - |
@@ -33,10 +33,10 @@ applications:
             - |
               cat << EOF > postcss.config.js
               module.exports = {
-                plugins: {
-                  tailwindcss: require('tailwindcss'),
-                  autoprefixer: require('autoprefixer')
-                }
+                plugins: [
+                  'tailwindcss',
+                  'autoprefixer'
+                ]
               }
               EOF
             - |
