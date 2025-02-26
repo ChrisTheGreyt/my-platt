@@ -11,6 +11,14 @@ applications:
             # Install dependencies including TailwindCSS
             - npm install
             - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            # Create postcss.config.js
+            - |
+              echo "module.exports = {
+                plugins: {
+                  tailwindcss: {},
+                  autoprefixer: {},
+                }
+              }" > postcss.config.js
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
             # Create next.config.js if it doesn't exist
