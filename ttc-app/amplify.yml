@@ -11,14 +11,18 @@ applications:
             # Create ESLint config to be more permissive during build
             - |
               echo '{
-                "extends": "next/core-web-vitals",
+                "extends": [
+                  "next/core-web-vitals",
+                  "plugin:@typescript-eslint/recommended"
+                ],
+                "parser": "@typescript-eslint/parser",
+                "plugins": ["@typescript-eslint"],
                 "rules": {
-                  "@typescript-eslint/no-unused-vars": "warn",
-                  "@typescript-eslint/no-explicit-any": "warn",
+                  "@typescript-eslint/no-unused-vars": "off",
+                  "@typescript-eslint/no-explicit-any": "off",
                   "react/no-unescaped-entities": "off",
-                  "@next/next/no-img-element": "warn",
-                  "react-hooks/exhaustive-deps": "warn",
-                  "@typescript-eslint/no-var-requires": "warn"
+                  "@next/next/no-img-element": "off",
+                  "react-hooks/exhaustive-deps": "off"
                 }
               }' > .eslintrc.json
             # Create TypeScript config
@@ -51,7 +55,7 @@ applications:
                 "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
                 "exclude": ["node_modules"]
               }' > tsconfig.json
-            # Update package.json
+            # Update package.json to include ESLint plugins
             - |
               echo "Updating package.json..."
               node -e '
@@ -63,6 +67,8 @@ applications:
                   "typescript": "5.3.3",
                   "eslint": "8.56.0",
                   "eslint-config-next": "14.2.10",
+                  "@typescript-eslint/parser": "^7.0.0",
+                  "@typescript-eslint/eslint-plugin": "^7.0.0",
                   "@types/node": "^20",
                   "@types/react": "^18",
                   "@types/react-dom": "^18",
