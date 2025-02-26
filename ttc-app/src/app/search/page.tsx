@@ -1,8 +1,8 @@
 "use client"
 
 import { useSearchQuery } from '@/state/api';
-import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
-import { debounce, DebouncedFunc } from "lodash";
+import React, { useEffect, useState, useCallback, useMemo, ChangeEvent } from 'react';
+import { debounce } from "lodash";
 import Header from '@/components/Header';
 import TaskCard from '@/components/TaskCard';
 import ProjectCard from '@/components/ProjectCard';
@@ -14,11 +14,8 @@ const Search = () => {
         skip: searchTerm.length < 3, 
     });
 
-    // Create a debounced version of setSearchTerm with proper typing
-    const debouncedSetSearchTerm: DebouncedFunc<(value: string) => void> = useCallback(
-        debounce((value: string) => {
-            setSearchTerm(value);
-        }, 500),
+    const debouncedSetSearchTerm = useMemo(
+        () => debounce((value: string) => setSearchTerm(value), 500) as ReturnType<typeof debounce>,
         []
     );
 
@@ -27,12 +24,7 @@ const Search = () => {
         debouncedSetSearchTerm(event.target.value);
     }, [debouncedSetSearchTerm]);
 
-    // Cleanup
-    useEffect(() => {
-        return () => {
-            debouncedSetSearchTerm.cancel();
-        };
-    }, [debouncedSetSearchTerm]);
+    // Remove the cleanup useEffect entirely
 
   return (
     <div className='p-8'>
