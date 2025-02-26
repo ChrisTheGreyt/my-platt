@@ -16,10 +16,14 @@ applications:
             - npm install tailwindcss postcss autoprefixer --save-dev
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
+            # Debug: Show directory structure
+            - echo "Project structure:"
+            - ls -R src/
         build:
           commands:
-            # Ensure global modules are in path
-            - export NODE_PATH=$NODE_PATH:$(npm root -g)
+            # Set up module resolution paths
+            - export NODE_PATH=$NODE_PATH:$(npm root -g):$(pwd)/src
+            - export NEXT_PRIVATE_LOCAL_WEBPACK=true
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
