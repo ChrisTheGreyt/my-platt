@@ -8,44 +8,63 @@ applications:
             # Clean install with more aggressive cleanup
             - npm cache clean --force
             - rm -rf node_modules package-lock.json .next
-            # Update package.json - fix dependencies
+            # Create TypeScript config
+            - |
+              echo '{
+                "compilerOptions": {
+                  "target": "es5",
+                  "lib": ["dom", "dom.iterable", "esnext"],
+                  "allowJs": true,
+                  "skipLibCheck": true,
+                  "strict": true,
+                  "forceConsistentCasingInFileNames": true,
+                  "noEmit": true,
+                  "esModuleInterop": true,
+                  "module": "esnext",
+                  "moduleResolution": "node",
+                  "resolveJsonModule": true,
+                  "isolatedModules": true,
+                  "jsx": "preserve",
+                  "incremental": true,
+                  "plugins": [
+                    {
+                      "name": "next"
+                    }
+                  ],
+                  "paths": {
+                    "@/*": ["./src/*"]
+                  }
+                },
+                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+                "exclude": ["node_modules"]
+              }' > tsconfig.json
+            # Update package.json
             - |
               echo "Updating package.json..."
               node -e '
                 const fs = require("fs");
                 const pkg = JSON.parse(fs.readFileSync("package.json"));
-                // Clean up any duplicates
-                delete pkg.devDependencies.tailwindcss;
-                delete pkg.devDependencies.postcss;
-                delete pkg.dependencies.typescript;
-                // Set up dev dependencies
-                pkg.devDependencies = {
-                  ...pkg.devDependencies,
+                // Move everything to regular dependencies
+                pkg.dependencies = {
+                  ...pkg.dependencies,
                   "typescript": "5.3.3",
                   "eslint": "8.56.0",
                   "eslint-config-next": "14.2.10",
                   "@types/node": "^20",
                   "@types/react": "^18",
-                  "@types/react-dom": "^18"
-                };
-                // Set up dependencies
-                pkg.dependencies = {
-                  ...pkg.dependencies,
+                  "@types/react-dom": "^18",
                   "tailwindcss": "3.4.1",
                   "postcss": "8.4.35",
                   "autoprefixer": "10.4.17"
                 };
+                // Clean up devDependencies
+                delete pkg.devDependencies;
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
                 console.log("Updated package.json:", JSON.stringify(pkg, null, 2));
               '
-            # Install everything at once
+            # Install all dependencies
             - npm install --legacy-peer-deps
-            # Verify the installation worked
-            - echo "=== Node Modules Check ==="
-            - test -d node_modules/typescript || exit 1
-            - test -d node_modules/eslint || exit 1
-            - test -d node_modules/tailwindcss || exit 1
-            # Create postcss.config.js
+            # Create PostCSS config
             - |
               echo "module.exports = {
                 plugins: {
