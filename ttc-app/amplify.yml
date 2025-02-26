@@ -8,18 +8,11 @@ applications:
             # Clean install
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            # Install dependencies
+            # Install dependencies including TailwindCSS
             - npm install
-            # Install webpack explicitly
-            - npm install webpack@5.89.0 --save-dev
-            # Install TailwindCSS globally to ensure it's available
-            - npm install -g tailwindcss postcss autoprefixer
-            # Also install locally
-            - npm install tailwindcss postcss autoprefixer --save-dev
+            - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
-            # Verify tsconfig paths
-            - cat tsconfig.json
             # Create next.config.js if it doesn't exist
             - |
               if [ ! -f next.config.js ]; then
@@ -38,7 +31,6 @@ applications:
               fi
         build:
           commands:
-            # Set up module resolution paths
             - export NODE_PATH=$NODE_PATH:$(pwd)/src
             - NODE_ENV=production npm run build
       artifacts:
