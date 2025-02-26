@@ -20,13 +20,15 @@ applications:
                 pkg.dependencies.autoprefixer = "10.4.17";
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
               '
-            # Install dependencies with clean slate
-            - npm ci --legacy-peer-deps
+            # Install dependencies
+            - npm install --legacy-peer-deps --verbose
             # Verify TailwindCSS installation
             - echo "=== Verifying TailwindCSS ==="
             - npm list tailwindcss
             - echo "=== Package.json Contents ==="
             - cat package.json
+            - echo "=== Node Modules Check ==="
+            - ls -la node_modules | grep tailwind
             # Create postcss.config.js
             - |
               echo "module.exports = {
