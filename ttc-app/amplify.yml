@@ -14,33 +14,37 @@ applications:
               node -e '
                 const fs = require("fs");
                 const pkg = JSON.parse(fs.readFileSync("package.json"));
-                // Move TypeScript to devDependencies
-                pkg.devDependencies = pkg.devDependencies || {};
-                pkg.devDependencies.typescript = "^5.3.3";
-                pkg.devDependencies.eslint = "^8.56.0";
-                // Remove from dependencies if exists
-                if (pkg.dependencies && pkg.dependencies.typescript) {
-                  delete pkg.dependencies.typescript;
-                }
-                // Ensure TailwindCSS in dependencies
-                pkg.dependencies = pkg.dependencies || {};
-                pkg.dependencies.tailwindcss = "3.4.1";
-                pkg.dependencies.postcss = "8.4.35";
-                pkg.dependencies.autoprefixer = "10.4.17";
+                // Clean up any duplicates
+                delete pkg.devDependencies.tailwindcss;
+                delete pkg.devDependencies.postcss;
+                delete pkg.dependencies.typescript;
+                // Set up dev dependencies
+                pkg.devDependencies = {
+                  ...pkg.devDependencies,
+                  "typescript": "5.3.3",
+                  "eslint": "8.56.0",
+                  "eslint-config-next": "14.2.10",
+                  "@types/node": "^20",
+                  "@types/react": "^18",
+                  "@types/react-dom": "^18"
+                };
+                // Set up dependencies
+                pkg.dependencies = {
+                  ...pkg.dependencies,
+                  "tailwindcss": "3.4.1",
+                  "postcss": "8.4.35",
+                  "autoprefixer": "10.4.17"
+                };
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
                 console.log("Updated package.json:", JSON.stringify(pkg, null, 2));
               '
-            # Install dependencies with specific flags
-            - npm install --no-package-lock --no-audit
-            # Install dev dependencies explicitly
-            - npm install --save-dev typescript@5.3.3 eslint@8.56.0
-            # Verify installation
-            - echo "=== Verifying Installation ==="
-            - npm list tailwindcss typescript eslint
-            - echo "=== Node Modules Content ==="
-            - ls -la node_modules/tailwindcss || echo "tailwindcss not found!"
-            - ls -la node_modules/typescript || echo "typescript not found!"
-            - ls -la node_modules/eslint || echo "eslint not found!"
+            # Install everything at once
+            - npm install --legacy-peer-deps
+            # Verify the installation worked
+            - echo "=== Node Modules Check ==="
+            - test -d node_modules/typescript || exit 1
+            - test -d node_modules/eslint || exit 1
+            - test -d node_modules/tailwindcss || exit 1
             # Create postcss.config.js
             - |
               echo "module.exports = {
@@ -55,7 +59,6 @@ applications:
             - |
               if [ ! -f next.config.js ]; then
                 echo "/** @type {import('next').NextConfig} */
-                const path = require('path');
                 const nextConfig = {
                   webpack: (config) => {
                     config.resolve.alias = {
@@ -67,11 +70,6 @@ applications:
                 };
                 module.exports = nextConfig;" > next.config.js
               fi
-            # Verify configs
-            - echo "=== Config Files ==="
-            - cat postcss.config.js
-            - cat next.config.js
-            - cat tailwind.config.ts
         build:
           commands:
             - export NODE_PATH=$NODE_PATH:$(pwd)/src:$(pwd)/node_modules
