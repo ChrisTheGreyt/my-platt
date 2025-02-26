@@ -5,7 +5,10 @@ applications:
       phases:
         preBuild:
           commands:
-            - npm cache clean --force
+            # Use npm ci for more reliable installations
+            - npm ci --cache .npm --prefer-offline
+            # Add environment variable to disable uploads
+            - echo "DISABLE_UPLOAD=true" >> .env
             - rm -rf node_modules package-lock.json
             # Install dependencies
             - npm install
@@ -97,4 +100,5 @@ applications:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/* 
+          - node_modules/**/*
+          - .npm/**/* 
