@@ -23,18 +23,20 @@ applications:
                 pkg.dependencies.tailwindcss = "3.4.1";
                 pkg.dependencies.postcss = "8.4.35";
                 pkg.dependencies.autoprefixer = "10.4.17";
+                pkg.dependencies.typescript = "^5.0.0";
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
                 console.log("Updated package.json:", JSON.stringify(pkg, null, 2));
               '
             # Install dependencies with specific flags
             - npm install --no-package-lock --no-audit
-            # Install TailwindCSS explicitly
-            - npm install tailwindcss@3.4.1 --save --no-package-lock
+            # Install TailwindCSS and TypeScript explicitly
+            - npm install tailwindcss@3.4.1 typescript@5.3.3 --save --no-package-lock
             # Verify installation
             - echo "=== Verifying Installation ==="
-            - npm list tailwindcss
+            - npm list tailwindcss typescript
             - echo "=== Node Modules Content ==="
             - ls -la node_modules/tailwindcss || echo "tailwindcss not found!"
+            - ls -la node_modules/typescript || echo "typescript not found!"
             # Create postcss.config.js
             - |
               echo "module.exports = {
