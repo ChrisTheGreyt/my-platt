@@ -5,94 +5,14 @@ applications:
       phases:
         preBuild:
           commands:
-            # Use npm ci for more reliable installations
+            # Clean install with cache
             - npm ci --cache .npm --prefer-offline
-            # Add environment variable to disable uploads
-            - echo "DISABLE_UPLOAD=true" >> .env
-            - rm -rf node_modules package-lock.json
-            # Install dependencies
-            - npm install
             # Install TailwindCSS and its dependencies
-            - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 @tailwindcss/postcss-8
-            - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
-            # Create config files
-            - |
-              cat << EOF > tailwind.config.js
-              /** @type {import('tailwindcss').Config} */
-              module.exports = {
-                content: [
-                  './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-                  './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-                  './src/components/**/*.{js,ts,jsx,tsx,mdx}'
-                ],
-                theme: {
-                  extend: {},
-                },
-                plugins: [],
-              }
-              EOF
-            - |
-              cat << EOF > postcss.config.js
-              module.exports = {
-                plugins: {
-                  'tailwindcss/postcss7-compat': {},
-                  'autoprefixer': {}
-                }
-              }
-              EOF
-            - |
-              cat << EOF > next.config.js
-              /** @type {import('next').NextConfig} */
-              const path = require('path');
-              
-              module.exports = {
-                webpack: (config) => {
-                  config.resolve.alias = {
-                    ...config.resolve.alias,
-                    '@': path.join(__dirname, 'src')
-                  };
-                  return config;
-                }
-              };
-              EOF
-            - |
-              cat << EOF > tsconfig.json
-              {
-                "compilerOptions": {
-                  "target": "es5",
-                  "lib": ["dom", "dom.iterable", "esnext"],
-                  "allowJs": true,
-                  "skipLibCheck": true,
-                  "strict": true,
-                  "noEmit": true,
-                  "esModuleInterop": true,
-                  "module": "esnext",
-                  "moduleResolution": "bundler",
-                  "resolveJsonModule": true,
-                  "isolatedModules": true,
-                  "jsx": "preserve",
-                  "incremental": true,
-                  "allowImportingTsExtensions": true,
-                  "paths": {
-                    "@/*": ["./src/*"]
-                  },
-                  "baseUrl": "."
-                },
-                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "*.ts"],
-                "exclude": ["node_modules"]
-              }
-              EOF
-            - |
-              cat << EOF > src/app/globals.css
-              @tailwind base;
-              @tailwind components;
-              @tailwind utilities;
-              EOF
-            - npm list tailwindcss postcss autoprefixer
-            - npm list @types/react @types/react-dom
+            - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
+            # Add environment variable
+            - echo "DISABLE_UPLOAD=true" >> .env
         build:
           commands:
-            - export NODE_PATH=$NODE_PATH:$(npm root -g)
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
