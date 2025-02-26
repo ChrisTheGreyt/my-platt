@@ -15,7 +15,7 @@ interface PageProps {
 }
 
 interface Task {
-  id: string;  // String for compatibility with KanbanBoard
+  id: string | number;
   schoolTaskId: number;  // Ensure this exists for school-based tasks
   userId: number;  // Ensure this exists to track per-user persistence
   title: string;
@@ -79,7 +79,7 @@ const SchoolPage = ({ params }: PageProps) => {
           if (!response.ok) throw new Error("Failed to fetch user tasks");
 
           const data = await response.json();
-          setUserTasks(data.map(task => ({ ...task, id: Number(task.id) }))); // ✅ Convert ID to number
+          setUserTasks(data.map((task: Task) => ({ ...task, id: Number(task.id) }))); // Add type annotation
         } catch (error) {
           console.error("❌ Error fetching user tasks:", error);
         }
