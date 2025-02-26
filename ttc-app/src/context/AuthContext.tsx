@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const currentUser = getCurrentUser();
     if (currentUser) {
-      currentUser.getSession((err, session) => {
+      currentUser.getSession((err: Error | null, session: CognitoUserSession | null) => {
         if (err) {
           console.error('Error getting session:', err);
           setUser(null);
