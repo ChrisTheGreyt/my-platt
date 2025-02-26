@@ -8,29 +8,33 @@ applications:
             # Clean install with more aggressive cleanup
             - npm cache clean --force
             - rm -rf node_modules package-lock.json .next
-            # Check and update package.json
+            # Update package.json - remove TailwindCSS from devDependencies
             - |
-              echo "Checking package.json..."
+              echo "Updating package.json..."
               node -e '
                 const fs = require("fs");
                 const pkg = JSON.parse(fs.readFileSync("package.json"));
-                console.log("Current dependencies:", JSON.stringify(pkg.dependencies, null, 2));
+                // Remove from devDependencies
+                if (pkg.devDependencies && pkg.devDependencies.tailwindcss) {
+                  delete pkg.devDependencies.tailwindcss;
+                }
+                // Ensure in dependencies
                 pkg.dependencies = pkg.dependencies || {};
                 pkg.dependencies.tailwindcss = "3.4.1";
                 pkg.dependencies.postcss = "8.4.35";
                 pkg.dependencies.autoprefixer = "10.4.17";
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
-                console.log("Updated dependencies:", JSON.stringify(pkg.dependencies, null, 2));
+                console.log("Updated package.json:", JSON.stringify(pkg, null, 2));
               '
-            # Install dependencies with force flag
-            - npm install --force
+            # Install dependencies with specific flags
+            - npm install --no-package-lock --no-audit
+            # Install TailwindCSS explicitly
+            - npm install tailwindcss@3.4.1 --save --no-package-lock
             # Verify installation
             - echo "=== Verifying Installation ==="
-            - npm list tailwindcss postcss autoprefixer
+            - npm list tailwindcss
             - echo "=== Node Modules Content ==="
             - ls -la node_modules/tailwindcss || echo "tailwindcss not found!"
-            - ls -la node_modules/postcss || echo "postcss not found!"
-            - ls -la node_modules/autoprefixer || echo "autoprefixer not found!"
             # Create postcss.config.js
             - |
               echo "module.exports = {
@@ -57,16 +61,11 @@ applications:
                 };
                 module.exports = nextConfig;" > next.config.js
               fi
-            # Verify all configs
+            # Verify configs
             - echo "=== Config Files ==="
-            - echo "PostCSS Config:"
             - cat postcss.config.js
-            - echo "Next.js Config:"
             - cat next.config.js
-            - echo "Tailwind Config:"
             - cat tailwind.config.ts
-            - echo "Package.json:"
-            - cat package.json
         build:
           commands:
             - export NODE_PATH=$NODE_PATH:$(pwd)/src:$(pwd)/node_modules
