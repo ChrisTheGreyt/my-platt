@@ -7,10 +7,10 @@ applications:
           commands:
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            # Install dependencies
+            # Install TailwindCSS first
+            - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            # Then install other dependencies
             - npm install
-            # Install TailwindCSS and its peer dependencies
-            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
             # Create config files
             - |
@@ -18,8 +18,9 @@ applications:
               /** @type {import('tailwindcss').Config} */
               module.exports = {
                 content: [
-                  './src/**/*.{js,ts,jsx,tsx,mdx}',
-                  './src/components/Navbar/**/*.{js,ts,jsx,tsx}'
+                  './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+                  './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+                  './src/components/**/*.{js,ts,jsx,tsx,mdx}'
                 ],
                 theme: {
                   extend: {},
@@ -63,17 +64,18 @@ applications:
                   "noEmit": true,
                   "esModuleInterop": true,
                   "module": "esnext",
-                  "moduleResolution": "node",
+                  "moduleResolution": "bundler",
                   "resolveJsonModule": true,
                   "isolatedModules": true,
                   "jsx": "preserve",
                   "incremental": true,
+                  "allowImportingTsExtensions": true,
                   "paths": {
                     "@/*": ["./src/*"]
                   },
                   "baseUrl": "."
                 },
-                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+                "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "*.ts"],
                 "exclude": ["node_modules"]
               }
               EOF
@@ -87,6 +89,7 @@ applications:
             - npm list @types/react @types/react-dom
         build:
           commands:
+            - export NODE_PATH=$NODE_PATH:$(npm root -g)
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
