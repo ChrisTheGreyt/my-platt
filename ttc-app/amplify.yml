@@ -11,25 +11,14 @@ applications:
             # Install dependencies including TailwindCSS as regular dependencies
             - npm install
             - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
-            # Create TailwindCSS config
-            - |
-              echo "/** @type {import('tailwindcss').Config} */
-              module.exports = {
-                content: [
-                  './src/**/*.{js,ts,jsx,tsx,mdx}',
-                ],
-                theme: {
-                  extend: {},
-                },
-                plugins: [],
-              }" > tailwind.config.js
             # Create postcss.config.js
             - |
               echo "module.exports = {
-                plugins: {
-                  tailwindcss: {},
-                  autoprefixer: {},
-                }
+                plugins: [
+                  'tailwindcss/nesting',
+                  'tailwindcss',
+                  'autoprefixer',
+                ]
               }" > postcss.config.js
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
