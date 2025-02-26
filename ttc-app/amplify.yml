@@ -10,6 +10,8 @@ applications:
             - rm -rf node_modules package-lock.json
             # Install dependencies
             - npm install
+            # Install webpack explicitly
+            - npm install webpack@5.89.0 --save-dev
             # Install TailwindCSS globally to ensure it's available
             - npm install -g tailwindcss postcss autoprefixer
             # Also install locally
@@ -23,7 +25,6 @@ applications:
           commands:
             # Set up module resolution paths
             - export NODE_PATH=$NODE_PATH:$(npm root -g):$(pwd)/src
-            - export NEXT_PRIVATE_LOCAL_WEBPACK=true
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
