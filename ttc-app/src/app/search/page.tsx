@@ -14,16 +14,25 @@ const Search = () => {
         skip: searchTerm.length < 3, 
     });
 
-    const handleSearch = useCallback(
-       (event: ChangeEvent<HTMLInputElement>) => {
-            setSearchTerm(event.target.value);
-        }, []);
+    // Create a debounced version of setSearchTerm
+    const debouncedSetSearchTerm = useCallback(
+        debounce((value: string) => {
+            setSearchTerm(value);
+        }, 500),
+        []
+    );
 
+    // Handle input changes
+    const handleSearch = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        debouncedSetSearchTerm(event.target.value);
+    }, [debouncedSetSearchTerm]);
+
+    // Cleanup
     useEffect(() => {
         return () => {
-            handleSearch.cancel();
+            debouncedSetSearchTerm.cancel();
         };
-    }, [handleSearch]);
+    }, [debouncedSetSearchTerm]);
 
   return (
     <div className='p-8'>
