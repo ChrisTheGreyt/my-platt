@@ -7,10 +7,11 @@ applications:
           commands:
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            # Install TailwindCSS first
-            - npm install -D tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
-            # Then install other dependencies
+            # Install dependencies
             - npm install
+            # Install TailwindCSS globally and locally
+            - npm install -g tailwindcss postcss autoprefixer
+            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 --save
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
             # Create config files
             - |
