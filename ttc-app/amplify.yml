@@ -18,13 +18,28 @@ applications:
             - npm install tailwindcss postcss autoprefixer --save-dev
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
-            # Debug: Show directory structure
-            - echo "Project structure:"
-            - ls -R src/
+            # Verify tsconfig paths
+            - cat tsconfig.json
+            # Create next.config.js if it doesn't exist
+            - |
+              if [ ! -f next.config.js ]; then
+                echo "/** @type {import('next').NextConfig} */
+                const path = require('path');
+                const nextConfig = {
+                  webpack: (config) => {
+                    config.resolve.alias = {
+                      ...config.resolve.alias,
+                      '@': path.join(__dirname, 'src')
+                    };
+                    return config;
+                  }
+                };
+                module.exports = nextConfig;" > next.config.js
+              fi
         build:
           commands:
             # Set up module resolution paths
-            - export NODE_PATH=$NODE_PATH:$(npm root -g):$(pwd)/src
+            - export NODE_PATH=$NODE_PATH:$(pwd)/src
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
