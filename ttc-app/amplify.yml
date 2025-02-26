@@ -8,14 +8,17 @@ applications:
             # Clean install
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            # Install dependencies including TailwindCSS as regular dependencies
+            # Install dependencies including TailwindCSS
             - npm install
-            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 postcss-nesting@12.0.2
-            # Create postcss.config.js
+            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            # Verify installations
+            - ls -la node_modules/tailwindcss
+            - ls -la node_modules/postcss
+            - ls -la node_modules/autoprefixer
+            # Create simple postcss.config.js
             - |
               echo "module.exports = {
                 plugins: {
-                  'postcss-nesting': {},
                   tailwindcss: {},
                   autoprefixer: {},
                 }
@@ -26,7 +29,6 @@ applications:
             - |
               if [ ! -f next.config.js ]; then
                 echo "/** @type {import('next').NextConfig} */
-                const path = require('path');
                 const nextConfig = {
                   webpack: (config) => {
                     config.resolve.alias = {
@@ -38,9 +40,15 @@ applications:
                 };
                 module.exports = nextConfig;" > next.config.js
               fi
+            # Verify file contents
+            - cat postcss.config.js
+            - cat next.config.js
+            - cat tailwind.config.ts
         build:
           commands:
             - export NODE_PATH=$NODE_PATH:$(pwd)/src
+            # Add explicit NODE_OPTIONS
+            - export NODE_OPTIONS='--require "./node_modules/tailwindcss/lib/index.js"'
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
