@@ -87,14 +87,15 @@ const STATUS_MAPPING = {
 } as const;
 
 const taskStatus = ["To Do", "Work In Progress", "Under Review", "Completed"];
-const linkDecorator = (href, text) => (
+const linkDecorator = (href: string, text: string, key: number) => (
   <a
     href={href}
     target="_blank"
     rel="noopener noreferrer"
-    style={{ textDecoration: "underline", color: "teal" }} // Customize styles
+    className="text-blue-500 hover:text-blue-700"
+    key={key}
   >
-    {href.length > 130 ? "Click here" : text}
+    {text}
   </a>
 );
 
@@ -574,7 +575,7 @@ const Task = ({ task, handleEditTask, isAdmin}: TaskProps) => {
         <p className="text-sm text-gray-600 dark:text-neutral-500">
         <ReactMarkdown
           components={{
-            a: ({ href, children }) => linkDecorator(href, children),
+            a: ({ href, children }) => linkDecorator(href, children, task.id),
           }}
         >{task.description}</ReactMarkdown>
         </p>
