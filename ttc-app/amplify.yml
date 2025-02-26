@@ -10,15 +10,15 @@ applications:
             - rm -rf node_modules package-lock.json
             # Install dependencies including TailwindCSS as regular dependencies
             - npm install
-            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17 postcss-nesting@12.0.2
             # Create postcss.config.js
             - |
               echo "module.exports = {
-                plugins: [
-                  'tailwindcss/nesting',
-                  'tailwindcss',
-                  'autoprefixer',
-                ]
+                plugins: {
+                  'postcss-nesting': {},
+                  tailwindcss: {},
+                  autoprefixer: {},
+                }
               }" > postcss.config.js
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
