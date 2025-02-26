@@ -2,7 +2,7 @@
 
 import { useSearchQuery } from '@/state/api';
 import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
-import { debounce } from "lodash";
+import { debounce, DebouncedFunc } from "lodash";
 import Header from '@/components/Header';
 import TaskCard from '@/components/TaskCard';
 import ProjectCard from '@/components/ProjectCard';
@@ -14,8 +14,8 @@ const Search = () => {
         skip: searchTerm.length < 3, 
     });
 
-    // Create a debounced version of setSearchTerm
-    const debouncedSetSearchTerm = useCallback(
+    // Create a debounced version of setSearchTerm with proper typing
+    const debouncedSetSearchTerm: DebouncedFunc<(value: string) => void> = useCallback(
         debounce((value: string) => {
             setSearchTerm(value);
         }, 500),
