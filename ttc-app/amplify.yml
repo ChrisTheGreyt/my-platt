@@ -8,15 +8,25 @@ applications:
             # Clean install with more aggressive cleanup
             - npm cache clean --force
             - rm -rf node_modules package-lock.json .next
-            # First install project dependencies
-            - npm install --legacy-peer-deps
-            # Then install TailwindCSS separately
-            - npm install --save --legacy-peer-deps tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            # Add TailwindCSS to package.json directly
+            - |
+              echo "Adding TailwindCSS to package.json"
+              node -e '
+                const fs = require("fs");
+                const pkg = JSON.parse(fs.readFileSync("package.json"));
+                pkg.dependencies = pkg.dependencies || {};
+                pkg.dependencies.tailwindcss = "3.4.1";
+                pkg.dependencies.postcss = "8.4.35";
+                pkg.dependencies.autoprefixer = "10.4.17";
+                fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+              '
+            # Install dependencies with clean slate
+            - npm ci --legacy-peer-deps
             # Verify TailwindCSS installation
             - echo "=== Verifying TailwindCSS ==="
             - npm list tailwindcss
-            - echo "=== Checking node_modules ==="
-            - ls -la node_modules/tailwindcss
+            - echo "=== Package.json Contents ==="
+            - cat package.json
             # Create postcss.config.js
             - |
               echo "module.exports = {
