@@ -1,7 +1,7 @@
 "use client"
 
 import { useSearchQuery } from '@/state/api';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, ChangeEvent } from 'react';
 import { debounce } from "lodash";
 import Header from '@/components/Header';
 import TaskCard from '@/components/TaskCard';
@@ -14,14 +14,16 @@ const Search = () => {
         skip: searchTerm.length < 3, 
     });
 
-    const handleSearch = debounce(
-       (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearch = useCallback(
+       (event: ChangeEvent<HTMLInputElement>) => {
             setSearchTerm(event.target.value);
-        }, 500);
+        }, []);
 
-        useEffect(() =>{
-            return handleSearch.cancel;
-        }, [ handleSearch.cancel ]);
+    useEffect(() => {
+        return () => {
+            handleSearch.cancel();
+        };
+    }, [handleSearch]);
 
   return (
     <div className='p-8'>
