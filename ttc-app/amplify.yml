@@ -10,21 +10,25 @@ applications:
             # Install dependencies
             - npm install
             # Install TailwindCSS and its peer dependencies
-            - npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
+            - npm install tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
             - npm install -D @types/react@18.2.25 @types/react-dom@18.2.0 @types/node typescript
-            # Create config files directly without using tailwindcss init
+            # Initialize TailwindCSS
+            - npx tailwindcss init -p
+            # Update tailwind config
             - |
-              cat << EOF > tailwind.config.js
-              /** @type {import('tailwindcss').Config} */
-              module.exports = {
+              cat << EOF > tailwind.config.ts
+              import type { Config } from 'tailwindcss'
+              
+              const config: Config = {
                 content: [
-                  './src/**/*.{js,ts,jsx,tsx}'
+                  './src/**/*.{js,ts,jsx,tsx,mdx}',
                 ],
                 theme: {
                   extend: {},
                 },
                 plugins: [],
               }
+              export default config
               EOF
             - |
               cat << EOF > postcss.config.js
