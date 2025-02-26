@@ -8,35 +8,39 @@ applications:
             # Clean install with more aggressive cleanup
             - npm cache clean --force
             - rm -rf node_modules package-lock.json .next
-            # Update package.json - remove TailwindCSS from devDependencies
+            # Update package.json - fix dependencies
             - |
               echo "Updating package.json..."
               node -e '
                 const fs = require("fs");
                 const pkg = JSON.parse(fs.readFileSync("package.json"));
-                // Remove from devDependencies
-                if (pkg.devDependencies && pkg.devDependencies.tailwindcss) {
-                  delete pkg.devDependencies.tailwindcss;
+                // Move TypeScript to devDependencies
+                pkg.devDependencies = pkg.devDependencies || {};
+                pkg.devDependencies.typescript = "^5.3.3";
+                pkg.devDependencies.eslint = "^8.56.0";
+                // Remove from dependencies if exists
+                if (pkg.dependencies && pkg.dependencies.typescript) {
+                  delete pkg.dependencies.typescript;
                 }
-                // Ensure in dependencies
+                // Ensure TailwindCSS in dependencies
                 pkg.dependencies = pkg.dependencies || {};
                 pkg.dependencies.tailwindcss = "3.4.1";
                 pkg.dependencies.postcss = "8.4.35";
                 pkg.dependencies.autoprefixer = "10.4.17";
-                pkg.dependencies.typescript = "^5.0.0";
                 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
                 console.log("Updated package.json:", JSON.stringify(pkg, null, 2));
               '
             # Install dependencies with specific flags
             - npm install --no-package-lock --no-audit
-            # Install TailwindCSS and TypeScript explicitly
-            - npm install tailwindcss@3.4.1 typescript@5.3.3 --save --no-package-lock
+            # Install dev dependencies explicitly
+            - npm install --save-dev typescript@5.3.3 eslint@8.56.0
             # Verify installation
             - echo "=== Verifying Installation ==="
-            - npm list tailwindcss typescript
+            - npm list tailwindcss typescript eslint
             - echo "=== Node Modules Content ==="
             - ls -la node_modules/tailwindcss || echo "tailwindcss not found!"
             - ls -la node_modules/typescript || echo "typescript not found!"
+            - ls -la node_modules/eslint || echo "eslint not found!"
             # Create postcss.config.js
             - |
               echo "module.exports = {
