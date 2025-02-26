@@ -7,20 +7,17 @@ applications:
           commands:
             # Clean install with more aggressive cleanup
             - npm cache clean --force
-            - rm -rf node_modules package-lock.json
-            - rm -rf .next
-            # Install TailwindCSS globally first
-            - npm install -g tailwindcss postcss autoprefixer
-            # Install dependencies with verbose logging
-            - npm install --verbose
-            # Install TailwindCSS locally with explicit path
-            - npm install --save-exact tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
-            # Verify installations with more detail
-            - echo "Checking TailwindCSS installation..."
+            - rm -rf node_modules package-lock.json .next
+            # First install project dependencies
+            - npm install --legacy-peer-deps
+            # Then install TailwindCSS separately
+            - npm install --save --legacy-peer-deps tailwindcss@3.4.1 postcss@8.4.35 autoprefixer@10.4.17
+            # Verify TailwindCSS installation
+            - echo "=== Verifying TailwindCSS ==="
             - npm list tailwindcss
-            - npm list postcss
-            - npm list autoprefixer
-            # Create simple postcss.config.js
+            - echo "=== Checking node_modules ==="
+            - ls -la node_modules/tailwindcss
+            # Create postcss.config.js
             - |
               echo "module.exports = {
                 plugins: {
@@ -46,15 +43,11 @@ applications:
                 };
                 module.exports = nextConfig;" > next.config.js
               fi
-            # Verify all config files and dependencies
-            - echo "=== PostCSS Config ==="
+            # Verify configs
+            - echo "=== Config Files ==="
             - cat postcss.config.js
-            - echo "=== Next.js Config ==="
             - cat next.config.js
-            - echo "=== Tailwind Config ==="
             - cat tailwind.config.ts
-            - echo "=== Node Modules ==="
-            - ls -la node_modules
         build:
           commands:
             - export NODE_PATH=$NODE_PATH:$(pwd)/src:$(pwd)/node_modules
