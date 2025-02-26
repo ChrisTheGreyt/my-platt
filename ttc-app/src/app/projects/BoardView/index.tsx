@@ -575,7 +575,7 @@ const Task = ({ task, handleEditTask, isAdmin}: TaskProps) => {
         <p className="text-sm text-gray-600 dark:text-neutral-500">
         <ReactMarkdown
           components={{
-            a: ({ href, children }) => linkDecorator(href, children, task.id),
+            a: ({ href, children }) => href ? linkDecorator(href, children as string, task.id) : <>{children}</>,
           }}
         >{task.description}</ReactMarkdown>
         </p>

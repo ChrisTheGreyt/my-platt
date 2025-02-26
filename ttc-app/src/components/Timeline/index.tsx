@@ -15,8 +15,14 @@ type Props = {
 
 type TaskTypeItems = "task" | "milestone" | "project";
 
-const Timeline = ({ id, setIsModalNewTaskOpen }: Props) => {
+const Timeline = ({ id, setIsModalNewTaskOpen }: Props): JSX.Element => {
   // ... rest of the original Timeline component code ...
+
+  return (
+    <div className="max-w-full p-8">
+      {/* ... rest of the JSX ... */}
+    </div>
+  );
 };
 
 export default Timeline; 
