@@ -5,21 +5,21 @@ applications:
       phases:
         preBuild:
           commands:
-            # Clean the npm cache and remove existing modules
+            # Clean install
             - npm cache clean --force
             - rm -rf node_modules package-lock.json
-            # Install all dependencies including dev dependencies
+            # Install dependencies
             - npm install
-            # Install TailwindCSS and its dependencies
-            - npm install tailwindcss postcss autoprefixer --save
-            # Initialize TailwindCSS if config doesn't exist
-            - npx tailwindcss init -p
+            # Install TailwindCSS globally to ensure it's available
+            - npm install -g tailwindcss postcss autoprefixer
+            # Also install locally
+            - npm install tailwindcss postcss autoprefixer --save-dev
             # Add environment variable
             - echo "DISABLE_UPLOAD=true" >> .env
         build:
           commands:
-            # Set NODE_PATH to help with module resolution
-            - export NODE_PATH=$NODE_PATH:$(pwd)/node_modules
+            # Ensure global modules are in path
+            - export NODE_PATH=$NODE_PATH:$(npm root -g)
             - NODE_ENV=production npm run build
       artifacts:
         baseDirectory: .next
