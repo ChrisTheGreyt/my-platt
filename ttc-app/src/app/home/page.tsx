@@ -48,7 +48,7 @@ const HomePage = () => {
         }
         
         const userSub = authData.user.attributes.sub;
-        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"; 
 
         console.log(`Fetching user details for cognitoId: ${userSub}`);
         const response = await fetch(`${backendUrl}/api/users/resolve?cognitoSub=${userSub}`);
@@ -146,7 +146,7 @@ const HomePage = () => {
               You can view your tasks by month under the "projects" section. You can view it as a list, board, timeline, or table. I prefer the board.
             </li>
             <li className="text-base sm:text-lg">
-              Drag and drop tasks from the "to do" section to the "in progress," "under review," or "completed" section. This will then update accordingly on your home page under "your tasks."
+              Drag and drop tasks from the "To Do" section to the "In Progress," "Under Review," or "Completed" section. This will then update accordingly on your home page under "your tasks."
             </li>
             <li className="text-base sm:text-lg">
               You should be able to click all of the links within a task to see the resource.
