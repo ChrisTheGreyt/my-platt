@@ -137,17 +137,17 @@ const SubscriptionPage: React.FC = () => {
           {/* Monthly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKbpG8jnQLC5SAmZ0CFHhO', 'subscription')}
+            onClick={() => handleSubscription('price_1QxEuFG8jnQLC5SAMwPZfuBM', 'subscription')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-400 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Monthly</h2>
-            <p className="mt-2 text-gray-600">$75 / Monthly</p>
+            <p className="mt-2 text-gray-600">$47 / Monthly</p>
             <p className="mt-2 text-sm text-gray-500">Access to all features for 30 days.</p>
           </div>
 
 
-          {/* 6-Month Plan */}
-          <div
+          {/* 6-Month Plan !!! disabled for now !!!*/}
+          {/* <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
             onClick={() => handleSubscription('price_1QPp1IG8jnQLC5SAi8U6QAel', 'one-time')}
           >
@@ -155,16 +155,17 @@ const SubscriptionPage: React.FC = () => {
             <h2 className="text-2xl font-semibold mt-2">MyPLATT 6 Months</h2>
             <p className="mt-2 text-gray-600">$400 / 6 Months</p>
             <p className="mt-2 text-sm text-gray-500">Save with a 6-month subscription.</p>
-          </div>
+          </div> */}
 
           {/* Yearly Plan */}
           <div
             className="relative bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'one-time')}
+            onClick={() => handleSubscription('price_1QxEuFG8jnQLC5SAMwPZfuBM', 'one-time')}
+            // onClick={() => handleSubscription('price_1QBKeDG8jnQLC5SA2gOWRfA2', 'one-time')}
           >
             <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500 rounded-t-lg"></div>
             <h2 className="text-2xl font-semibold mt-2">MyPLATT Yearly</h2>
-            <p className="mt-2 text-gray-600">$800 / Yearly</p>
+            <p className="mt-2 text-gray-600">$3350 / Yearly</p>
             <p className="mt-2 text-sm text-gray-500">Best value with a yearly subscription.</p>
           </div>
 
