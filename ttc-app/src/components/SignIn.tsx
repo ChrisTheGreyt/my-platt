@@ -12,7 +12,7 @@ const SignIn: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [showConfirmOption, setShowConfirmOption] = useState<boolean>(false);
-  const [maintenanceMode] = useState(true); // Set to false to disable maintenance message
+  const [maintenanceMode] = useState(false); // Set to false to disable maintenance message
   const maintenanceMessage = "We are currently performing system maintenance. Login will be available shortly.";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
