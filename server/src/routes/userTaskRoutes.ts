@@ -8,18 +8,37 @@ const prisma = new PrismaClient();
 // Add this at the top of the file, after imports
 const corsMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const origin = req.headers.origin;
+  console.log('Request origin:', origin);
+  
   const allowedOrigins = [
     'http://localhost:3000',
     'https://main.d249lhj5v2utjs.amplifyapp.com'
   ];
   
+  // Always set CORS headers for allowed origins
   if (origin && allowedOrigins.includes(origin)) {
+    console.log(`Setting Access-Control-Allow-Origin to: ${origin}`);
     res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  } else {
+    console.log(`Origin not in allowed list or missing. Received: ${origin}`);
+    // For development/debugging purposes, allow any origin when none is specified
+    if (!origin) {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With');
+    }
   }
   
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  // Log the headers we're setting
+  console.log('CORS headers set:', {
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+    'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+  });
   
   if (req.method === 'OPTIONS') {
     res.status(204).end();
@@ -44,6 +63,13 @@ router.get('/users/resolve', async (req, res) => {
   try {
     const { cognitoSub } = req.query;
     console.log('Resolving user for cognitoSub:', cognitoSub);
+    console.log('Request headers:', req.headers);
+    console.log('CORS headers already set:', {
+      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+      'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+      'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+      'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+    });
 
     if (!cognitoSub) {
       console.log('Missing cognitoSub parameter');
@@ -511,6 +537,45 @@ router.get('/users/:userId/time-gated-projects', async (req, res) => {
     console.error('Error fetching time-gated projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
+});
+
+// Add a test endpoint for CORS
+router.get('/test-cors', (req, res) => {
+  // Explicitly set CORS headers
+  const origin = req.headers.origin;
+  console.log('Test CORS endpoint - Origin:', origin);
+  
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://main.d249lhj5v2utjs.amplifyapp.com'
+  ];
+  
+  // Set CORS headers based on origin
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    // Default for API testing
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Log the headers we're setting
+  console.log('Test CORS endpoint - Headers set:', {
+    'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+    'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+    'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+    'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+  });
+  
+  res.json({ 
+    message: 'CORS test successful', 
+    headers: req.headers,
+    origin: origin || 'No origin provided',
+    allowedOrigins: allowedOrigins
+  });
 });
 
 export default router;
