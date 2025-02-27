@@ -80,7 +80,29 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
     }
 
     try {
-        // Create school association - match the server's expected payload
+        console.log('Submitting school creation request:', { userId: resolvedUserId, school });
+        
+        // First try the test endpoint to diagnose issues
+        const testResponse = await fetch(`${backendUrl}/api/test-schools`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                userId: resolvedUserId, 
+                school: school
+            }),
+        });
+        
+        const testData = await testResponse.json();
+        console.log('Test endpoint response:', testData);
+        
+        if (!testResponse.ok) {
+            throw new Error(testData.error || 'Test endpoint failed');
+        }
+        
+        // If test was successful, proceed with actual creation
         const createSchoolResponse = await fetch(`${backendUrl}/api/schools`, {
             method: 'POST',
             headers: { 
@@ -89,11 +111,12 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
             },
             body: JSON.stringify({ 
                 userId: resolvedUserId, 
-                school: school // Changed from schoolName to school to match server expectation
+                school: school
             }),
         });
 
         const responseData = await createSchoolResponse.json();
+        console.log('Create school response:', responseData);
         
         if (!createSchoolResponse.ok) {
             if (responseData.error === 'User-school association already exists') {
@@ -104,15 +127,31 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
             throw new Error(responseData.error || 'Failed to create school association');
         }
 
-        // Success handling
-        toast.success('School added successfully!');
+        // Success handling with more detailed feedback
+        if (responseData.tasksCreated > 0) {
+            if (responseData.warning) {
+                toast.success(`School added with ${responseData.tasksCreated} tasks!`);
+                toast(responseData.warning, {
+                    icon: '⚠️',
+                    style: {
+                        background: '#FFF9C4',
+                        color: '#5F4339'
+                    }
+                });
+            } else {
+                toast.success(`School added with ${responseData.tasksCreated} tasks!`);
+            }
+        } else {
+            toast.success('School added successfully!');
+        }
+        
         onSchoolSelect(school);
         onClose();
         
         // Optional: Delay reload to allow toast to be seen
         setTimeout(() => {
             window.location.reload();
-        }, 1000);
+        }, 1500);
 
     } catch (error) {
         console.error('Error:', error);

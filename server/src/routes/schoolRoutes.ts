@@ -5,6 +5,83 @@ import { authenticateUser } from '../middleware/authMiddleware';
 const router = express.Router();
 const prisma = new PrismaClient();
 
+// Test endpoint for CORS
+router.get('/test-cors', (req, res) => {
+  console.log('Test CORS endpoint hit');
+  console.log('Request origin:', req.headers.origin);
+  console.log('Request headers:', req.headers);
+  
+  res.json({ 
+    message: 'CORS test successful', 
+    origin: req.headers.origin,
+    time: new Date().toISOString()
+  });
+});
+
+// Test endpoint for debugging school creation
+router.post('/test-schools', async (req, res) => {
+  const { userId, school } = req.body;
+  console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
+
+  try {
+    // Step 1: Find school
+    console.log('Step 1: Finding school');
+    const schoolRecord = await prisma.law_schools.findFirst({
+      where: { 
+        OR: [
+          { school: school }, // Exact match
+          { 
+            school: {
+              contains: school.split(' ')[0], // Match first word
+              mode: 'insensitive'
+            } 
+          }
+        ]
+      },
+      include: {
+        schoolTasks: true
+      }
+    });
+
+    if (!schoolRecord || !schoolRecord.school) {
+      console.log(`❌ TEST: School not found: "${school}"`);
+      return res.status(404).json({ error: 'School not found' });
+    }
+
+    console.log(`✅ TEST: Found school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
+    console.log(`✅ TEST: School tasks:`, schoolRecord.schoolTasks.length);
+
+    // Step 2: Check if user already has this school
+    console.log('Step 2: Checking if user already has this school');
+    const existingUserSchool = await prisma.userSchool.findFirst({
+      where: {
+        userId: Number(userId),
+        school: schoolRecord.school
+      }
+    });
+
+    if (existingUserSchool) {
+      console.log(`⚠️ TEST: User already has this school: ${schoolRecord.school}`);
+      return res.status(409).json({ error: 'User-school association already exists' });
+    }
+
+    // Return success without actually creating anything
+    res.json({ 
+      message: 'Test successful',
+      school: schoolRecord.school,
+      schoolId: schoolRecord.id,
+      tasksAvailable: schoolRecord.schoolTasks.length
+    });
+
+  } catch (error) {
+    console.error('❌ TEST Error:', error);
+    res.status(500).json({ 
+      error: 'Test failed',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 // Get all law schools
 router.get('/law-schools', async (req, res) => {
   try {
@@ -559,39 +636,218 @@ router.post('/schools', async (req, res) => {
   console.log(`🟢 Creating school tasks for user:`, { userId, school });
 
   try {
-    // Find or create school tasks
+    // Find school with more flexible matching
+    console.log('Step 1: Finding school in database');
     const schoolRecord = await prisma.law_schools.findFirst({
-      where: { school },
+      where: { 
+        OR: [
+          { school: school }, // Exact match
+          { 
+            school: {
+              contains: school.split(' ')[0], // Match first word (e.g., "Harvard" in "Harvard Law School")
+              mode: 'insensitive'
+            } 
+          }
+        ]
+      },
       include: {
         schoolTasks: true
       }
     });
 
-    if (!schoolRecord) {
+    if (!schoolRecord || !schoolRecord.school) {
+      console.log(`❌ School not found: "${school}"`);
       return res.status(404).json({ error: 'School not found' });
     }
 
+    console.log(`✅ Found school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
+    console.log(`✅ School has ${schoolRecord.schoolTasks.length} tasks`);
+
+    // Check if user already has this school
+    console.log('Step 2: Checking if user already has this school');
+    const existingUserSchool = await prisma.userSchool.findFirst({
+      where: {
+        userId: Number(userId),
+        school: schoolRecord.school
+      }
+    });
+
+    if (existingUserSchool) {
+      console.log(`⚠️ User already has this school: ${schoolRecord.school}`);
+      return res.status(409).json({ error: 'User-school association already exists' });
+    }
+
+    // Create user-school association
+    console.log('Step 3: Creating user-school association');
+    const userSchool = await prisma.userSchool.create({
+      data: {
+        userId: Number(userId),
+        school: schoolRecord.school,
+        isSelected: false
+      }
+    });
+
+    console.log(`✅ Created user-school association: ${userSchool.id}`);
+
     // Create user-specific tasks
-    const userSchoolTasks = await Promise.all(
-      schoolRecord.schoolTasks.map(task =>
-        prisma.userSchoolTasks.create({
-          data: {
-            userId: Number(userId),
-            schoolTaskId: task.id,
-            status: 'todo',
-            priority: 'Medium',
-            position: 0
+    console.log('Step 4: Creating user-specific tasks');
+    
+    // Count non-empty fields in the school record that could be tasks
+    const taskFields = [
+      'personal_statement', 
+      'diversity_statement', 
+      'optional_statement_prompt', 
+      'letters_of_recommendation', 
+      'resume', 
+      'extras_addenda', 
+      'application_fee', 
+      'interviews'
+    ];
+    
+    const nonEmptyFieldCount = taskFields.filter(field => {
+      const value = schoolRecord[field as keyof typeof schoolRecord] as string | null;
+      return value && value !== 'N/A' && value.trim() !== '';
+    }).length;
+    
+    console.log(`✅ School has ${nonEmptyFieldCount} non-empty fields that could be tasks`);
+    
+    // If the school has fewer tasks than non-empty fields, or no tasks at all, create new tasks
+    let schoolTasksToUse = schoolRecord.schoolTasks;
+    let createdNewTasks = false;
+    
+    if (schoolTasksToUse.length < nonEmptyFieldCount || schoolTasksToUse.length === 0) {
+      console.log('⚠️ School has fewer tasks than expected. Creating tasks based on school data...');
+      createdNewTasks = true;
+      
+      // Create tasks based on the fields in the law_schools table
+      const taskFields = [
+        { field: 'personal_statement', taskType: 'personal_statement' },
+        { field: 'diversity_statement', taskType: 'diversity_statement' },
+        { field: 'optional_statement_prompt', taskType: 'optional_statement' },
+        { field: 'letters_of_recommendation', taskType: 'letters_of_recommendation' },
+        { field: 'resume', taskType: 'resume' },
+        { field: 'extras_addenda', taskType: 'extras_addenda' },
+        { field: 'application_fee', taskType: 'application_fee' },
+        { field: 'interviews', taskType: 'interviews' }
+      ];
+      
+      const tasksToCreate = taskFields
+        .filter(({ field }) => {
+          const value = schoolRecord[field as keyof typeof schoolRecord] as string | null;
+          return value && value !== 'N/A' && value.trim() !== '';
+        })
+        .map(({ taskType }) => ({
+          schoolId: schoolRecord.id,
+          taskType,
+          isRequired: ['personal_statement', 'letters_of_recommendation', 'resume', 'application_fee'].includes(taskType),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }));
+      
+      // If no tasks were found in the school data, add default ones
+      if (tasksToCreate.length === 0) {
+        console.log('⚠️ No task data found in school fields. Adding default tasks...');
+        tasksToCreate.push(
+          {
+            schoolId: schoolRecord.id,
+            taskType: 'personal_statement',
+            isRequired: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            schoolId: schoolRecord.id,
+            taskType: 'letters_of_recommendation',
+            isRequired: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            schoolId: schoolRecord.id,
+            taskType: 'resume',
+            isRequired: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            schoolId: schoolRecord.id,
+            taskType: 'application_fee',
+            isRequired: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        );
+      }
+      
+      const createdSchoolTasks = await Promise.all(
+        tasksToCreate.map(taskData => prisma.schoolTasks.create({ data: taskData }))
+      );
+      
+      console.log(`✅ Created ${createdSchoolTasks.length} school tasks based on school data`);
+      schoolTasksToUse = [...schoolTasksToUse, ...createdSchoolTasks];
+    }
+
+    // Create user-specific tasks
+    let userSchoolTasks = [];
+    
+    try {
+      userSchoolTasks = await Promise.all(
+        schoolTasksToUse.map(async (task, index) => {
+          console.log(`Creating task ${index + 1}/${schoolTasksToUse.length}: ID ${task.id}`);
+          try {
+            const newTask = await prisma.userSchoolTasks.create({
+              data: {
+                userId: Number(userId),
+                schoolTaskId: task.id,
+                status: 'todo',
+                priority: 'Medium',
+                position: 0
+              }
+            });
+            console.log(`✅ Created task ${index + 1}: ${newTask.id}`);
+            return newTask;
+          } catch (taskError) {
+            console.error(`❌ Error creating task ${index + 1}:`, taskError);
+            throw taskError; // Re-throw to be caught by the outer catch
           }
         })
-      )
-    );
+      );
+    } catch (taskError) {
+      // If task creation fails, we should still keep the user-school association
+      console.error('❌ Error creating tasks, but keeping user-school association:', taskError);
+      
+      return res.status(500).json({ 
+        error: 'Failed to create school tasks, but school was added',
+        details: taskError instanceof Error ? taskError.message : String(taskError),
+        school: schoolRecord.school,
+        userSchoolId: userSchool.id
+      });
+    }
 
-    console.log(`✅ Created user-specific tasks:`, userSchoolTasks);
-    res.json({ message: 'School tasks created successfully' });
+    console.log(`✅ Created user-specific tasks:`, userSchoolTasks.length);
+    
+    // Add a warning if we created new tasks
+    const responseData = {
+      message: 'School tasks created successfully',
+      school: schoolRecord.school,
+      tasksCreated: userSchoolTasks.length
+    };
+    
+    if (createdNewTasks) {
+      Object.assign(responseData, {
+        warning: `Some tasks were missing for this school and were automatically created. You now have ${userSchoolTasks.length} tasks.`
+      });
+    }
+    
+    res.json(responseData);
 
   } catch (error) {
     console.error('❌ Error:', error);
-    res.status(500).json({ error: 'Failed to create school tasks' });
+    // More detailed error response
+    res.status(500).json({ 
+      error: 'Failed to create school tasks',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
