@@ -134,11 +134,23 @@ const HomePage = () => {
       
       {/* Content layer */}
       <div className="relative max-w-4xl mx-auto text-left">
+        {/* Tutorial Video */}
+        <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
+          <video 
+            controls
+            className="w-full"
+            poster="/ttc_hero.webp"
+          >
+            <source src="https://mp-s3-images.s3.us-east-1.amazonaws.com/How+to+use+Myplatt.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
           Hello {firstName},
         </h1>
         <p className="text-lg sm:text-xl font-bold mb-6">
-          Welcome to MyPLATT! Here is a brief overview of how everything works. A full tutorial will be coming once we move out of BETA. As a reminder, this pricing is for the BETA version. You keep access to this pricing as long as you do not leave MyPLATT. Also bear in mind that if you leave MyPLATT, you start all over from month 1. You cannot "pick up where you left off."
+          Welcome to MyPLATT! Here is a brief overview of how everything works. You keep access to this pricing as long as you do not leave MyPLATT. Also bear in mind that if you leave MyPLATT, you start all over from month 1. You cannot "pick up where you left off."
         </p>
         <div className="text-left max-w-3xl mx-auto">
           <ol className="list-decimal space-y-3 pl-5">
