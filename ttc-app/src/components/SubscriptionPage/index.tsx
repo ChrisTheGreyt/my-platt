@@ -218,7 +218,7 @@ const SubscriptionPage: React.FC = () => {
               {/* Yearly Plan */}
               <div 
                 className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'yearly' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
-                onClick={() => !loading && handleSubscription('price_1QxEuFG8jnQLC5SAMwPZfuBM', 'subscription', 'yearly')}
+                onClick={() => !loading && handleSubscription('price_1QxFkoG8jnQLC5SABmUMgR9A', 'one-time', 'yearly')}
               >
                 <div className="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
                 <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
