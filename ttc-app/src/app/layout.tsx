@@ -9,7 +9,6 @@ import { Provider as ReduxProvier } from 'react-redux';
 import { AuthProvider } from '../context/AuthContext'; // Import AuthProvider
 import { store } from '../state/store';
 
-import Sidebar from '../components/Sidebar';
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -43,13 +42,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ReduxProvier store={store}>
-            <AuthProvider >
-                <Sidebar />
+            <AuthProvider>
                 <DashboardWrapper>
                   {children}
                 </DashboardWrapper>
-              </AuthProvider>
-            </ReduxProvier>
+            </AuthProvider>
+          </ReduxProvier>
       </body>
     </html>
   );

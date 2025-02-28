@@ -14,6 +14,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const isDarkmode = useAppSelector((state) => state.global.isDarkMode);
   const { user, session } = useAuth();
   const isAuthenticated = user && session;
+  const pathname = usePathname();
+  
+  // Check if the current page is the subscription page
+  const isSubscriptionPage = pathname === '/subscriptions';
 
   useEffect(() => {
     if (isDarkmode) {
@@ -25,15 +29,15 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50 text-gray-900">
-      {/* Only render Sidebar if user is authenticated */}
-      {isAuthenticated && <Sidebar />}
+      {/* Only render Sidebar if user is authenticated AND not on subscription page */}
+      {isAuthenticated && !isSubscriptionPage && <Sidebar />}
       <main
-  className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${
-    isAuthenticated && !isSidebarCollapsed ? 'md:pl-64' : ''
-  }`}
+        className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${
+          isAuthenticated && !isSidebarCollapsed && !isSubscriptionPage ? 'md:pl-64' : ''
+        }`}
       >
-        {/* Only render Navbar if user is authenticated */}
-        {isAuthenticated && <Navbar />}
+        {/* Only render Navbar if user is authenticated AND not on subscription page */}
+        {isAuthenticated && !isSubscriptionPage && <Navbar />}
         {children}
       </main>
     </div>
