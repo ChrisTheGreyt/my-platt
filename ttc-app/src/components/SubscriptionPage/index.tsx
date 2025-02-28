@@ -17,6 +17,8 @@ const SubscriptionPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [promotionCode, setPromotionCode] = useState<string>('');
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string>('');
+  const [promoCodeMessage, setPromoCodeMessage] = useState<{text: string, type: 'success' | 'error' | 'info' | null}>({text: '', type: null});
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,12 +42,58 @@ const SubscriptionPage: React.FC = () => {
     }
   }, [searchParams]);
 
+  const handleApplyPromoCode = () => {
+    if (!promotionCode.trim()) {
+      setPromoCodeMessage({text: 'Please enter a promotion code', type: 'error'});
+      return;
+    }
+
+    setLoading(true);
+    
+    // Here you would typically validate the promo code with your backend
+    // For now, we'll simulate a successful application after a short delay
+    setTimeout(() => {
+      setAppliedPromoCode(promotionCode);
+      setPromoCodeMessage({text: 'Promotion code applied successfully!', type: 'success'});
+      setLoading(false);
+    }, 500);
+    
+    // Uncomment and adapt this code when you have a backend endpoint for promo code validation
+    /*
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/validate-promo-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        promotionCode,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        setAppliedPromoCode(promotionCode);
+        setPromoCodeMessage({text: 'Promotion code applied successfully!', type: 'success'});
+      } else {
+        setPromoCodeMessage({text: data.message || 'Invalid promotion code', type: 'error'});
+      }
+    })
+    .catch(err => {
+      console.error('Error validating promotion code:', err);
+      setPromoCodeMessage({text: 'Error validating promotion code', type: 'error'});
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+    */
+  };
+
   const handleSubscription = async (priceId: string, planType: string, planName: string) => {
     console.log("email:", email);
     console.log("username:", username);
     console.log("priceId:", priceId);
     console.log("planType:", planType);
-    console.log("promotionCode:", promotionCode);
+    console.log("promotionCode:", appliedPromoCode);
     
     setSelectedPlan(planName);
   
@@ -78,7 +126,7 @@ const SubscriptionPage: React.FC = () => {
           email,
           username,
           planType,
-          promotionCode,
+          promotionCode: appliedPromoCode,
         }),
       });
   
@@ -115,7 +163,7 @@ const SubscriptionPage: React.FC = () => {
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
             Choose Your <span className="text-indigo-600">MyPLATT</span> Plan
@@ -160,7 +208,64 @@ const SubscriptionPage: React.FC = () => {
           <div className="p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">Select a Plan</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Waitlist Special Plan */}
+              <div 
+                className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'waitlist' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
+                onClick={() => !loading && handleSubscription('price_1QxVT5G8jnQLC5SAE5DzOyBs', 'subscription', 'waitlist')}
+              >
+                <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
+                <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  LIMITED TIME
+                </div>
+                <div className="p-6 cursor-pointer">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">Waitlist Special</h3>
+                      <p className="mt-1 text-sm text-gray-500">For February waitlist members</p>
+                    </div>
+                    <div className="bg-green-100 rounded-full p-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <span className="text-3xl font-extrabold text-gray-900">$35</span>
+                    <span className="text-base font-medium text-gray-500"> / month</span>
+                  </div>
+                  
+                  <ul className="mt-6 space-y-3">
+                    <li className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">Full access to all features</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">Cancel anytime</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-700">Available until March 5th</span>
+                    </li>
+                  </ul>
+                  
+                  <button 
+                    className={`mt-6 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    disabled={loading}
+                  >
+                    {loading && selectedPlan === 'waitlist' ? 'Processing...' : 'Select Waitlist Special'}
+                  </button>
+                </div>
+              </div>
+
               {/* Monthly Plan */}
               <div 
                 className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'monthly' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
@@ -283,19 +388,40 @@ const SubscriptionPage: React.FC = () => {
                   id="promotionCode"
                   type="text"
                   value={promotionCode}
-                  onChange={(e) => setPromotionCode(e.target.value)}
+                  onChange={(e) => {
+                    setPromotionCode(e.target.value);
+                    // Clear any message when user starts typing again
+                    if (promoCodeMessage.text) {
+                      setPromoCodeMessage({text: '', type: null});
+                    }
+                  }}
                   placeholder="Enter your code"
                   className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   disabled={loading}
                 />
                 <button
                   type="button"
+                  onClick={handleApplyPromoCode}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-r-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                   disabled={!promotionCode.trim() || loading}
                 >
-                  Apply
+                  {loading && !selectedPlan ? 'Applying...' : 'Apply'}
                 </button>
               </div>
+              {promoCodeMessage.text && (
+                <p className={`mt-2 text-sm ${
+                  promoCodeMessage.type === 'success' ? 'text-green-600' : 
+                  promoCodeMessage.type === 'error' ? 'text-red-600' : 
+                  'text-gray-500'
+                }`}>
+                  {promoCodeMessage.text}
+                </p>
+              )}
+              {appliedPromoCode && (
+                <p className="mt-2 text-sm text-green-600">
+                  Code <span className="font-medium">{appliedPromoCode}</span> will be applied at checkout.
+                </p>
+              )}
               <p className="mt-2 text-xs text-gray-500">
                 Enter your promotion code to receive a discount on your subscription.
               </p>
