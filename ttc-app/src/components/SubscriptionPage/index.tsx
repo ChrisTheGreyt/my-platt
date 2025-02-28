@@ -48,12 +48,19 @@ const SubscriptionPage: React.FC = () => {
       return;
     }
 
+    // Basic validation - promo codes are typically alphanumeric
+    const cleanedCode = promotionCode.trim().toUpperCase();
+    if (!/^[A-Z0-9]+$/.test(cleanedCode)) {
+      setPromoCodeMessage({text: 'Promotion code should only contain letters and numbers', type: 'error'});
+      return;
+    }
+
     setLoading(true);
     
     // Here you would typically validate the promo code with your backend
     // For now, we'll simulate a successful application after a short delay
     setTimeout(() => {
-      setAppliedPromoCode(promotionCode);
+      setAppliedPromoCode(cleanedCode);
       setPromoCodeMessage({text: 'Promotion code applied successfully!', type: 'success'});
       setLoading(false);
     }, 500);
@@ -66,13 +73,13 @@ const SubscriptionPage: React.FC = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        promotionCode,
+        promotionCode: cleanedCode,
       }),
     })
     .then(response => response.json())
     .then(data => {
       if (data.valid) {
-        setAppliedPromoCode(promotionCode);
+        setAppliedPromoCode(cleanedCode);
         setPromoCodeMessage({text: 'Promotion code applied successfully!', type: 'success'});
       } else {
         setPromoCodeMessage({text: data.message || 'Invalid promotion code', type: 'error'});
@@ -86,6 +93,12 @@ const SubscriptionPage: React.FC = () => {
       setLoading(false);
     });
     */
+  };
+
+  const clearPromoCode = () => {
+    setPromotionCode('');
+    setAppliedPromoCode('');
+    setPromoCodeMessage({text: 'Promotion code removed', type: 'info'});
   };
 
   const handleSubscription = async (priceId: string, planType: string, planName: string) => {
@@ -115,21 +128,45 @@ const SubscriptionPage: React.FC = () => {
     }
   
     try {
+      // Prepare the request body - only include promotionCode if it exists
+      const requestBody: any = {
+        priceId,
+        email,
+        username,
+        planType,
+      };
+      
+      // Only add the promotion code if it's not empty
+      if (appliedPromoCode && appliedPromoCode.trim() !== '') {
+        requestBody.promotionCode = appliedPromoCode.trim();
+      }
+      
+      console.log("Request body:", requestBody);
+      
       // Call the backend to create a Stripe Checkout session
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          priceId,
-          email,
-          username,
-          planType,
-          promotionCode: appliedPromoCode,
-        }),
+        body: JSON.stringify(requestBody),
       });
   
+      // Check if the response is ok before parsing JSON
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error:', errorText);
+        
+        // Handle specific error for promotion code
+        if (errorText.includes('promotion_code') || errorText.toLowerCase().includes('promo')) {
+          setError('Invalid promotion code. Please check and try again.');
+          setLoading(false);
+          return;
+        } else {
+          throw new Error(`Server error: ${response.status} ${errorText}`);
+        }
+      }
+      
       const data = await response.json();
       console.log('Backend response:', data);
   
@@ -397,16 +434,27 @@ const SubscriptionPage: React.FC = () => {
                   }}
                   placeholder="Enter your code"
                   className="flex-1 min-w-0 block w-full px-3 py-2 rounded-l-md border border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  disabled={loading}
+                  disabled={loading || appliedPromoCode !== ''}
                 />
-                <button
-                  type="button"
-                  onClick={handleApplyPromoCode}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-r-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                  disabled={!promotionCode.trim() || loading}
-                >
-                  {loading && !selectedPlan ? 'Applying...' : 'Apply'}
-                </button>
+                {appliedPromoCode ? (
+                  <button
+                    type="button"
+                    onClick={clearPromoCode}
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-r-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                    disabled={loading}
+                  >
+                    Clear
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleApplyPromoCode}
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-r-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    disabled={!promotionCode.trim() || loading}
+                  >
+                    {loading && !selectedPlan ? 'Applying...' : 'Apply'}
+                  </button>
+                )}
               </div>
               {promoCodeMessage.text && (
                 <p className={`mt-2 text-sm ${
@@ -418,9 +466,16 @@ const SubscriptionPage: React.FC = () => {
                 </p>
               )}
               {appliedPromoCode && (
-                <p className="mt-2 text-sm text-green-600">
-                  Code <span className="font-medium">{appliedPromoCode}</span> will be applied at checkout.
-                </p>
+                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-green-700">
+                      Code <span className="font-medium">{appliedPromoCode}</span> will be applied at checkout
+                    </p>
+                  </div>
+                </div>
               )}
               <p className="mt-2 text-xs text-gray-500">
                 Enter your promotion code to receive a discount on your subscription.
