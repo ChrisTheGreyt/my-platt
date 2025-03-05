@@ -252,64 +252,7 @@ const SubscriptionPage: React.FC = () => {
             <div className="p-6">
               <h2 className="text-lg font-medium text-gray-900 mb-6">Select a Plan</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Waitlist Special Plan */}
-                <div 
-                  className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'waitlist' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
-                  onClick={() => !loading && handleSubscription('price_1QxVT5G8jnQLC5SAE5DzOyBs', 'subscription', 'waitlist')}
-                >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-green-500"></div>
-                  <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
-                    LIMITED TIME
-                  </div>
-                  <div className="p-6 cursor-pointer">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">Waitlist Special</h3>
-                        <p className="mt-1 text-sm text-gray-500">For February waitlist members</p>
-                      </div>
-                      <div className="bg-green-100 rounded-full p-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <span className="text-3xl font-extrabold text-gray-900">$35</span>
-                      <span className="text-base font-medium text-gray-500"> / month</span>
-                    </div>
-                    
-                    <ul className="mt-6 space-y-3">
-                      <li className="flex items-start">
-                        <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-sm text-gray-700">Full access to all features</span>
-                      </li>
-                      <li className="flex items-start">
-                        <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-sm text-gray-700">Cancel anytime</span>
-                      </li>
-                      <li className="flex items-start">
-                        <svg className="h-5 w-5 text-green-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-sm text-gray-700">Available until March 5th</span>
-                      </li>
-                    </ul>
-                    
-                    <button 
-                      className={`mt-6 w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
-                      disabled={loading}
-                    >
-                      {loading && selectedPlan === 'waitlist' ? 'Processing...' : 'Select Waitlist Special'}
-                    </button>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Monthly Plan */}
                 <div 
                   className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'monthly' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
