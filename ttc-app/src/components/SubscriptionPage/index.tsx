@@ -256,7 +256,7 @@ const SubscriptionPage: React.FC = () => {
                 {/* Monthly Plan */}
                 <div 
                   className={`relative overflow-hidden rounded-lg border-2 transition-all duration-300 ${selectedPlan === 'monthly' ? 'border-indigo-500 bg-indigo-50 transform scale-[1.02]' : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'}`}
-                  onClick={() => !loading && handleSubscription('price_1QxEuFG8jnQLC5SAMwPZfuBM', 'subscription', 'monthly')}
+                  onClick={() => !loading && handleSubscription('price_1R1I1bG8jnQLC5SA6rlMiau2', 'subscription', 'monthly')}
                 >
                   <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
                   <div className="p-6 cursor-pointer">
@@ -273,7 +273,7 @@ const SubscriptionPage: React.FC = () => {
                     </div>
                     
                     <div className="mt-4">
-                      <span className="text-3xl font-extrabold text-gray-900">$47</span>
+                      <span className="text-3xl font-extrabold text-gray-900">$37</span>
                       <span className="text-base font-medium text-gray-500"> / month</span>
                     </div>
                     
