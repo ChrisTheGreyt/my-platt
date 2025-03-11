@@ -273,7 +273,7 @@ const SubscriptionPage: React.FC = () => {
                     </div>
                     
                     <div className="mt-4">
-                      <span className="text-3xl font-extrabold text-gray-900">$47</span>
+                      <span className="text-3xl font-extrabold text-gray-900">$37</span>
                       <span className="text-base font-medium text-gray-500"> / month</span>
                     </div>
                     
