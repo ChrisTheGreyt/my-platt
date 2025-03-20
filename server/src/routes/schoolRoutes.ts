@@ -640,15 +640,10 @@ router.post('/schools', async (req, res) => {
     console.log('Step 1: Finding school in database');
     const schoolRecord = await prisma.law_schools.findFirst({
       where: { 
-        OR: [
-          { school: school }, // Exact match
-          { 
-            school: {
-              contains: school.split(' ')[0], // Match first word (e.g., "Harvard" in "Harvard Law School")
-              mode: 'insensitive'
-            } 
-          }
-        ]
+        school: {
+          equals: school,
+          mode: 'insensitive'
+        }
       },
       include: {
         schoolTasks: true
