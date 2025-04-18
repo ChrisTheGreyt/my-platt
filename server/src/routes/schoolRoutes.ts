@@ -671,6 +671,25 @@ router.post('/schools', async (req, res) => {
 
     if (existingUserSchool) {
       console.log(`⚠️ User already has this school: ${schoolRecord.school}`);
+      console.log('Existing user-school record:', existingUserSchool);
+      
+      // Check for any orphaned tasks
+      const orphanedTasks = await prisma.userSchoolTasks.findMany({
+        where: {
+          userId: Number(userId),
+          schoolTask: {
+            lawSchool: {
+              id: schoolRecord.id
+            }
+          }
+        }
+      });
+      
+      console.log('Orphaned tasks found:', orphanedTasks.length);
+      if (orphanedTasks.length > 0) {
+        console.log('Orphaned task details:', orphanedTasks);
+      }
+      
       return res.status(409).json({ error: 'User-school association already exists' });
     }
 

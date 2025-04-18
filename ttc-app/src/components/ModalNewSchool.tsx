@@ -10,6 +10,7 @@ import {
 } from "@/state/api";
 import Modal from "@/components/Modal";
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 type NewSchoolModalProps = {
   isOpen: boolean;
@@ -19,8 +20,8 @@ type NewSchoolModalProps = {
 
 const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onSchoolSelect }) => {
   const [school, setSchool] = useState("");
-  // Use a single state for the resolved user ID
   const [resolvedUserId, setResolvedUserId] = useState<number | null>(null);
+  const router = useRouter();
 
   const [createSchool, { isLoading: isCreating, isError, error }] = useCreateSchoolMutation();
   const { data: lawSchools, isLoading: isSchoolsLoading, error: fetchError } = useGetLawSchoolsQuery();
@@ -99,6 +100,25 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
         console.log('Test endpoint response:', testData);
         
         if (!testResponse.ok) {
+            if (testData.error === 'User-school association already exists') {
+                toast.error(
+                    <div>
+                        <p>You have already added {school}</p>
+                        <button 
+                            onClick={() => {
+                                router.push(`/schools/${encodeURIComponent(school)}`);
+                                onClose();
+                            }}
+                            className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                        >
+                            Go to existing school
+                        </button>
+                    </div>,
+                    { duration: 5000 }
+                );
+                onClose();
+                return;
+            }
             throw new Error(testData.error || 'Test endpoint failed');
         }
         
@@ -120,7 +140,21 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
         
         if (!createSchoolResponse.ok) {
             if (responseData.error === 'User-school association already exists') {
-                toast.error('You have already added this school');
+                toast.error(
+                    <div>
+                        <p>You have already added {school}</p>
+                        <button 
+                            onClick={() => {
+                                router.push(`/schools/${encodeURIComponent(school)}`);
+                                onClose();
+                            }}
+                            className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                        >
+                            Go to existing school
+                        </button>
+                    </div>,
+                    { duration: 5000 }
+                );
                 onClose();
                 return;
             }
