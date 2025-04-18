@@ -28,6 +28,7 @@ const SchoolPage = ({ params }: PageProps) => {
   const { name } = params;
   const decodedName = decodeURIComponent(name);
   const [internalUserId, setInternalUserId] = useState<string | null>(null);
+  const router = useRouter();
   
   const { 
     data: schoolDetails, 
@@ -199,6 +200,34 @@ const SchoolPage = ({ params }: PageProps) => {
     }
   };
   
+  const handleRemoveSchool = async () => {
+    if (!schoolDetails || !internalUserId) return;
+    
+    console.log('Attempting to remove school:', schoolDetails.school);
+    console.log('School ID:', schoolDetails.id);
+    console.log('User ID:', internalUserId);
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/schools/user/${internalUserId}/school/${schoolDetails.id}`, {
+        method: 'DELETE',
+      });
+
+      console.log('Delete response status:', response.status);
+      const responseData = await response.json();
+      console.log('Delete response data:', responseData);
+
+      if (!response.ok) {
+        throw new Error('Failed to remove school');
+      }
+
+      toast.success(`${schoolDetails.school} has been removed from your schools`);
+      router.push('/schools'); // Redirect to schools list after deletion
+    } catch (error) {
+      console.error('Error removing school:', error);
+      toast.error('Failed to remove school');
+    }
+  };
+
   const renderContent = () => {
     if (!internalUserId || isLoading) {
       return (
@@ -222,7 +251,11 @@ const SchoolPage = ({ params }: PageProps) => {
     return (
       <div className="container mx-auto px-4">
         <Toaster position="top-right" />
-        <SchoolHeader schoolDetails={schoolDetails} />
+        <SchoolHeader 
+          schoolDetails={schoolDetails} 
+          onRemove={handleRemoveSchool}
+          showRemoveButton={true}
+        />
         <div className="mt-8">
           <KanbanBoard
             tasks={kanbanTasks}

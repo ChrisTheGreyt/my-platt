@@ -53,6 +53,13 @@ const SchoolHeader: React.FC<SchoolHeaderProps> = ({
     tasks: tasks.map(t => ({ id: t.id, status: t.status }))
   });
 
+  console.log('SchoolHeader props:', {
+    schoolName: schoolDetails.school,
+    showRemoveButton,
+    hasOnRemove: !!onRemove,
+    onRemoveType: typeof onRemove
+  });
+
   // Initialize minimized state from localStorage
   const [isMinimized, setIsMinimized] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -72,6 +79,18 @@ const SchoolHeader: React.FC<SchoolHeaderProps> = ({
     }
   }, [isMinimized, schoolDetails.school]);
 
+  const handleRemoveClick = () => {
+    console.log('Delete button clicked for school:', schoolDetails.school);
+    console.log('School ID:', schoolDetails.id);
+    console.log('onRemove prop exists:', !!onRemove);
+    console.log('onRemove type:', typeof onRemove);
+    if (typeof onRemove === 'function') {
+      onRemove();
+    } else {
+      console.warn('onRemove is not a function:', onRemove);
+    }
+  };
+
   return (
     <div className={`bg-white dark:bg-gray-800 shadow rounded-lg relative`}>
       <div className="p-6">
@@ -80,9 +99,9 @@ const SchoolHeader: React.FC<SchoolHeaderProps> = ({
             {schoolDetails.school}
           </h2>
           <div className="flex items-center gap-2">
-            {showRemoveButton && (
+            {showRemoveButton && onRemove && (
               <button
-                onClick={onRemove}
+                onClick={handleRemoveClick}
                 className="p-2 text-gray-400 hover:text-red-500 transition-colors duration-200"
                 title="Remove school"
               >

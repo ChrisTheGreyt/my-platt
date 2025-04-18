@@ -40,10 +40,18 @@ const SchoolsPage = () => {
   }, []);
 
   const handleRemoveSchool = async (schoolId: number) => {
+    console.log('Attempting to remove school with ID:', schoolId);
+    console.log('User ID:', internalUserId);
+    console.log('Backend URL:', backendUrl);
+    
     try {
       const response = await fetch(`${backendUrl}/api/schools/user/${internalUserId}/school/${schoolId}`, {
         method: 'DELETE',
       });
+
+      console.log('Delete response status:', response.status);
+      const responseData = await response.json();
+      console.log('Delete response data:', responseData);
 
       if (!response.ok) {
         throw new Error('Failed to remove school');
@@ -87,17 +95,25 @@ const SchoolsPage = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">My Schools</h1>
         <div className="space-y-6">
-          {userSchools.map((school) => (
-            <SchoolHeader 
-              key={school.id} 
-              schoolDetails={school}
-              onRemove={() => {
-                if (window.confirm(`Are you sure you want to remove ${school.school}?`)) {
-                  handleRemoveSchool(school.id);
-                }
-              }}
-            />
-          ))}
+          {userSchools?.map((school) => {
+            console.log('Rendering school:', school);
+            const handleRemove = () => {
+              console.log('Confirming deletion for school:', school.school);
+              if (window.confirm(`Are you sure you want to remove ${school.school}?`)) {
+                console.log('User confirmed deletion, calling handleRemoveSchool with ID:', school.id);
+                handleRemoveSchool(school.id);
+              }
+            };
+            
+            return (
+              <SchoolHeader 
+                key={school.id} 
+                schoolDetails={school}
+                onRemove={handleRemove}
+                showRemoveButton={true}
+              />
+            );
+          })}
         </div>
       </div>
     );

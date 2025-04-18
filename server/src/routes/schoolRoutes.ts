@@ -1,6 +1,8 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateUser } from '../middleware/authMiddleware';
+import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -1170,21 +1172,102 @@ router.delete('/schools/user/:userId/school/:schoolId', async (req, res) => {
   const { userId, schoolId } = req.params;
 
   try {
+    // First, get the school name
+    const school = await prisma.law_schools.findUnique({
+      where: { id: Number(schoolId) },
+      select: { school: true }
+    });
+
+    if (!school || !school.school) {
+      return res.status(404).json({ error: 'School not found' });
+    }
+
+    // Delete all user school tasks associated with this school
     await prisma.userSchoolTasks.deleteMany({
       where: {
         userId: Number(userId),
         schoolTask: {
-          lawSchool: {  // Changed from lawSchoolId to lawSchool
+          lawSchool: {
             id: Number(schoolId)
           }
         }
       }
     });
 
+    // Delete the user-school association
+    await prisma.userSchool.deleteMany({
+      where: {
+        userId: Number(userId),
+        school: school.school
+      }
+    });
+
     res.json({ message: 'School removed successfully' });
   } catch (error) {
     console.error('Error removing school:', error);
-    res.status(500).json({ error: 'Failed to remove school' });
+    res.status(500).json({ 
+      error: 'Failed to remove school',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+router.post('/add', async (req: Request, res: Response) => {
+  try {
+    const { school } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!school) {
+      return res.status(400).json({ error: 'School name is required' });
+    }
+
+    // Normalize the school name
+    const normalizedSchool = school.trim();
+
+    // First, find or create the school record
+    const schoolRecord = await prisma.law_schools.upsert({
+      where: {
+        school: normalizedSchool
+      },
+      update: {},
+      create: {
+        school: normalizedSchool
+      }
+    });
+
+    // Check for existing user-school association
+    const existingUserSchool = await prisma.userSchool.findFirst({
+      where: {
+        userId: Number(userId),
+        school: schoolRecord.school || ''
+      }
+    });
+
+    if (existingUserSchool) {
+      return res.status(400).json({ error: 'User-school association already exists' });
+    }
+
+    // Create the user-school association
+    const userSchool = await prisma.userSchool.create({
+      data: {
+        userId: Number(userId),
+        school: schoolRecord.school || ''
+      }
+    });
+
+    res.json(userSchool);
+  } catch (error) {
+    console.error('Error adding school:', error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return res.status(400).json({ error: 'User-school association already exists' });
+      }
+    }
+    res.status(500).json({ error: 'Failed to add school' });
   }
 });
 
