@@ -26,26 +26,8 @@ router.post('/test-schools', async (req, res) => {
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
 
   try {
-    // First, let's see all schools with similar names
-    const similarSchools = await prisma.law_schools.findMany({
-      where: {
-        OR: [
-          { school: { contains: 'Kansas', mode: 'insensitive' } },
-          { school: { contains: 'University of', mode: 'insensitive' } }
-        ]
-      },
-      select: { id: true, school: true }
-    });
-    console.log('Similar schools in database:', similarSchools.map(s => ({ id: s.id, name: s.school })));
-
-    // Get all schools for this user
-    const userSchools = await prisma.userSchool.findMany({
-      where: { userId: Number(userId) },
-      select: { id: true, school: true }
-    });
-    console.log('User schools:', userSchools.map(s => ({ id: s.id, name: s.school })));
-
-    // Find the exact school
+    // Step 1: Find school with exact match only
+    console.log('Step 1: Finding school with exact match');
     const schoolRecord = await prisma.law_schools.findFirst({
       where: { 
         school: {
@@ -57,27 +39,29 @@ router.post('/test-schools', async (req, res) => {
 
     if (!schoolRecord || !schoolRecord.school) {
       console.log(`❌ TEST: School not found: "${school}"`);
-      // Log potential matches
-      const potentialMatches = similarSchools.filter(s => 
-        s.school?.toLowerCase().includes(school.toLowerCase().split(' ')[0])
-      );
-      if (potentialMatches.length > 0) {
-        console.log('Potential matches:', potentialMatches.map(s => s.school));
-      }
       return res.status(404).json({ error: 'School not found' });
     }
 
-    console.log('Found exact school record:', schoolRecord);
+    console.log(`✅ TEST: Found exact match for school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
 
-    // Check for existing association
-    const existingUserSchool = userSchools.find(
-      s => s.school.toLowerCase() === schoolRecord.school?.toLowerCase()
-    );
+    // Step 2: Check for exact match in user's schools
+    console.log('Step 2: Checking if user already has this exact school');
+    const existingUserSchool = await prisma.userSchool.findFirst({
+      where: {
+        userId: Number(userId),
+        school: {
+          equals: schoolRecord.school,
+          mode: 'insensitive'
+        }
+      }
+    });
 
     if (existingUserSchool) {
       console.log(`⚠️ TEST: User already has this exact school: ${schoolRecord.school}`);
       return res.status(409).json({ error: 'User-school association already exists' });
     }
+
+    console.log('✅ TEST: No existing association found for this exact school name');
 
     // Return success without actually creating anything
     res.json({ 
