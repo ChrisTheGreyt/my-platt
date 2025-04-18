@@ -26,8 +26,23 @@ router.post('/test-schools', async (req, res) => {
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
 
   try {
-    // Step 1: Find school
-    console.log('Step 1: Finding school');
+    // Step 1: Find school with detailed logging
+    console.log('Step 1: Finding school with exact match');
+    
+    // First, log all schools in the database that contain "University"
+    if (school.includes('University')) {
+      const allUniversities = await prisma.law_schools.findMany({
+        where: {
+          school: {
+            contains: 'University',
+            mode: 'insensitive'
+          }
+        },
+        select: { id: true, school: true }
+      });
+      console.log('All universities in database:', allUniversities.map(u => u.school));
+    }
+    
     const schoolRecord = await prisma.law_schools.findFirst({
       where: { 
         school: {
@@ -45,11 +60,18 @@ router.post('/test-schools', async (req, res) => {
       return res.status(404).json({ error: 'School not found' });
     }
 
-    console.log(`✅ TEST: Found school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
-    console.log(`✅ TEST: School tasks:`, schoolRecord.schoolTasks.length);
+    console.log(`✅ TEST: Found exact match for school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
 
-    // Step 2: Check if user already has this school
+    // Step 2: Check if user already has this school with detailed logging
     console.log('Step 2: Checking if user already has this school');
+    
+    // First, log all schools this user has
+    const userSchools = await prisma.userSchool.findMany({
+      where: { userId: Number(userId) },
+      select: { school: true }
+    });
+    console.log(`Current user schools:`, userSchools.map(s => s.school));
+    
     const existingUserSchool = await prisma.userSchool.findFirst({
       where: {
         userId: Number(userId),
@@ -58,9 +80,12 @@ router.post('/test-schools', async (req, res) => {
     });
 
     if (existingUserSchool) {
-      console.log(`⚠️ TEST: User already has this school: ${schoolRecord.school}`);
+      console.log(`⚠️ TEST: User already has this exact school: ${schoolRecord.school}`);
+      console.log('Existing user-school record:', existingUserSchool);
       return res.status(409).json({ error: 'User-school association already exists' });
     }
+
+    console.log('✅ TEST: No existing association found for this exact school name');
 
     // Return success without actually creating anything
     res.json({ 
