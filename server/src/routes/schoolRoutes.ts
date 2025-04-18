@@ -26,6 +26,25 @@ router.post('/test-schools', async (req, res) => {
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
 
   try {
+    // First, let's see all schools with similar names
+    const similarSchools = await prisma.law_schools.findMany({
+      where: {
+        OR: [
+          { school: { contains: 'Kansas', mode: 'insensitive' } },
+          { school: { contains: 'University of', mode: 'insensitive' } }
+        ]
+      },
+      select: { id: true, school: true }
+    });
+    console.log('Similar schools in database:', similarSchools.map(s => ({ id: s.id, name: s.school })));
+
+    // Get all schools for this user
+    const userSchools = await prisma.userSchool.findMany({
+      where: { userId: Number(userId) },
+      select: { id: true, school: true }
+    });
+    console.log('User schools:', userSchools.map(s => ({ id: s.id, name: s.school })));
+
     // Step 1: Find school with exact match only
     console.log('Step 1: Finding school with exact match');
     const schoolRecord = await prisma.law_schools.findFirst({
@@ -39,6 +58,13 @@ router.post('/test-schools', async (req, res) => {
 
     if (!schoolRecord || !schoolRecord.school) {
       console.log(`❌ TEST: School not found: "${school}"`);
+      // Log potential matches
+      const potentialMatches = similarSchools.filter(s => 
+        s.school?.toLowerCase().includes(school.toLowerCase().split(' ')[0])
+      );
+      if (potentialMatches.length > 0) {
+        console.log('Potential matches:', potentialMatches.map(s => s.school));
+      }
       return res.status(404).json({ error: 'School not found' });
     }
 
