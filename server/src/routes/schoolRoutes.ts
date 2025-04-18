@@ -26,17 +26,26 @@ router.post('/test-schools', async (req, res) => {
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
 
   try {
-    // Log the exact school name being searched for
-    console.log('Searching for exact school name:', school);
-
-    // Get all schools for this user first
-    const allUserSchools = await prisma.userSchool.findMany({
-      where: { userId: Number(userId) },
-      select: { school: true }
+    // First, let's see all schools with similar names
+    const similarSchools = await prisma.law_schools.findMany({
+      where: {
+        OR: [
+          { school: { contains: 'Kansas', mode: 'insensitive' } },
+          { school: { contains: 'University of', mode: 'insensitive' } }
+        ]
+      },
+      select: { id: true, school: true }
     });
-    console.log('All schools for this user:', allUserSchools.map(s => s.school));
+    console.log('Similar schools in database:', similarSchools.map(s => ({ id: s.id, name: s.school })));
 
-    // Find the exact school in law_schools
+    // Get all schools for this user
+    const userSchools = await prisma.userSchool.findMany({
+      where: { userId: Number(userId) },
+      select: { id: true, school: true }
+    });
+    console.log('User schools:', userSchools.map(s => ({ id: s.id, name: s.school })));
+
+    // Find the exact school
     const schoolRecord = await prisma.law_schools.findFirst({
       where: { 
         school: {
@@ -46,15 +55,22 @@ router.post('/test-schools', async (req, res) => {
       }
     });
 
-    console.log('Found school record:', schoolRecord);
-
     if (!schoolRecord || !schoolRecord.school) {
       console.log(`❌ TEST: School not found: "${school}"`);
+      // Log potential matches
+      const potentialMatches = similarSchools.filter(s => 
+        s.school?.toLowerCase().includes(school.toLowerCase().split(' ')[0])
+      );
+      if (potentialMatches.length > 0) {
+        console.log('Potential matches:', potentialMatches.map(s => s.school));
+      }
       return res.status(404).json({ error: 'School not found' });
     }
 
-    // Check for exact match in user's schools
-    const existingUserSchool = allUserSchools.find(
+    console.log('Found exact school record:', schoolRecord);
+
+    // Check for existing association
+    const existingUserSchool = userSchools.find(
       s => s.school.toLowerCase() === schoolRecord.school?.toLowerCase()
     );
 
