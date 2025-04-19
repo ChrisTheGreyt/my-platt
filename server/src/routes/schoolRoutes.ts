@@ -24,85 +24,66 @@ router.get('/test-cors', (req, res) => {
 router.post('/test-schools', async (req, res) => {
   const { userId, school } = req.body;
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
-  console.log(`🔴🔵🔴🔵🔴🔵🔴🔵🔴🔵 TEST ENDPOINT UPDATED - VERIFY DEPLOYMENT 🔴🔵🔴🔵🔴🔵🔴🔵🔴🔵`);
 
   try {
-    // First, let's see all schools with similar names
+    // Step 1: Find school
+    console.log('Step 1: Finding school');
+    const schoolRecord = await prisma.law_schools.findFirst({
+      where: { 
+        OR: [
+          { school: school }, // Exact match
+          { school: { contains: school, mode: 'insensitive' } }, // Partial match
+        ]
+      }
+    });
+    console.log('School record found:', schoolRecord);
+
+    // Step 2: Check if user already has this school
+    console.log('Step 2: Checking if user already has this school');
+    const existingAssociation = await prisma.userSchool.findFirst({
+      where: {
+        userId: userId,
+        school: school
+      }
+    });
+    console.log('Existing association:', existingAssociation);
+
+    // Step 3: Check for similar schools in user's schools
+    console.log('Step 3: Checking for similar schools in user\'s schools');
+    const userSchools = await prisma.userSchool.findMany({
+      where: {
+        userId: userId
+      }
+    });
+    console.log('User schools:', userSchools);
+
+    // Step 4: Check for similar schools in the database
+    console.log('Step 4: Checking for similar schools in the database');
     const similarSchools = await prisma.law_schools.findMany({
       where: {
         OR: [
           { school: { contains: 'Kansas', mode: 'insensitive' } },
           { school: { contains: 'University of', mode: 'insensitive' } }
         ]
-      },
-      select: { id: true, school: true }
-    });
-    console.log('Similar schools in database:', similarSchools.map(s => ({ id: s.id, name: s.school })));
-
-    // Get all schools for this user
-    const userSchools = await prisma.userSchool.findMany({
-      where: { userId: Number(userId) },
-      select: { id: true, school: true }
-    });
-    console.log('User schools:', userSchools.map(s => ({ id: s.id, name: s.school })));
-
-    // Step 1: Find school with exact match only
-    console.log('Step 1: Finding school with exact match');
-    const schoolRecord = await prisma.law_schools.findFirst({
-      where: { 
-        school: {
-          equals: school,
-          mode: 'insensitive'
-        }
       }
     });
+    console.log('Similar schools:', similarSchools);
 
-    if (!schoolRecord || !schoolRecord.school) {
-      console.log(`❌ TEST: School not found: "${school}"`);
-      // Log potential matches
-      const potentialMatches = similarSchools.filter(s => 
-        s.school?.toLowerCase().includes(school.toLowerCase().split(' ')[0])
-      );
-      if (potentialMatches.length > 0) {
-        console.log('Potential matches:', potentialMatches.map(s => s.school));
-      }
-      return res.status(404).json({ error: 'School not found' });
-    }
-
-    console.log(`✅ TEST: Found exact match for school: ${schoolRecord.school} (ID: ${schoolRecord.id})`);
-
-    // Step 2: Check for exact match in user's schools
-    console.log('Step 2: Checking if user already has this exact school');
-    const existingUserSchool = await prisma.userSchool.findFirst({
-      where: {
-        userId: Number(userId),
-        school: {
-          equals: schoolRecord.school,
-          mode: 'insensitive'
-        }
-      }
-    });
-
-    if (existingUserSchool) {
-      console.log(`⚠️ TEST: User already has this exact school: ${schoolRecord.school}`);
+    if (existingAssociation) {
+      console.log('User already has this school');
       return res.status(409).json({ error: 'User-school association already exists' });
     }
 
-    console.log('✅ TEST: No existing association found for this exact school name');
+    if (!schoolRecord) {
+      console.log('School not found');
+      return res.status(404).json({ error: 'School not found' });
+    }
 
-    // Return success without actually creating anything
-    res.json({ 
-      message: 'Test successful',
-      school: schoolRecord.school,
-      schoolId: schoolRecord.id
-    });
-
+    console.log('School found and user does not have it');
+    return res.status(200).json({ message: 'School found and user does not have it' });
   } catch (error) {
-    console.error('❌ TEST Error:', error);
-    res.status(500).json({ 
-      error: 'Test failed',
-      details: error instanceof Error ? error.message : String(error)
-    });
+    console.error('Error in test-schools endpoint:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
