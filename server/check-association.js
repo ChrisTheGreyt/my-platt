@@ -3,7 +3,9 @@ const prisma = new PrismaClient();
 
 async function checkAssociation() {
   try {
-    // Check for existing association
+    console.log('Checking for existing association for University of Kansas...');
+    
+    // Check for existing association with exact match
     const existingAssociation = await prisma.userSchool.findFirst({
       where: {
         userId: 30,
@@ -11,9 +13,10 @@ async function checkAssociation() {
       }
     });
     
-    console.log('Existing association:', existingAssociation);
+    console.log('Existing association (exact match):', existingAssociation);
     
-    // Check for similar schools in user's schools
+    // Check for all user schools
+    console.log('\nChecking for all user schools...');
     const userSchools = await prisma.userSchool.findMany({
       where: {
         userId: 30
@@ -22,17 +25,15 @@ async function checkAssociation() {
     
     console.log('User schools:', userSchools);
     
-    // Check for similar schools in the database
-    const similarSchools = await prisma.law_schools.findMany({
+    // Check if "University of Kansas" exists in the law_schools table
+    console.log('\nChecking if "University of Kansas" exists in the law_schools table...');
+    const kansasSchool = await prisma.law_schools.findFirst({
       where: {
-        OR: [
-          { school: { contains: 'Kansas', mode: 'insensitive' } },
-          { school: { contains: 'University of', mode: 'insensitive' } }
-        ]
+        school: 'University of Kansas'
       }
     });
     
-    console.log('Similar schools:', similarSchools);
+    console.log('Kansas school:', kansasSchool);
     
   } catch (error) {
     console.error('Error:', error);
