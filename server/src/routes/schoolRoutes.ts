@@ -24,6 +24,7 @@ router.get('/test-cors', (req, res) => {
 router.post('/test-schools', async (req, res) => {
   const { userId, school } = req.body;
   console.log(`🔍 TEST: Creating school tasks for user:`, { userId, school });
+  console.log(`🔴🔵🔴🔵🔴🔵🔴🔵🔴🔵 TEST ENDPOINT UPDATED - VERIFY DEPLOYMENT 🔴🔵🔴🔵🔴🔵🔴🔵🔴🔵`);
 
   try {
     // First, let's see all schools with similar names
