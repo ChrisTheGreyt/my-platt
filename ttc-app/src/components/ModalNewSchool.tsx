@@ -101,21 +101,64 @@ const NewSchoolModal: React.FC<NewSchoolModalProps> = ({ isOpen, onClose, onScho
         
         if (!testResponse.ok) {
             if (testData.error === 'User-school association already exists') {
-                toast.error(
-                    <div>
-                        <p>You have already added {school}</p>
-                        <button 
-                            onClick={() => {
-                                router.push(`/schools/${encodeURIComponent(school)}`);
-                                onClose();
-                            }}
-                            className="mt-2 text-blue-500 hover:text-blue-600 underline"
-                        >
-                            Go to existing school
-                        </button>
-                    </div>,
-                    { duration: 5000 }
+                // Check if the school actually exists in the user's schools
+                const userSchoolsResponse = await fetch(`${backendUrl}/api/user/${resolvedUserId}/schools`);
+                const userSchoolsData = await userSchoolsResponse.json();
+                
+                // Check if the school exists in the user's schools (case-insensitive)
+                const schoolExists = userSchoolsData.some(
+                    (userSchool: any) => userSchool.school.toLowerCase() === school.toLowerCase()
                 );
+                
+                if (schoolExists) {
+                    toast.error(
+                        <div>
+                            <p>You have already added {school}</p>
+                            <button 
+                                onClick={() => {
+                                    router.push(`/schools/${encodeURIComponent(school)}`);
+                                    onClose();
+                                }}
+                                className="mt-2 text-blue-500 hover:text-blue-600 underline"
+                            >
+                                Go to existing school
+                            </button>
+                        </div>,
+                        { duration: 5000 }
+                    );
+                } else {
+                    // If the school doesn't exist in the user's schools, try to add it anyway
+                    console.log('School not found in user schools, attempting to add anyway');
+                    // Proceed with actual creation
+                    const createSchoolResponse = await fetch(`${backendUrl}/api/schools`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            userId: resolvedUserId, 
+                            school: school
+                        }),
+                    });
+                    
+                    const responseData = await createSchoolResponse.json();
+                    console.log('Create school response:', responseData);
+                    
+                    if (!createSchoolResponse.ok) {
+                        throw new Error(responseData.error || 'Failed to create school association');
+                    }
+                    
+                    // Success handling
+                    toast.success('School added successfully!');
+                    onSchoolSelect(school);
+                    onClose();
+                    
+                    // Optional: Delay reload to allow toast to be seen
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
                 onClose();
                 return;
             }
