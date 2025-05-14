@@ -90,16 +90,19 @@ router.post('/test-schools', async (req, res) => {
 // Get all law schools
 router.get('/law-schools', async (req, res) => {
   try {
-    const schools = await prisma.law_schools.findMany({
-      select: {
-        id: true,
-        school: true
-      }
-    });
+    const schools = await prisma.law_schools.findMany();
     
     res.json(schools.map(school => ({
       school_id: school.id.toString(),
-      school_name: school.school || ''
+      school_name: school.school || '',
+      personal_statement: school.personal_statement || '',
+      diversity_statement: school.diversity_statement || '',
+      optional_statement_prompt: school.optional_statement_prompt || '',
+      letters_of_recommendation: school.letters_of_recommendation || '',
+      resume: school.resume || '',
+      extras_addenda: school.extras_addenda || '',
+      application_fee: school.application_fee || '',
+      interviews: school.interviews || ''
     })));
   } catch (error) {
     console.error('Error fetching law schools:', error);
@@ -1290,6 +1293,52 @@ router.post('/add', async (req: Request, res: Response) => {
       }
     }
     res.status(500).json({ error: 'Failed to add school' });
+  }
+});
+
+// Update school details
+router.put('/schools/:schoolId', async (req, res) => {
+  const { schoolId } = req.params;
+  const {
+    school,
+    personal_statement,
+    diversity_statement,
+    optional_statement_prompt,
+    letters_of_recommendation,
+    resume,
+    extras_addenda,
+    application_fee,
+    interviews
+  } = req.body;
+
+  try {
+    console.log(`🔄 Updating school ID ${schoolId} with new details`);
+
+    const updatedSchool = await prisma.law_schools.update({
+      where: {
+        id: Number(schoolId)
+      },
+      data: {
+        school,
+        personal_statement,
+        diversity_statement,
+        optional_statement_prompt,
+        letters_of_recommendation,
+        resume,
+        extras_addenda,
+        application_fee,
+        interviews
+      }
+    });
+
+    console.log('✅ Successfully updated school:', updatedSchool);
+    res.json(updatedSchool);
+  } catch (error) {
+    console.error('❌ Error updating school:', error);
+    res.status(500).json({
+      error: 'Failed to update school',
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

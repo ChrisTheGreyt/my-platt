@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { dataGridClassName, dataGridSxStyles } from "@/lib/utils";
+import VideoPlayer from '@/components/VideoPlayer';
 
 const taskColumns: GridColDef[] = [
   { field: "title", headerName: "Title", width: 200 },
@@ -136,14 +137,10 @@ const HomePage = () => {
       <div className="relative max-w-4xl mx-auto text-left">
         {/* Tutorial Video */}
         <div className="mb-6 rounded-lg overflow-hidden shadow-lg">
-          <video 
-            controls
-            className="w-full"
-            poster="/ttc_hero.webp"
-          >
-            <source src="https://mp-s3-images.s3.us-east-1.amazonaws.com/How+to+use+Myplatt.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
+          <VideoPlayer 
+            videoUrl="https://mp-s3-images.s3.us-east-1.amazonaws.com/How+to+use+Myplatt.mp4"
+            posterUrl="/ttc_hero.webp"
+          />
         </div>
         
         <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">

@@ -14,6 +14,7 @@ import NewSchoolModal from '@/components/ModalNewSchool';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
+import { isAdmin } from '@/utils/adminUtils';
 
 
 type Project = {
@@ -31,6 +32,8 @@ const Sidebar = () => {
   const [showProjects, setShowProjects] = useState(true);
   const [showPriority, setShowPriority] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [isUserAdmin, setIsUserAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   // Hooks
   const { user, setUser, setSession } = useAuth();
@@ -149,6 +152,27 @@ const Sidebar = () => {
     };
   }, [refetchSchools]);
 
+  // Add this effect to check admin status when user changes
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const currentUser = await Auth.currentAuthenticatedUser();
+        const cognitoSub = currentUser.attributes.sub;
+        console.log("🔍 Checking admin status for Cognito ID:", cognitoSub);
+        console.log("🔍 User attributes:", currentUser.attributes);
+        const isAdminUser = isAdmin(cognitoSub);
+        console.log("🔍 Is user admin?", isAdminUser);
+        console.log("🔍 Expected admin IDs:", ["b4d80438-b081-7025-1adc-d6f95479680f", "74488448-c071-70b0-28db-644fc67f3f11"]);
+        setIsUserAdmin(isAdminUser);
+      } catch (error) {
+        console.error("Failed to fetch authenticated user:", error);
+        setIsUserAdmin(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
+
   const handleSignOut = async () => {
     try {
       await Auth.signOut();
@@ -228,9 +252,7 @@ const Sidebar = () => {
           {/* <SidebarLink icon={Briefcase} label="Timeline" href="/timeline" /> */}
           <SidebarLink icon={Search} label="Search" href="/search" />
           <SidebarLink icon={Settings} label="Settings" href="/settings" />
-          <SidebarLink icon={User} label="User" href="/users" />
-                    <SidebarLink icon={Briefcase} label="Schools" href="/schools" />
-          
+          <SidebarLink icon={Briefcase} label="Schools" href="/schools" />
         </nav>
 
         <div className="space-y-2">
@@ -314,6 +336,26 @@ const Sidebar = () => {
             <SidebarLink icon={AlertTriangle} label="Medium" href="/priority/medium" />
             <SidebarLink icon={AlertOctagon} label="Low" href="/priority/low" />
             <SidebarLink icon={Layers3} label="Backlog" href="/priority/backlog" />
+          </>
+        )}
+
+        {/* ADMIN SECTION */}
+        {isUserAdmin && (
+          <>
+            <button 
+              onClick={() => setShowAdmin((prev) => !prev)} 
+              className='flex w-full items-center justify-between px-8 py-3 text-gray-500'
+            >
+              <span className=''>Admin</span>
+              {showAdmin ? <ChevronUp className='h-5 w-5' /> : <ChevronDown className='h-5 w-5' />}
+            </button>
+
+            {showAdmin && (
+              <>
+                <SidebarLink icon={Users} label="Users" href="/users" />
+                <SidebarLink icon={School} label="Manage Schools" href="/admin/schools" />
+              </>
+            )}
           </>
         )}
       </div>

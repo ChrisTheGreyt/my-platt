@@ -87,17 +87,22 @@ const STATUS_MAPPING = {
 } as const;
 
 const taskStatus = ["To Do", "Work In Progress", "Under Review", "Completed"];
-const linkDecorator = (href: string, text: string, key: number) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-500 hover:text-blue-700"
-    key={key}
-  >
-    {text}
-  </a>
-);
+const linkDecorator = (href: string, text: string, key: number) => {
+  // Check if the link is internal (starts with /)
+  const isInternalLink = href.startsWith('/');
+  
+  return (
+    <a
+      href={href}
+      target={isInternalLink ? "_self" : "_blank"}
+      rel={isInternalLink ? "" : "noopener noreferrer"}
+      className="text-blue-500 hover:text-blue-700"
+      key={key}
+    >
+      {text}
+    </a>
+  );
+};
 
 const BoardView: React.FC<BoardProps> = ({ id, setIsModalNewTaskOpen, authData, projects }) => {
   const userId = authData?.userDetails?.userId || null;

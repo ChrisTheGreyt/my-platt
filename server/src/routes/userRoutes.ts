@@ -23,6 +23,7 @@ import {
   getUserCreatedTime,
 } from "../controllers/userController";
 import { body, validationResult } from 'express-validator'; // Use named imports
+import { isAdmin } from '../middleware/adminMiddleware';
 
 const router = Router();
 
@@ -42,7 +43,7 @@ const validateUpdateAfterPayment = [
 ];
 
 // Route Definitions
-router.get("/", getUsers);
+router.get("/", isAdmin, getUsers);
 router.get("/:cognitoId", getUser);
 router.post("/", postUser)
 router.post("/check-subscription", checkSubscriptionStatus);
